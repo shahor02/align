@@ -14,9 +14,11 @@ class AliAlgTrack: public AliExternalTrackParam
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
 	,kNMSPar=2                           // N params per MS act       
 	,kNELosPar=1                         // N params per e.loss act
-	,kRichardsonN=2,kNRDClones=2*kRichardsonN // number of 2-points derivatives for Richardson derivative
+	,kRichardsonOrd=1                    // Order of Richardson extrapolation for derivative (min=1)
+	,kRichardsonN=kRichardsonOrd+1       // N of 2-point symmetric derivatives needed for requested order
+	,kNRDClones=2*kRichardsonN           // number of variations for derivative of requested order
   };
-  enum {kMSTheta=0,kMSPhi=1,kELoss=2};
+  enum {kMSTheta,kMSPhi,kELoss,kNMatDOFs};
 
   AliAlgTrack();
   virtual ~AliAlgTrack();
@@ -30,33 +32,43 @@ class AliAlgTrack: public AliExternalTrackParam
   virtual void Clear(Option_t *opt="");
   //
   Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt);
-  Bool_t PropagateToPointMulti(AliExternalTrackParam** trSet, int nTr, const AliAlgPoint* pnt);
+  Bool_t PropagateToPoint(AliExternalTrackParam** trSet, int nTr, const AliAlgPoint* pnt);
   Double_t GetELoss(double xTimesRho);
   //
   Bool_t CalcResiduals(const double *params);
   Bool_t CalcResidDeriv(const double *params);
   //
   Bool_t GetFieldON()                            const {return TestBit(kFieldONBit);}
-  void   SetFieldON(Bool_t v=kTRUE)                    {SetBit(kFieldONBit);}
+  void   SetFieldON(Bool_t v=kTRUE)                    {SetBit(kFieldONBit,v);}
   Bool_t GetResidDone()                          const {return TestBit(kResidDoneBit);}
-  void   SetResidDone(Bool_t v=kTRUE)                  {SetBit(kResidDoneBit);}
+  void   SetResidDone(Bool_t v=kTRUE)                  {SetBit(kResidDoneBit,v);}
   Bool_t GetDerivDone()                          const {return TestBit(kDerivDoneBit);}
-  void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit);}
+  void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit,v);}
   // propagation methods
-  Bool_t ApplyMS(AliExternalTrackParam trPar, double tms,double pms);
-  Bool_t ApplyELoss(AliExternalTrackParam trPar, double dE);
-  Bool_t ApplyELoss(AliExternalTrackParam trPar, const AliAlgPoint* pnt);
+  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
+  Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
+  Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
+  //
+  Bool_t ApplyMS(AliExternalTrackParam** trSet, int ntr, double tms,double pms);
+  Bool_t ApplyELoss(AliExternalTrackParam** trSet, int ntr, double dE);
+  Bool_t ApplyELoss(AliExternalTrackParam** trSet, int ntr, const AliAlgPoint* pnt);
   //
   Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
   Double_t *GetDerivative(int dim, int pntID)     const {return &fDerivA[dim][pntID*fNLocPar];}
   //
   void SetParams(AliExternalTrackParam& tr, double x, double alp, double* par);
-  void SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, double* par);
+  void SetParams(AliExternalTrackParam** trSet, int ntr, double x, double alp, double* par);
   void SetParam(AliExternalTrackParam& tr, int par, double val);
-  void SetParam(AliExternalTrackParam* trSet, int ntr, int par, double val);
+  void SetParam(AliExternalTrackParam** trSet, int ntr, int par, double val);
   void ModParam(AliExternalTrackParam& tr, int par, double delta);
-  void ModParam(AliExternalTrackParam* trSet, int ntr, int par, double delta);
-
+  void ModParam(AliExternalTrackParam** trSet, int ntr, int par, double delta);
+  //
+  void   RichardsonDeriv(const AliExternalTrackParam** trSet, const double *delta, const AliAlgPoint* pnt, double& derY, double& derZ);
+  //
+ protected: 
+  
+  static Double_t RichardsonExtrap(double *val, int ord=1);
+  static Double_t RichardsonExtrap(const double *val, int ord=1);
 
  protected:
 
@@ -90,7 +102,7 @@ inline Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam* tr, const Ali
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParams(AliExternalTrackParam & tr, double x, double alp, double* par)
+inline void AliAlgTrack::SetParams(AliExternalTrackParam& tr, double x, double alp, double* par)
 {
   // set track params
   tr.SetParamOnly(x,alp,par);
@@ -98,7 +110,7 @@ inline void AliAlgTrack::SetParams(AliExternalTrackParam & tr, double x, double 
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, double* par)
+inline void AliAlgTrack::SetParams(AliExternalTrackParam** trSet, int ntr, double x, double alp, double* par)
 {
   // set parames for multiple tracks (VECTORIZE THIS)
   for (int itr=ntr;itr--;) {
@@ -108,14 +120,14 @@ inline void AliAlgTrack::SetParams(AliExternalTrackParam* trSet, int ntr, double
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParam(AliExternalTrackParam & tr, int par, double val)
+inline void AliAlgTrack::SetParam(AliExternalTrackParam& tr, int par, double val)
 {
   // set track parameter
   ((double*)tr.GetParameter())[par] = val;
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParam(AliExternalTrackParam* trSet, int ntr, int par, double val)
+inline void AliAlgTrack::SetParam(AliExternalTrackParam** trSet, int ntr, int par, double val)
 {
   // set parames for multiple tracks (VECTORIZE THIS)
   for (int itr=ntr;itr--;) ((double*)trSet[itr]->GetParameter())[par] = val;
@@ -129,7 +141,7 @@ inline void AliAlgTrack::ModParam(AliExternalTrackParam & tr, int par, double de
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParam(AliExternalTrackParam* trSet, int ntr, int par, double delta)
+inline void AliAlgTrack::SetParam(AliExternalTrackParam** trSet, int ntr, int par, double delta)
 {
   // modify param for multiple tracks (VECTORIZE THIS)
   for (int itr=ntr;itr--;) ((double*)trSet[itr]->GetParameter())[par] += delta;

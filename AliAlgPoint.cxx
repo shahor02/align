@@ -1,3 +1,4 @@
+#include <TMath.h>
 #include "AliAlgPoint.h"
 
 
@@ -18,7 +19,7 @@ AliAlgPoint::AliAlgPoint() :
 }
 
 //_____________________________________
-void AliAlgPoint::GetResidualsDiag(const *double pos, double &resU, double &resV) const
+void AliAlgPoint::GetResidualsDiag(const double* pos, double &resU, double &resV) const
 {
   // calculate residuals in the frame where the errors are diagonal, given the position
   // of the track in the standard tracking frame
@@ -35,7 +36,7 @@ void AliAlgPoint::Init()
   const double kCorrToler = 1e-6;
   const double kDiagToler = 1e-14;  
   // 
-  // compute parametes of tranformation to diagonal error matrix
+  // compute parameters of tranformation to diagonal error matrix
   if (TMath::Abs(fErrYZTracking[1]*fErrYZTracking[1]/(fErrYZTracking[0]*fErrYZTracking[2]))<kCorrToler) {
     fCosDiagErr = 1.;
     fSinDiagErr = 0.;
