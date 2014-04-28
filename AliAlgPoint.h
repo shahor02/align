@@ -44,8 +44,8 @@ class AliAlgPoint : public TObject
   void       SetAlpha(double a)            {fAlpha = a;}
   void       SetXYZTracking(double r[3])   {for (int i=3;i--;) fXYZTracking[i] = r[i];}
   //
-  Double_t*  GetTrParamWS()          const {return (Double_t*)fTrParamWS;}
-  void       SetTrParamWS(double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
+  Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
+  void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
   //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");

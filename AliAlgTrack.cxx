@@ -1,4 +1,12 @@
 #include "AliAlgTrack.h"
+#include "AliTrackerBase.h"
+
+// RS: this is not good: we define constants outside the class, but it is to
+// bypass the CINT limitations on static arrays initializations 
+const Int_t kRichardsonOrd = 1;              // Order of Richardson extrapolation for derivative (min=1)
+const Int_t kRichardsonN = kRichardsonOrd+1; // N of 2-point symmetric derivatives needed for requested order
+const Int_t kNRDClones = kRichardsonN*2     ;// number of variations for derivative of requested order
+
 
 //____________________________________________________________________________
 AliAlgTrack::AliAlgTrack() :
@@ -37,11 +45,10 @@ void AliAlgTrack::DefineDOFs()
     pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
     if (pnt->ContainsMaterial()) {
       fNLocPar += kNMSPar;
-      if (pnt->GetVaryELoss()) fNLocPar += kNELosPar;
+      if (pnt->GetELossVaried()) fNLocPar += kNELosPar;
     }
   }
   //
-  int nOld = fResid[0].GetSize();
   if (fResid[0].GetSize()<np) {
     fResid[0].Set(np);
     fResid[1].Set(np);
@@ -99,12 +106,12 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       //
       if (pnt->ContainsMeasurement()) {  
 	int offsDer = ip*fNLocPar + ipar;
-	RichardsonDeriv(probD, varDelta, pnt, derRichY[offsDer], derRichZ[offsDer]); // calculate derivatives
+	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
       }
       //
       if (pnt->ContainsMaterial()) { // apply MS and ELoss
 	int offs = pnt->GetMaxLocVarID();
-	if (!ApplyMS(probD,params[offs+kMSTheta],params[offs+kMSPhi])) return kFALSE;
+	if (!ApplyMS(probD,kNRDClones,params[offs+kMSTheta],params[offs+kMSPhi])) return kFALSE;
 	if (GetFieldON()) {	
 	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD,kNRDClones,params[offs+kELoss])) return kFALSE;}
 	  else                       {if (!ApplyELoss(probD,kNRDClones,pnt)) return kFALSE;}
@@ -122,7 +129,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
     if (!pnt->ContainsMaterial()) continue;
     int offs = pnt->GetMaxLocVarID(); // the parameters for this point start with this offset
     //
-    double *vpars = (double*)&params[offs];
+    double *vpar = (double*)&params[offs];
     for (int ipar=0;ipar<kNMatDOFs;ipar++) { // loop over DOFs related to MS and ELoss are point ip
       double del = kDeltaMat[ipar];
       if (ipar==kELoss) {
@@ -138,14 +145,14 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	// apply varied material effects
 	if (!ApplyMS(probD[(icl<<1)+0], vpar[kMSTheta], vpar[kMSPhi])) return kFALSE;
 	if (GetFieldON()) {	
-	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+0],kNRDClones,vpar[kELoss])) return kFALSE;}
-	  else                       {if (!ApplyELoss(probD[(icl<<1)+0],kNRDClones,pnt)) return kFALSE;}
+	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+0],vpar[kELoss])) return kFALSE;}
+	  else                       {if (!ApplyELoss(probD[(icl<<1)+0],pnt)) return kFALSE;}
 	}
 	vpar[ipar] -= del+del;
 	if (!ApplyMS(probD[(icl<<1)+1], vpar[kMSTheta], vpar[kMSPhi])) return kFALSE;
 	if (GetFieldON()) {	
-	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+1],kNRDClones,vpar[kELoss])) return kFALSE;}
-	  else                       {if (!ApplyELoss(probD[(icl<<1)+1],kNRDClones,pnt)) return kFALSE;}
+	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+1],vpar[kELoss])) return kFALSE;}
+	  else                       {if (!ApplyELoss(probD[(icl<<1)+1],pnt)) return kFALSE;}
 	}
 	//
 	vpar[ipar] += del;
@@ -158,12 +165,12 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	//
 	if (pntj->ContainsMeasurement()) {  
 	  int offsDer = ip*fNLocPar + offs + ipar;
-	  RichardsonDeriv(probD, varDelta, pntj, derRichY[offsDer], derRichZ[offsDer]); // calculate derivatives
+	  RichardsonDeriv(probD, varDelta, pntj, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
 	}
 	//
 	if (pntj->ContainsMaterial()) { // apply MS and ELoss
 	  int offsj = pntj->GetMaxLocVarID();
-	  if (!ApplyMS(probD,params[offsj+kMSTheta],params[offsj+kMSPhi])) return kFALSE;
+	  if (!ApplyMS(probD,kNRDClones,params[offsj+kMSTheta],params[offsj+kMSPhi])) return kFALSE;
 	  if (GetFieldON()) {	
 	    if (pntj->GetELossVaried()) {if (!ApplyELoss(probD,kNRDClones,params[offsj+kELoss])) return kFALSE;}
 	    else                        {if (!ApplyELoss(probD,kNRDClones,pntj)) return kFALSE;}
@@ -175,22 +182,6 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
     } // << loop over DOFs related to MS and ELoss are point ip
   }  // << loop over all points of the track
   //  
-  return kTRUE;
-}
-    // init variation clones by the track propagated to this point during residuals calculation
-    SetParams(probD,kNRDClones, pnt->GetXTracking(),pnt->GetAlpha(),pnt->GetTrParamWS());
-    
-kDeltaMat
-
-    if ( !PropagateToPoint(probe, pnt, params) ) return kFALSE;
-    pnt->SetTrParamWS(probe.GetParameter());    // store the current track kinematics at the point
-    //
-    if (pnt->ContainsMeasurement()) { // need to calculate residuals in the frame where errors are orthogonal
-      pnt->GetResidualsDiag(probe.GetParameter(),fResidA[0][ip],fResidA[1][ip]);
-    }
-  }
-  //
-
   SetDerivDone();
   return kTRUE;
 }
@@ -201,7 +192,7 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   // Propagate for given local params and calculate residuals
   // The 1st 4 or 5 elements of params vector should be the externalTrackParam 
   static AliExternalTrackParam probe;
-  SetParam(probe,GetX(),GetAlpha(),params);
+  SetParams(probe,GetX(),GetAlpha(),params);
   //
   int np = GetNPoints();
   for (int ip=0;ip<np;ip++) {
@@ -229,15 +220,13 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam** tr, int nTr, const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam* tr, int nTr, const AliAlgPoint* pnt)
 {
   // Propagate set of tracks to the point
   // VECTORIZE this
   //
-  double xyz[3],bxyz[3],bz;
-  //
   for (int itr=nTr;itr--;) {
-    if (!PropagateToPointMulti(*tr[itr],pnt)) return kFALSE;
+    if (!PropagateToPoint(tr[itr],pnt)) return kFALSE;
   }
   return kTRUE;
 }
@@ -246,7 +235,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam** tr, int nTr, const 
 Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt)
 {
   // propagate tracks to the point
-  double xyz[3],bxyz[3],bz;
+  double xyz[3],bxyz[3];
   //
   if (!tr.RotateParamOnly(pnt->GetAlpha())) return kFALSE;
   tr.GetXYZ(xyz);
@@ -257,7 +246,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
     }
     else {
       AliTrackerBase::GetBxByBz(xyz,bxyz);
-      if (!tr->PropagateParamOnlyBxByBzTo(pnt->GetXTracking(),bxyz)) return kFALSE;
+      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXTracking(),bxyz)) return kFALSE;
     }
   }    
   else { // straigth line propagation
@@ -277,9 +266,9 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double tms,double pms)
   // the track collinear frame (tms and pms resp).
   // The updated direction vector in the tracking frame becomes
   //
-  //  / Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] \   / Cos[tms]         \
+  //  | Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] |   | Cos[tms]         |
   //  | Cos[lam]*Sin[phi] Sin[lam]*Sin[phi]  Cos[phi] | x | Cos[pms]*Sin[tms]|
-  //  \ Sin[lam]	       -Cos[lam]	0     /   \ Sin[pms]*Sin[tms]/
+  //  | Sin[lam]	       -Cos[lam]	0     |   | Sin[pms]*Sin[tms]|
   //
   //------------------------------------------------------------------------------
   //
@@ -319,10 +308,10 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* 
    double p2 = p*p;
    Double_t e = TMath::Sqrt(p2 + fMass*fMass);
    Double_t bg = p/fMass;
-   double dE = Bethe(bg)*pnt->SetXTimesRho();
+   double dE = AliExternalTrackParam::BetheBlochSolid(bg)*pnt->GetXTimesRho();
    if ( TMath::Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
    if ( (1.+ dE/p2*(dE + 2*e)) < 0. ) return kFALSE;
-   cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
+   double cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
    if (TMath::Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
    p4 *= cP4;
    return kTRUE;
@@ -338,7 +327,7 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, double dE)
    Double_t e = TMath::Sqrt(p2 + fMass*fMass);
    if ( TMath::Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
    if ( (1.+ dE/p2*(dE + 2*e)) < 0. ) return kFALSE;
-   cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
+   double cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
    if (TMath::Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
    p4 *= cP4;
    return kTRUE;
@@ -346,7 +335,7 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, double dE)
 
 
 //______________________________________________________
-Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam** trSet, int ntr, double tms,double pms)
+Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms)
 {
   //------------------------------------------------------------------------------
   // Modify params for SET of tracks (e.g. AliExternalTrackParam) in the tracking frame 
@@ -355,9 +344,9 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam** trSet, int ntr, double tms,d
   // the track collinear frame (tms and pms resp).
   // The updated direction vector in the tracking frame becomes
   //
-  //  / Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] \   / Cos[tms]         \
+  //  | Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] |   | Cos[tms]         |
   //  | Cos[lam]*Sin[phi] Sin[lam]*Sin[phi]  Cos[phi] | x | Cos[pms]*Sin[tms]|
-  //  \ Sin[lam]	       -Cos[lam]	0     /   \ Sin[pms]*Sin[tms]/
+  //  | Sin[lam]	       -Cos[lam]	0     |   | Sin[pms]*Sin[tms]|
   //
   //------------------------------------------------------------------------------
   //
@@ -369,7 +358,7 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam** trSet, int ntr, double tms,d
   double snPms = TMath::Sin(pms), csPms = TMath::Cos(pms);  
   //
   for (int itr=ntr;itr--;) { // at the moment just loop
-    double *par = (double*) trSet[itr]->GetParameter();
+    double *par = (double*) trSet[itr].GetParameter();
     //
     double snPhi = par[2],  csPhi = TMath::Sqrt((1.-snPhi)*(1.+snPhi));
     double csLam = 1./TMath::Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
@@ -394,27 +383,27 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam** trSet, int ntr, double tms,d
 }
 
 //______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam** trSet, int ntr, const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt)
 {
   // apply eloss according to x*rho of the point to SET of tracks
   //
   // VECTORIZE THIS
   //
   // at the moment just loop
-  for (int itr=ntr;itr--;) if (!ApplyELoss(*trSet[itr],pnt)) return kFASLE;
+  for (int itr=ntr;itr--;) if (!ApplyELoss(trSet[itr],pnt)) return kFALSE;
   return kTRUE;
   //
 }
 
 //______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam** trSet, int ntr, double dE)
+Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE)
 {
   // apply eloss according to externally supplied dE to SET of tracks
   //
   // VECTORIZE THIS
   //
   // at the moment just loop
-  for (int itr=ntr;itr--;) if (!ApplyELoss(*trSet[itr],dE)) return kFASLE;
+  for (int itr=ntr;itr--;) if (!ApplyELoss(trSet[itr],dE)) return kFALSE;
   return kTRUE;
   //
 }
@@ -428,8 +417,8 @@ Double_t AliAlgTrack::RichardsonExtrap(double *val, int ord)
   // d, d/2 ... d/2^ord.
   // The array val is overwritten
   //
-  if (ord==1) return (4.*fval[1] - val[0])*(1./3);
-  do {for (int i=0;i<nord;i++) val[i] = (4.*val[i+1] - val[i])*(1./3);} while(--ord);
+  if (ord==1) return (4.*val[1] - val[0])*(1./3);
+  do {for (int i=0;i<ord;i++) val[i] = (4.*val[i+1] - val[i])*(1./3);} while(--ord);
   return val[0];
 }
 
@@ -441,28 +430,28 @@ Double_t AliAlgTrack::RichardsonExtrap(const double *val, int ord)
   // d, d/2 ... d/2^ord.
   // The array val is not overwritten
   //
-  if (ord==1) return (4.*fval[1] - val[0])*(1./3);
+  if (ord==1) return (4.*val[1] - val[0])*(1./3);
   double* buff = new double[ord+1];
   memcpy(buff,val,(ord+1)*sizeof(double));
-  do {for (int i=0;i<nord;i++) buff[i] = (4.*buff[i+1] - buff[i])*(1./3);} while(--ord);
+  do {for (int i=0;i<ord;i++) buff[i] = (4.*buff[i+1] - buff[i])*(1./3);} while(--ord);
   return buff[0];
 }
 
 //______________________________________________
-void AliAlgTrack::RichardsonDeriv(const AliExternalTrackParam** trSet, const double *delta, const AliAlgPoint* pnt, double& derY, double& derZ)
+void AliAlgTrack::RichardsonDeriv(const AliExternalTrackParam* trSet, const double *delta, const AliAlgPoint* pnt, double& derY, double& derZ)
 {
   // Calculate Richardson derivatives for diagonalized Y and Z from a set of kRichardsonN pairs 
   // of tracks with same parameter of i-th pair varied by +-delta[i]
-  static double varDelta[kRichardsonN],derRichY[kRichardsonN],derRichZ[kRichardsonN];
+  static double derRichY[kRichardsonN],derRichZ[kRichardsonN];
   //
   for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
-    double resYVP=0,resYVP=0,resZVP=0,resZVN=0;
-    pnt->GetResidualsDiag(probD[(icl<<1)+0].GetParameter(), resYVP, resZVP); // variation with +delta
-    pnt->GetResidualsDiag(probD[(icl<<1)+1].GetParameter(), resYVN, resZVN); // variation with -delta
-    derRichY[icl] = 0.5*(resYVP-resYVN)/varDelta[icl];   // 2-point symmetric derivatives
-    derRichZ[icl] = 0.5*(resZVP-resZVN)/varDelta[icl];
+    double resYVP=0,resYVN=0,resZVP=0,resZVN=0;
+    pnt->GetResidualsDiag(trSet[(icl<<1)+0].GetParameter(), resYVP, resZVP); // variation with +delta
+    pnt->GetResidualsDiag(trSet[(icl<<1)+1].GetParameter(), resYVN, resZVN); // variation with -delta
+    derRichY[icl] = 0.5*(resYVP-resYVN)/delta[icl];   // 2-point symmetric derivatives
+    derRichZ[icl] = 0.5*(resZVP-resZVN)/delta[icl];
   }
   derY = RichardsonExtrap(derRichY,kRichardsonOrd);   // dY/dPar
-  detZ = RichardsonExtrap(derRichZ,kRichardsonOrd);  // dZ/dPar
+  derZ = RichardsonExtrap(derRichZ,kRichardsonOrd);  // dZ/dPar
   //
 }
