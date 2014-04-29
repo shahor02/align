@@ -10,10 +10,15 @@ const Int_t kNRDClones = kRichardsonN*2     ;// number of variations for derivat
 
 //____________________________________________________________________________
 AliAlgTrack::AliAlgTrack() :
-  fPoints(0)
+  fNLocPar(0)
+  ,fNLocExtPar(0)
+  ,fMass(0.14)
+  ,fPoints(0)
+  ,fPoints(0)
 {
   // def c-tor
-  
+  for (int i=0;i<2;i++) fResidA[i] = fDerivA[i] = 0;
+  //
 }
 
 //____________________________________________________________________________
