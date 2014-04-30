@@ -28,6 +28,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Int_t        GetNLocPar()                      const {return fNLocPar;}
   //
   virtual void Clear(Option_t *opt="");
+  virtual void Print(Option_t *opt="")           const;
   //
   Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt);
   Bool_t PropagateToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt);

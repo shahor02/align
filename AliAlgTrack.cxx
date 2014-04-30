@@ -1,5 +1,6 @@
 #include "AliAlgTrack.h"
 #include "AliTrackerBase.h"
+#include "AliLog.h"
 
 // RS: this is not good: we define constants outside the class, but it is to
 // bypass the CINT limitations on static arrays initializations 
@@ -13,7 +14,6 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fMass(0.14)
-  ,fPoints(0)
   ,fPoints(0)
 {
   // def c-tor
@@ -242,20 +242,32 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   // propagate tracks to the point
   double xyz[3],bxyz[3];
   //
-  if (!tr.RotateParamOnly(pnt->GetAlpha())) return kFALSE;
+  if (!tr.RotateParamOnly(pnt->GetAlpha())) {
+    AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlpha()));
+    return kFALSE;
+  }
   tr.GetXYZ(xyz);
   //
   if (GetFieldON()) {
     if (pnt->GetUseBzOnly()) {
-      if (!tr.PropagateParamOnlyTo(pnt->GetXTracking(),AliTrackerBase::GetBz(xyz))) return kFALSE;
+      if (!tr.PropagateParamOnlyTo(pnt->GetXTracking(),AliTrackerBase::GetBz(xyz))) {
+	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXTracking()));
+	return kFALSE;
+      }
     }
     else {
       AliTrackerBase::GetBxByBz(xyz,bxyz);
-      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXTracking(),bxyz)) return kFALSE;
+      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXTracking(),bxyz)) {
+	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXTracking()));
+	return kFALSE;
+      }
     }
   }    
   else { // straigth line propagation
-    if ( !tr.PropagateParamOnlyTo(pnt->GetXTracking(),0) ) return kFALSE;
+    if ( !tr.PropagateParamOnlyTo(pnt->GetXTracking(),0) ) {
+      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXTracking()));
+      return kFALSE;
+    }
   }
   //
   return kTRUE;
@@ -459,4 +471,15 @@ void AliAlgTrack::RichardsonDeriv(const AliExternalTrackParam* trSet, const doub
   derY = RichardsonExtrap(derRichY,kRichardsonOrd);   // dY/dPar
   derZ = RichardsonExtrap(derRichZ,kRichardsonOrd);  // dZ/dPar
   //
+}
+
+//______________________________________________
+void AliAlgTrack::Print(Option_t *) const
+{
+  // print track data
+  AliExternalTrackParam::Print();
+  printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f\n",fNLocPar,fNLocExtPar,
+	 GetNPoints(),fMass);
+  //
+  for (int ip=0;ip<GetNPoints();ip++) GetPoint(ip)->Print();  
 }

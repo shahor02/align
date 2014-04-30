@@ -42,7 +42,10 @@ class AliAlgPoint : public TObject
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;
   //
   void       SetAlpha(double a)            {fAlpha = a;}
-  void       SetXYZTracking(double r[3])   {for (int i=3;i--;) fXYZTracking[i] = r[i];}
+  void       SetXYZTracking(double r[3])   {for (int i=3;i--;) fXYZTracking[i]=r[i];}
+  void       SetXYZTracking(double x,double y,double z);
+  void       SetYZErrTracking(double sy2, double syz, double sz2);
+  void       SetYZErrTracking(double *err) {for (int i=3;i--;) fErrYZTracking[i]=err[i];}
   //
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
   void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
@@ -69,5 +72,19 @@ class AliAlgPoint : public TObject
   //
   ClassDef(AliAlgPoint,1)
 };
+
+//____________________________________________________
+inline void AliAlgPoint::SetXYZTracking(double x,double y,double z) 
+{
+  // assign tracking coordinates
+  fXYZTracking[0]=x; fXYZTracking[1]=y; fXYZTracking[2]=z;
+}
+
+//____________________________________________________
+inline void AliAlgPoint::SetYZErrTracking(double sy2,double syz,double sz2) 
+{
+  // assign tracking coordinates
+  fErrYZTracking[0]=sy2; fErrYZTracking[1]=syz; fErrYZTracking[2]=sz2;
+}
 
 #endif
