@@ -35,8 +35,8 @@ class AliAlgPoint : public TObject
   //
   void       SetMaxLocVarID(Int_t id)                 {fMaxLocVarID = id;}
   void       SetELossVaried(Bool_t v=kTRUE)           {SetBit(kVaryELossBit,v);}
-  void       SetConstainsMaterial(Bool_t v=kTRUE)     {SetBit(kMaterialBit,v);}
-  void       SetConstainsMeasurement(Bool_t v=kTRUE)  {SetBit(kMeasurementBit,v);}
+  void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
+  void       SetContainsMeasurement(Bool_t v=kTRUE)   {SetBit(kMeasurementBit,v);}
   void       SetUseBzOnly(Bool_t v=kTRUE)             {SetBit(kUseBzOnly,v);}
   //
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;

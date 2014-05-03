@@ -132,6 +132,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
   for (int ip=0;ip<np;ip++) { // loop over all points of the track
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
+    //
+    // we will vary the tracks starting from the original parameters propagated to given point and stored there
+    SetParams(probD,kNRDClones, pnt->GetXTracking(),pnt->GetAlpha(),pnt->GetTrParamWS());
+    //
     int offs = pnt->GetMaxLocVarID(); // the parameters for this point start with this offset
     //
     double *vpar = (double*)&params[offs];
@@ -146,6 +150,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
+	double parOrig = vpar[ipar];
 	vpar[ipar] += del;
 	// apply varied material effects
 	if (!ApplyMS(probD[(icl<<1)+0], vpar[kMSTheta], vpar[kMSPhi])) return kFALSE;
@@ -153,14 +158,14 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+0],vpar[kELoss])) return kFALSE;}
 	  else                       {if (!ApplyELoss(probD[(icl<<1)+0],pnt)) return kFALSE;}
 	}
-	vpar[ipar] -= del+del;
+	vpar[ipar] = parOrig - del;
 	if (!ApplyMS(probD[(icl<<1)+1], vpar[kMSTheta], vpar[kMSPhi])) return kFALSE;
 	if (GetFieldON()) {	
 	  if (pnt->GetELossVaried()) {if (!ApplyELoss(probD[(icl<<1)+1],vpar[kELoss])) return kFALSE;}
 	  else                       {if (!ApplyELoss(probD[(icl<<1)+1],pnt)) return kFALSE;}
 	}
 	//
-	vpar[ipar] += del;
+	vpar[ipar] = parOrig;
 	del *= 0.5;
       }
       //
@@ -169,8 +174,13 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	if ( !PropagateToPoint(probD, kNRDClones, pntj) ) return kFALSE;
 	//
 	if (pntj->ContainsMeasurement()) {  
-	  int offsDer = ip*fNLocPar + offs + ipar;
+	  int offsDer = jp*fNLocPar + offs + ipar;
 	  RichardsonDeriv(probD, varDelta, pntj, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
+	  /*
+	  for (int ic=0;ic<kNRDClones;ic++) {
+	    printf("cl%d [%d->%d] \n",ic,ip,jp); probD[ic].Print();
+	  }
+	  */
 	}
 	//
 	if (pntj->ContainsMaterial()) { // apply MS and ELoss
@@ -474,12 +484,25 @@ void AliAlgTrack::RichardsonDeriv(const AliExternalTrackParam* trSet, const doub
 }
 
 //______________________________________________
-void AliAlgTrack::Print(Option_t *) const
+void AliAlgTrack::Print(Option_t *opt) const
 {
   // print track data
   AliExternalTrackParam::Print();
   printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f\n",fNLocPar,fNLocExtPar,
 	 GetNPoints(),fMass);
   //
-  for (int ip=0;ip<GetNPoints();ip++) GetPoint(ip)->Print();  
+  TString optS = opt;
+  optS.ToLower();
+  Bool_t res = optS.Contains("r") && GetResidDone();
+  Bool_t der = optS.Contains("d") && GetDerivDone();;
+  for (int ip=0;ip<GetNPoints();ip++) {
+    printf("#%3d ",ip);
+    GetPoint(ip)->Print();  
+    if (res) printf("Residuals  : %+e %+e\n",GetResidual(0,ip),GetResidual(1,ip));
+    if (der) {
+      for (int ipar=0;ipar<fNLocPar;ipar++) {
+	printf("DRes/dp%03d : %+e %+e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+      }
+    }
+  }
 }

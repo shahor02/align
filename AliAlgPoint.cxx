@@ -41,8 +41,9 @@ void AliAlgPoint::Init()
   // compute parameters of tranformation to diagonal error matrix
   if (!IsZeroPos(fErrYZTracking[0]+fErrYZTracking[2])) { 
     // 
-    SetConstainsMeasurement();
+    SetContainsMeasurement();
     //
+    // is there a correlation?
     if (SmallerAbs(fErrYZTracking[1]*fErrYZTracking[1]/(fErrYZTracking[0]*fErrYZTracking[2]),kCorrToler)) {
       fCosDiagErr = 1.;
       fSinDiagErr = 0.;
@@ -50,7 +51,7 @@ void AliAlgPoint::Init()
       fErrDiag[1] = fErrYZTracking[2];
     }
     else {
-      double dfd = 0.5*(fErrYZTracking[0] - fErrYZTracking[2]);
+      double dfd = 0.5*(fErrYZTracking[2] - fErrYZTracking[0]);
       double phi = 0;
       // special treatment if errors are equal
       if (TMath::Abs(dfd)<kDiagToler) phi = fErrYZTracking[1]>0 ? (TMath::Pi()*0.25) : (TMath::Pi()*0.75);
@@ -67,7 +68,7 @@ void AliAlgPoint::Init()
     }
   }
   //
-  if ( !(IsZeroPos(fX2X0) && IsZeroPos(fXTimesRho)) ) SetConstainsMaterial();
+  if ( !(IsZeroPos(fX2X0) && IsZeroPos(fXTimesRho)) ) SetContainsMaterial();
   //
 }
 

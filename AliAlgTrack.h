@@ -26,6 +26,7 @@ class AliAlgTrack: public AliExternalTrackParam
   void         AddPoint(AliAlgPoint* p)                {fPoints.AddLast(p);}
   void         SetMass(double m)                       {fMass = m;}
   Int_t        GetNLocPar()                      const {return fNLocPar;}
+  Int_t        GetNLocExtPar()                   const {return fNLocExtPar;}
   //
   virtual void Clear(Option_t *opt="");
   virtual void Print(Option_t *opt="")           const;
