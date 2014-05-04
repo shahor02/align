@@ -46,9 +46,13 @@ class AliAlgPoint : public TObject
   void       SetXYZTracking(double x,double y,double z);
   void       SetYZErrTracking(double sy2, double syz, double sz2);
   void       SetYZErrTracking(double *err) {for (int i=3;i--;) fErrYZTracking[i]=err[i];}
+  Double_t   GetErrDiag(int i)             const {return fErrDiag[i];}
   //
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
   void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
+  //
+  Double_t   GetMSSigTheta2()              const {return fMSSigTheta2;}
+  void       SetMSSigTheta2(double v)            {fMSSigTheta2 = v;}
   //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
@@ -68,6 +72,7 @@ class AliAlgPoint : public TObject
   Double_t fErrYZTracking[3];                          // errors in tracking frame
   Double_t fErrDiag[2];                                // diagonalized errors
   //
+  Double_t fMSSigTheta2;                               //! sigma^2 of MS
   Double_t fTrParamWS[5];                              //! workspace for tracks params at this point
   //
   ClassDef(AliAlgPoint,1)

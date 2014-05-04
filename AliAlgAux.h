@@ -8,8 +8,9 @@ using namespace TMath;
 namespace AliAlgAux {
   const double kAlmostZeroD = 1e-15;
   const double kAlmostZeroF = 1e-11;
-
-
+  const double kAlmostOneD = 1.-kAlmostZeroD;
+  const double kAlmostOneF = 1.-kAlmostZeroF;
+  //
   void   PrintBits(ULong64_t patt, Int_t maxBits);
   Bool_t SmallerAbs(double d, double tolD)    {return Abs(d)<tolD;}
   Bool_t SmallerAbs(float  f, double tolF)    {return Abs(f)<tolF;}

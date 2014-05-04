@@ -5,17 +5,26 @@
 #include "AliGeomManager.h"
 #include "AliLog.h"
 #include "AliTrackerBase.h"
+
+#include "AliSymMatrix.h"
+#include "AliAlgAux.h"
+
 #include <TGeoGlobalMagField.h>
 #include <TMath.h>
 
+using namespace AliAlgAux;
 
 void Load();
+Bool_t BuildEq();
 
 AliAlgTrack* algTrack=0;
-
+AliSymMatrix* matr = 0;
+TVectorD* rhs = 0;
+//
 const int kNITS = 6;
 double rITS[kNITS] = {3.9,7.6,15.0,23.9,38.0,43.0};
 double pars[200];
+
 
 Bool_t TestTrack(const AliExternalTrackParam& trSrc)
 {
@@ -44,12 +53,13 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
     //
     pnt->SetAlpha(tr0.GetAlpha());
     pnt->SetXYZTracking(tr0.GetX(),tr0.GetY(),tr0.GetZ());
-    pnt->SetYZErrTracking( tr0.GetSigmaY2(), tr0.GetSigmaZY(), tr0.GetSigmaZ2());
+    pnt->SetYZErrTracking( TMath::Power(20e-4,2), 0 , TMath::Power(100e-4,2));
     pnt->SetX2X0(1e-2);
-    pnt->SetXTimesRho(0.05*5);
+    pnt->SetXTimesRho(0);//0.05*5);
     pnt->SetUseBzOnly();
     pnt->Init();
     algTrack->AddPoint(pnt);
+    if (pnt->ContainsMaterial()) algTrack->ApplyMS(tr0, (i&0x1) ? 0.001:-0.001, (i&0x1) ? 0.002:-0.002);
   }
   //
   algTrack->DefineDOFs();
@@ -73,4 +83,43 @@ void Load()
     TGeoGlobalMagField::Instance()->SetField( fld );
     TGeoGlobalMagField::Instance()->Lock();
   }
+}
+
+//________________________________________________________________________________
+Bool_t BuildEq()
+{
+  //
+  matr = new AliSymMatrix(algTrack->GetNLocPar());
+  rhs  = new TVectorD(algTrack->GetNLocPar());
+  //
+  for (int ip=algTrack->GetNPoints();ip--;) {
+    AliAlgPoint* pnt = algTrack->GetPoint(ip);
+    if (!pnt->ContainsMeasurement()) continue;
+    for (int im=2;im--;) { // loop over 2 orthogonal measurements in each point
+      double res = algTrack->GetResidual(im,ip);  // residual wrt current track
+      double* deriv = algTrack->GetDerivative(im,ip); // its derivative wrt current params
+      //
+      for (int ipar=algTrack->GetNLocPar();ipar--;) { // loop over track parameters
+	(*rhs)[ipar] -= deriv[ipar]*res/pnt->GetErrDiag(im);
+	for (int jpar=ipar+1;jpar--;) {
+	  (*matr)(ipar,jpar) += deriv[ipar]*deriv[jpar]/pnt->GetErrDiag(im);
+	}
+      }
+    } // loop over 2 measurements per point
+    //
+  } // loop over points
+  //
+  // add constraints on material effect parameters
+  for (int ip=algTrack->GetNPoints();ip--;) {
+    AliAlgPoint* pnt = algTrack->GetPoint(ip);
+    if (!pnt->ContainsMaterial()) continue;
+    double sg2 = pnt->GetMSSigTheta2();
+    if (IsZeroPos(sg2)) return kFALSE;
+    int offs = pnt->GetMaxLocVarID();
+    (*matr)(offs+AliAlgTrack::kMSTheta1,offs+AliAlgTrack::kMSTheta1) += 1./sg2;
+    (*matr)(offs+AliAlgTrack::kMSTheta2,offs+AliAlgTrack::kMSTheta2) += 1./sg2;
+    if (pnt->GetELossVaried()) {} // process eloss constraint
+  }
+  //
+  return kTRUE;
 }

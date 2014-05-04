@@ -11,6 +11,7 @@ AliAlgPoint::AliAlgPoint() :
   ,fSinDiagErr(0)
   ,fX2X0(0)
   ,fXTimesRho(0)
+  ,fMSSigTheta2(0)
 {
   // def c-tor
   for (int i=3;i--;) {

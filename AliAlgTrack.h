@@ -15,7 +15,7 @@ class AliAlgTrack: public AliExternalTrackParam
 	,kNMSPar=2                           // N params per MS act       
 	,kNELosPar=1                         // N params per e.loss act
   };
-  enum {kMSTheta,kMSPhi,kELoss,kNMatDOFs};
+  enum {kMSTheta1,kMSTheta2,kELoss,kNMatDOFs};
 
   AliAlgTrack();
   virtual ~AliAlgTrack();
@@ -44,11 +44,13 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t GetDerivDone()                          const {return TestBit(kDerivDoneBit);}
   void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit,v);}
   // propagation methods
-  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
+  //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
+  Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
   //
-  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms);
+  //  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms);
+  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt);
   //
