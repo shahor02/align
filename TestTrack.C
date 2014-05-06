@@ -11,6 +11,7 @@
 
 #include <TGeoGlobalMagField.h>
 #include <TMath.h>
+#include <TRandom.h>
 
 using namespace AliAlgAux;
 
@@ -25,6 +26,9 @@ const int kNITS = 6;
 double rITS[kNITS] = {3.9,7.6,15.0,23.9,38.0,43.0};
 double pars[200];
 
+const double kSclValTrk = 1;
+const double kSclValMS = 1;
+TVectorD var(5);
 
 Bool_t TestTrack(const AliExternalTrackParam& trSrc)
 {
@@ -35,14 +39,21 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
   //
   AliExternalTrackParam tr0(trSrc);
   if (!tr0.RotateParamOnly( tr0.Phi() )) return kFALSE;
-  //
+  AliExternalTrackParam tr1(tr0);
+  double *par = (double*)tr0.GetParameter();
+  par[0] += var[0] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaY2();
+  par[1] += var[1] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaZ2();
+  par[2] += var[2] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaSnp2();  
+  par[3] += var[3] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaTgl2();  
+  par[4] += var[4] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigma1Pt2();  
   algTrack = new AliAlgTrack();
-  algTrack->AliExternalTrackParam::operator=(tr0);
+  algTrack->AliExternalTrackParam::operator=(tr1);
   //
   if (TMath::Abs(bz)>0) algTrack->SetFieldON();
   //
   // add points
   double xyz[3];
+  int nMSp = 0;
   for (int i=0;i<kNITS;i++) {
     tr0.GetXYZ(xyz);
     bz = AliTrackerBase::GetBz(xyz);
@@ -59,7 +70,16 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
     pnt->SetUseBzOnly();
     pnt->Init();
     algTrack->AddPoint(pnt);
-    if (pnt->ContainsMaterial()) algTrack->ApplyMS(tr0, (i&0x1) ? 0.001:-0.001, (i&0x1) ? 0.002:-0.002);
+    if (pnt->ContainsMaterial()) {
+      double x2x0 = pnt->GetX2X0();
+      double p = tr0.P();
+      double sigMS = 0.014*TMath::Sqrt(x2x0)/p;
+      var.ResizeTo(5+(nMSp+1)*2);
+      var[5+2*nMSp+0] = kSclValMS*sigMS*gRandom->Gaus(0,1);
+      var[5+2*nMSp+1] = kSclValMS*sigMS*gRandom->Gaus(0,1);
+      algTrack->ApplyMS(tr0, var[5+2*nMSp+0],var[5+2*nMSp+1]);
+      nMSp++;
+    }
   }
   //
   algTrack->DefineDOFs();

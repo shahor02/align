@@ -48,6 +48,16 @@ void AliAlgTrack::DefineDOFs()
   //
   fNLocPar = fNLocExtPar = GetFieldON() ? kNKinParBON : kNKinParBOFF;
   int np = GetNPoints();
+  //
+  // TODO: sort in order the tracking will be done
+  //
+  // materials of including and beyond last measured point are irrelevant
+  for (int ip=np;ip--;) {
+    AliAlgPoint* pnt = GetPoint(ip);
+    pnt->SetContainsMaterial(kFALSE);
+    if (pnt->ContainsMeasurement()) break;
+  }
+  //
   for (int ip=0;ip<np;ip++) {
     AliAlgPoint* pnt = GetPoint(ip);
     pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
