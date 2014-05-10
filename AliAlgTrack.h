@@ -77,6 +77,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Int_t     fNLocPar;                    // number of local params
   Int_t     fNLocExtPar;                 // number of local params for the external track param
   Double_t  fMass;                       // assumed mass
+  Double_t  fChi2;                       // chi2 with current residuals
   TObjArray fPoints;                     // alignment points
   TArrayD   fResid[2];                   // residuals array
   TArrayD   fDeriv[2];                   // derivatives array  

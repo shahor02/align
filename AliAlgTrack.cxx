@@ -17,6 +17,7 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fMass(0.14)
+  ,fChi2(0)
   ,fPoints(0)
 {
   // def c-tor
@@ -36,6 +37,7 @@ void AliAlgTrack::Clear(Option_t *)
   // reset the track
   ResetBit(0xffffffff);
   fPoints.Clear();
+  fChi2 = 0;
 }
 
 //____________________________________________________________________________
@@ -147,9 +149,6 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
-    // we will vary the tracks starting from the original parameters propagated to given point and stored there
-    SetParams(probD,kNRDClones, pnt->GetXTracking(),pnt->GetAlpha(),pnt->GetTrParamWS());
-    //
     int offs = pnt->GetMaxLocVarID(); // the parameters for this point start with this offset
     //
     double *vpar = (double*)&params[offs];
@@ -161,6 +160,9 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	del *= TMath::Abs(Get1P());
 	if (del<1e-4) del = 1e-4;
       }
+      //
+      // we will vary the tracks starting from the original parameters propagated to given point and stored there
+      SetParams(probD,kNRDClones, pnt->GetXTracking(),pnt->GetAlpha(),pnt->GetTrParamWS());
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
@@ -192,11 +194,6 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	if (pntj->ContainsMeasurement()) {  
 	  int offsDer = jp*fNLocPar + offs + ipar;
 	  RichardsonDeriv(probD, varDelta, pntj, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
-	  /*
-	  for (int ic=0;ic<kNRDClones;ic++) {
-	    printf("cl%d [%d->%d] \n",ic,ip,jp); probD[ic].Print();
-	  }
-	  */
 	}
 	//
 	if (pntj->ContainsMaterial()) { // apply MS and ELoss
@@ -227,6 +224,7 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   SetParams(probe,GetX(),GetAlpha(),params);
   //
   int np = GetNPoints();
+  fChi2 = 0;
   for (int ip=0;ip<np;ip++) {
     AliAlgPoint* pnt = GetPoint(ip);
     if ( !PropagateToPoint(probe, pnt) ) return kFALSE;
@@ -235,6 +233,8 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
     //
     if (pnt->ContainsMeasurement()) { // need to calculate residuals in the frame where errors are orthogonal
       pnt->GetResidualsDiag(probe.GetParameter(),fResidA[0][ip],fResidA[1][ip]);
+      fChi2 += fResidA[0][ip]*fResidA[0][ip]/pnt->GetErrDiag(0);
+      fChi2 += fResidA[1][ip]*fResidA[1][ip]/pnt->GetErrDiag(1);
     }
     //
     // account for materials
@@ -615,8 +615,8 @@ void AliAlgTrack::Print(Option_t *opt) const
 {
   // print track data
   AliExternalTrackParam::Print();
-  printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f\n",fNLocPar,fNLocExtPar,
-	 GetNPoints(),fMass);
+  printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f | Chi2: %.3f\n",fNLocPar,fNLocExtPar,
+	 GetNPoints(),fMass,fChi2);
   //
   TString optS = opt;
   optS.ToLower();

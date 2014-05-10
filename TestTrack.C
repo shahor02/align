@@ -17,17 +17,22 @@ using namespace AliAlgAux;
 
 void Load();
 Bool_t BuildEq();
+Bool_t TestSol();
 
 AliAlgTrack* algTrack=0;
 AliSymMatrix* matr = 0;
 TVectorD* rhs = 0;
+TVectorD* sol = 0;
+TVectorD* inpPar = 0;
+TVectorD* solPar = 0;
 //
 const int kNITS = 6;
 double rITS[kNITS] = {3.9,7.6,15.0,23.9,38.0,43.0};
-double pars[200];
 
-const double kSclValTrk = 1;
+const double kSclValTrk = 0;
 const double kSclValMS = 1;
+const double kSigY = 20e-4;
+const double kSigZ = 20e-4;
 TVectorD var(5);
 
 Bool_t TestTrack(const AliExternalTrackParam& trSrc)
@@ -47,7 +52,7 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
   par[3] += var[3] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaTgl2();  
   par[4] += var[4] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigma1Pt2();  
   algTrack = new AliAlgTrack();
-  algTrack->AliExternalTrackParam::operator=(tr1);
+  algTrack->AliExternalTrackParam::operator=(tr0);
   //
   if (TMath::Abs(bz)>0) algTrack->SetFieldON();
   //
@@ -63,14 +68,14 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
     AliAlgPoint* pnt = new AliAlgPoint();
     //
     pnt->SetAlpha(tr0.GetAlpha());
-    pnt->SetXYZTracking(tr0.GetX(),tr0.GetY(),tr0.GetZ());
-    pnt->SetYZErrTracking( TMath::Power(20e-4,2), 0 , TMath::Power(100e-4,2));
+    pnt->SetXYZTracking(tr0.GetX(),tr0.GetY()+kSigY*gRandom->Gaus(),tr0.GetZ()+kSigZ*gRandom->Gaus());
+    pnt->SetYZErrTracking( kSigY*kSigY, 0 , kSigZ*kSigZ);
     pnt->SetX2X0(1e-2);
     pnt->SetXTimesRho(0);//0.05*5);
     pnt->SetUseBzOnly();
     pnt->Init();
     algTrack->AddPoint(pnt);
-    if (pnt->ContainsMaterial()) {
+    if (pnt->ContainsMaterial() && i<kNITS-1) {
       double x2x0 = pnt->GetX2X0();
       double p = tr0.P();
       double sigMS = 0.014*TMath::Sqrt(x2x0)/p;
@@ -85,10 +90,12 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
   algTrack->DefineDOFs();
   int nDOF   = algTrack->GetNLocPar();
   int nDOFtr = algTrack->GetNLocExtPar();
-  memset(pars,0,nDOF*sizeof(double));
-  for (int i=nDOFtr;i--;) pars[i] = algTrack->GetParameter()[i];
+  inpPar = new TVectorD(var);
+  double *inpParA = inpPar->GetMatrixArray();
+  memset(inpParA,0,nDOF*sizeof(double));
+  for (int i=nDOFtr;i--;) inpParA[i] = algTrack->GetParameter()[i];
   //
-  algTrack->CalcResidDeriv(pars);
+  algTrack->CalcResidDeriv(inpParA);
 
   return kTRUE;
 }
@@ -140,6 +147,26 @@ Bool_t BuildEq()
     (*matr)(offs+AliAlgTrack::kMSTheta2,offs+AliAlgTrack::kMSTheta2) += 1./sg2;
     if (pnt->GetELossVaried()) {} // process eloss constraint
   }
+  //
+  //
+  return kTRUE;
+}
+
+//________________________________________________________________________________
+Bool_t TestSol()
+{
+  BuildEq();
+  sol = new TVectorD(*rhs);
+  matr->SolveChol(*sol);
+  matr->InvertChol();
+  printf("With input vector: \n");
+  algTrack->Print("r");
+  //
+  solPar = new TVectorD(*inpPar);
+  *solPar += *sol;
+  algTrack->CalcResiduals(solPar->GetMatrixArray());
+  printf("With solution vector: \n");
+  algTrack->Print("r");
   //
   return kTRUE;
 }
