@@ -46,11 +46,11 @@ Bool_t TestTrack(const AliExternalTrackParam& trSrc)
   if (!tr0.RotateParamOnly( tr0.Phi() )) return kFALSE;
   AliExternalTrackParam tr1(tr0);
   double *par = (double*)tr0.GetParameter();
-  par[0] += var[0] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaY2();
-  par[1] += var[1] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaZ2();
-  par[2] += var[2] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaSnp2();  
-  par[3] += var[3] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigmaTgl2();  
-  par[4] += var[4] = kSclValTrk*gRandom->Gaus(0,1)*tr0.GetSigma1Pt2();  
+  par[0] += var[0] = kSclValTrk*gRandom->Gaus(0,1)*TMath::Sqrt(tr0.GetSigmaY2());
+  par[1] += var[1] = kSclValTrk*gRandom->Gaus(0,1)*TMath::Sqrt(tr0.GetSigmaZ2());
+  par[2] += var[2] = kSclValTrk*gRandom->Gaus(0,1)*TMath::Sqrt(tr0.GetSigmaSnp2());  
+  par[3] += var[3] = kSclValTrk*gRandom->Gaus(0,1)*TMath::Sqrt(tr0.GetSigmaTgl2());  
+  par[4] += var[4] = kSclValTrk*gRandom->Gaus(0,1)*TMath::Sqrt(tr0.GetSigma1Pt2());  
   algTrack = new AliAlgTrack();
   algTrack->AliExternalTrackParam::operator=(tr0);
   //
