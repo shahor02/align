@@ -3,7 +3,7 @@
 
 
 
-class AliGloAlgModule: public TNamed
+class AliAlgSteerModule: public TNamed
 {
   
  public:
@@ -13,7 +13,7 @@ class AliGloAlgModule: public TNamed
 
   TObjArray *fMatrices[];
 
-  ClassDef(AliGloAlgModule,1)  // base class for module global alignment
+  ClassDef(AliAlgSteerModule,1)  // base class for module global alignment
 };
 
 

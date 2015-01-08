@@ -1,13 +1,20 @@
-#ifndef ALIGLOALG_H
-#define ALIGLOALG_H
+#ifndef ALIALGSTEER_H
+#define ALIALGSTEER_H
 
 #include "AliGeomManager.h"
 #include "TClonesArray.h"
 #include "AliAlgTrack.h"
+#include "AliESDtrack.h"
 
 class TGeoHMatrix;
+class AliAlgDet;
 
-class AliGloAlg : public TObject
+/*--------------------------------------------------------
+  Steering class for the global alignment. Responsible for feeding the track data 
+  to participating detectors and preparation of the millepede input.
+  -------------------------------------------------------*/
+
+class AliAlgSteer : public TObject
 {
  public:
   enum {kMatStart,kNMat};
@@ -19,13 +26,16 @@ class AliGloAlg : public TObject
 	kNGeoms
   };  
   //
-  AliGloAlg();
-  virtual ~AliGloAlg();
+  AliAlgSteer();
+  virtual ~AliAlgSteer();
   virtual void   LocalInit();
   //
   void  LoadMatrices(Int_t geomTyp);
   void  AddDetector(const char* name);
-
+  
+  void  AcknowledgeNewRun(Int_t run);
+  void  SetRunNumber(Int_t run);
+  Int_t GetRunNumber()                                    const {return fRunNumber;}
 
   Int_t GetMatrixID(Int_t volID)                          const;
   Int_t GetMatrixID(Int_t lr, Int_t mod)                  const;
@@ -37,18 +47,17 @@ class AliGloAlg : public TObject
   //----------------------------------------
   Bool_t ProcessTrack(const AliESDtrack* esdTr);
   Bool_t AcceptTrack(const AliESDtrack* esdTr)            const;
-  AliAlgDetector* GetDetector(Int_t i)                    const {return (AliAlgDetector*)fDetectors[i];}
-  Bool_t AddDetector(AliAlgDetector* det);
+  AliAlgDet* GetDetector(Int_t i)                         const {return (AliAlgDet*)fDetectors[i];}
+  Bool_t AddDetector(AliAlgDet* det);
   //----------------------------------------
 
  protected:
   //
   Int_t         fNDet;                            // number of deectors participating in the alignment
+  Int_t         fRunNumber;                       // current run number
   AliAlgTrack*  fAlgTrack;                        // current alignment track 
   TObjArray     fDetectors;                       // detectors participating in the alignment
-
-
-
+  //
   Int_t fMatrixID[2][AliGeomManager::kLastLayer]; // start and N matrices for each layer in fMatrix
   TClonesArray* fMatrixT2G[kNGeoms];              // tracking to global matrices for different geometries
   TClonesArray* fMatrixT2L[kNGeoms];              // tracking to local matrices for different geometries
@@ -56,11 +65,11 @@ class AliGloAlg : public TObject
   static const Int_t  fgkSkipLayers[kNLrSkip];      //! detector layers for which we don't need module matrices
   static const char*  fgkDetectorName[kNDetectors]; //! names of detectors
   //
-  ClassDef(AliGloAlg,1)
+  ClassDef(AliAlgSteer,1)
 };
 
 //__________________________________________________________________
-inline Int_t AliGloAlg::GetMatrixID(Int_t volID) const
+inline Int_t AliAlgSteer::GetMatrixID(Int_t volID) const
 {
   // get stored matrix ID from volID
   int mod=0, lr = AliGeomManager::VolUIDToLayer(volID,mod);
@@ -68,14 +77,14 @@ inline Int_t AliGloAlg::GetMatrixID(Int_t volID) const
 }
 
 //__________________________________________________________________
-inline Int_t AliGloAlg::GetMatrixID(Int_t lr, Int_t mod) const
+inline Int_t AliAlgSteer::GetMatrixID(Int_t lr, Int_t mod) const
 {
   // get stored matrix ID from volID
   return fMatrixID[kNMat][lr]>0 ? fMatrixID[kMatStart][lr] + mod : -1;
 }
 
 //__________________________________________________________________
-inline TGeoHMatrix* AliGloAlg::GetMatrixT2G(Int_t geomTyp, Int_t volID)  const
+inline TGeoHMatrix* AliAlgSteer::GetMatrixT2G(Int_t geomTyp, Int_t volID)  const
 {
   // get module tracking to global matrix
   int id = GetMatrixID(volID);
@@ -83,7 +92,7 @@ inline TGeoHMatrix* AliGloAlg::GetMatrixT2G(Int_t geomTyp, Int_t volID)  const
 }
 
 //__________________________________________________________________
-inline TGeoHMatrix* AliGloAlg::GetMatrixT2L(Int_t geomTyp, Int_t volID)  const
+inline TGeoHMatrix* AliAlgSteer::GetMatrixT2L(Int_t geomTyp, Int_t volID)  const
 {
   // get module tracking to local matrix
   int id = GetMatrixID(volID);

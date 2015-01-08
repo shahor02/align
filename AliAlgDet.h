@@ -1,22 +1,23 @@
-#ifndef ALIALGDETECTOR_H
-#define ALIALGDETECTOR_H
+#ifndef ALIALGDET_H
+#define ALIALGDET_H
 
 #include <TNamed.h>
 class AliESDtrack;
 class AliAlgTrack;
 
-class AliAlgDetector : public TNamed
+class AliAlgDet : public TNamed
 {
  public:
-  AliAlgDetector();
-  AliAlgDetector(const char* name, const char* title="");
+  AliAlgDet();
+  AliAlgDet(const char* name, const char* title="");
   //
   Int_t   GetVolIDMin()              const {return fVolIDMin;}
   Int_t   GetVolIDMax()              const {return fVolIDMax;}
 
-  void    SetVolIDMin(Int_t v)       const {return fVolIDMin = v;}
-  void    SetVolIDMax(Int_t v)       const {return fVolIDMax = v;}
+  void    SetVolIDMin(Int_t v)             {fVolIDMin = v;}
+  void    SetVolIDMax(Int_t v)             {fVolIDMax = v;}
   //
+  void    AcknowledgeNewRun(Int_t run);
 
   virtual Bool_t ProcessTrack(const AliESDtrack* esdTr, AliAlgTrack* fAlgTrack);
 
@@ -25,7 +26,7 @@ class AliAlgDetector : public TNamed
   Int_t fVolIDMin;                   // min volID for this detector
   Int_t fVolIDMax;                   // max volID for this detector
 
-  ClassDef(AliAlgDetector,1)
+  ClassDef(AliAlgDet,1)              // base class for detector global alignment
 };
 
 

@@ -1,25 +1,42 @@
-#include "AliGloAlg.h"
+/**************************************************************************
+ * Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
+ *                                                                        *
+ * Author: The ALICE Off-line Project.                                    *
+ * Contributors are mentioned in the code where appropriate.              *
+ *                                                                        *
+ * Permission to use, copy, modify and distribute this software and its   *
+ * documentation strictly for non-commercial purposes is hereby granted   *
+ * without fee, provided that the above copyright notice appears in all   *
+ * copies and that both the copyright notice and this permission notice   *
+ * appear in the supporting documentation. The authors make no claims     *
+ * about the suitability of this software for any purpose. It is          *
+ * provided "as is" without express or implied warranty.                  *
+ **************************************************************************/
+
+#include "AliAlgSteer.h"
+#include "AliAlgDet.h"
 #include "AliLog.h"
 #include <TGeoMatrix.h>
 
-const char* AliGloAlg::fgkDetectorName[AliGloAlg::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
-const int   AliGloAlg::fgkSkipLayers[AliGloAlg::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,AliGeomManager::kMUON,AliGeomManager::kEMCAL};
+const char* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
+const int   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
+								 AliGeomManager::kMUON,AliGeomManager::kEMCAL};
 
-ClassImp(AliGloAlg)
+ClassImp(AliAlgSteer)
 
 //________________________________________________________________
-AliGloAlg::AliGloAlg() :
-fAlgTrack(0)
+AliAlgSteer::AliAlgSteer()
+  :fNDet(0)
+  ,fRunNumber(-1)
+  ,fAlgTrack(0)
+  ,fDetectors()
 {
   // def c-tor
-  //  for (int i=AliGloAlg::kNDetectors;i--;) fAlignerID[i] = 0;
-
-
 
 }
 
 //________________________________________________________________
-AliGloAlg::~AliGloAlg()
+AliAlgSteer::~AliAlgSteer()
 {
   // d-tor
   delete fAlgTrack;
@@ -31,7 +48,7 @@ AliGloAlg::~AliGloAlg()
 }
 
 //________________________________________________________________
-void AliGloAlg::LocalInit()
+void AliAlgSteer::LocalInit()
 {
   // init all structures
   //
@@ -63,7 +80,7 @@ void AliGloAlg::LocalInit()
 }
 
 //________________________________________________________________
-void AliGloAlg::LoadMatrices(Int_t geomTyp)
+void AliAlgSteer::LoadMatrices(Int_t geomTyp)
 {
   // fetch matrices for given geom type
   if (geomTyp<0||geomTyp>=kNGeoms) return;
@@ -118,7 +135,7 @@ void AliGloAlg::LoadMatrices(Int_t geomTyp)
 
 
 //________________________________________________________________
-void AliGloAlg::AddDetector(const char* name)
+void AliAlgSteer::AddDetector(const char* name)
 {
   // add detector participating in the alignment
   int id = -1;
@@ -131,7 +148,7 @@ void AliGloAlg::AddDetector(const char* name)
 
 //________________________________________________________________
 /*
-TGeoHMatrix* AliGloAlg::GetITSSensVolMatrix(Int_t vid)
+TGeoHMatrix* AliAlgSteer::GetITSSensVolMatrix(Int_t vid)
 {
   // special matrix extraction for its
   static TGeoHMatrix mat;
@@ -151,16 +168,16 @@ TGeoHMatrix* AliGloAlg::GetITSSensVolMatrix(Int_t vid)
 */
 
 //_________________________________________________________
-Bool_t AliGloAlg::AcceptTrack(const AliESDtrack* esdTr) const
+Bool_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr) const
 {
   // decide if the track should be processed
-  AliESDfriendTrack* trF = esdTr->GetFriendTrack();
+  const AliESDfriendTrack* trF = esdTr->GetFriendTrack();
   if (!trF) {
     AliError("No friend track found");
     return kFALSE;
   }
   const AliTrackPointArray* trPoints = trF->GetTrackPointArray();
-  if (!trPoints || trPoints.GetNPoints()<1) return kFALSE;
+  if (!trPoints || trPoints->GetNPoints()<1) return kFALSE;
   //
   // do other checks
   //
@@ -169,7 +186,7 @@ Bool_t AliGloAlg::AcceptTrack(const AliESDtrack* esdTr) const
 }
 
 //_________________________________________________________
-Bool_t AliGloAlg::ProcessTrack(const AliESDtrack* esdTr)
+Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
 {
   // process single track
   //
@@ -179,19 +196,37 @@ Bool_t AliGloAlg::ProcessTrack(const AliESDtrack* esdTr)
   UInt_t detStat = 0; // status of track processing by each detector
   // process the track points for each detector, fill needed points in the fAlgTrack
   for (int idet=0;idet<fNDet;idet++) if (GetDetector(idet)->ProcessTrack(esdTr, fAlgTrack)) detStat |= 0x1<<idet;
-  
+  //
+  return kTRUE;
 }
 
 //_________________________________________________________
-Bool_t AliGloAlg::AddDetector(AliAlgDetector* det)
+Bool_t AliAlgSteer::AddDetector(AliAlgDet* det)
 {
   // add new detector to alignment
   if (!det) return kFALSE;
-  if (fDetectors->FindObject(det->GetName())) {
-    AliError(Form("Detector %d was already added",det->GetName()));
+  if (fDetectors.FindObject(det->GetName())) {
+    AliError(Form("Detector %s was already added",det->GetName()));
     return kFALSE;
   }
-  fDetectors->AddLast(det);
+  fDetectors.AddLast(det);
   fNDet++;
   return kTRUE;
+}
+
+//_________________________________________________________
+void AliAlgSteer::SetRunNumber(Int_t run)
+{
+  if (run==fRunNumber) return;  // nothing to do
+  //
+  AcknowledgeNewRun(run); 
+}
+
+//_________________________________________________________
+void AliAlgSteer::AcknowledgeNewRun(Int_t run)
+{
+  // load needed info for new run
+  fRunNumber = run;
+  for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
+  //
 }
