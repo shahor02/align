@@ -19,13 +19,18 @@ class AliAlgDet : public TNamed
   //
   void    AcknowledgeNewRun(Int_t run);
 
-  virtual Bool_t ProcessTrack(const AliESDtrack* esdTr, AliAlgTrack* fAlgTrack);
+  Bool_t  VIDofDetector(Int_t id)    const {return id>=fVolIDMin && idM=<=fVolIDMax;}
+
+  virtual Bool_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* fAlgTrack);
+  virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const TrackPointArray* trp);
 
  protected:
   
   Int_t fVolIDMin;                   // min volID for this detector
   Int_t fVolIDMax;                   // max volID for this detector
-
+  //
+  TClonesArray fSensorT2G;           // sensor tracking-to-global matrices
+  //
   ClassDef(AliAlgDet,1)              // base class for detector global alignment
 };
 

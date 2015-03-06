@@ -29,10 +29,14 @@ AliAlgSteer::AliAlgSteer()
   :fNDet(0)
   ,fRunNumber(-1)
   ,fAlgTrack(0)
-  ,fDetectors()
+
 {
   // def c-tor
-
+  for (int i=kNDetectors;i--;) {
+    fDetectors[i] = 0;
+    fDetVolMinMax[i][0] = fDetVolMinMax[i][1] = 0;
+    fDetPos[i] = -1;
+  }
 }
 
 //________________________________________________________________
@@ -40,7 +44,7 @@ AliAlgSteer::~AliAlgSteer()
 {
   // d-tor
   delete fAlgTrack;
-
+  for (int i=0;i<fNDet;i++) delete fDetectors[i];
   for (int i=0;i<kNGeoms;i++) {
     delete fMatrixT2G[i];
     delete fMatrixT2L[i];
@@ -142,8 +146,23 @@ void AliAlgSteer::AddDetector(const char* name)
   TString names = name;
   names.ToUpper();
   for (int i=kNDetectors;i--;) if (names==fgkDetectorName[i]) {id=i;break;}
-  if (id<0) AliFatal(Form("Alignment of %s is not foreseen",name));
-  
+  if (id<0) AliFatal(Form("Detector %s is not known to alignment framework",name));
+  AliAlgDet* det = 0;
+  switch(id) {
+  case kITS: det = new AliAlgITS(); break;
+    //  case kTPC: det = new AliAlgTPC(); break;
+    //  case kTRD: det = new AliAlgTRD(); break;
+    //  case kTOF: det = new AliAlgTOF(); break;
+  default: AliErrorF("%s not implemented yet",name); break;
+  };
+  //
+  fDetectors[fNDet] = det;
+  fDetVolMinMax[fNDet][0] = det->GetVolIDMin();
+  fDetVolMinMax[fNDet][1] = det->GetVolIDMax();
+  fDetPos[id] = fNDet;
+  //
+  fNDet++;
+  //
 }
 
 //________________________________________________________________
@@ -171,16 +190,6 @@ TGeoHMatrix* AliAlgSteer::GetITSSensVolMatrix(Int_t vid)
 Bool_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr) const
 {
   // decide if the track should be processed
-  const AliESDfriendTrack* trF = esdTr->GetFriendTrack();
-  if (!trF) {
-    AliError("No friend track found");
-    return kFALSE;
-  }
-  const AliTrackPointArray* trPoints = trF->GetTrackPointArray();
-  if (!trPoints || trPoints->GetNPoints()<1) return kFALSE;
-  //
-  // do other checks
-  //
   return kTRUE;
   //
 }
@@ -190,12 +199,20 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
 {
   // process single track
   //
+  int nPnt = 0;
+  const AliESDfriendTrack* trF = esdTr->GetFriendTrack();
+  if (!trF) return kFALSE;
+  const AliTrackPointArray* trPoints = trF->GetTrackPointArray();
+  if (!trPoints || (nPnt=trPoints->GetNPoints())<1) return kFALSE;
+  //
   if (!AcceptTrack(esdTr)) return kFALSE;
+  //
   fAlgTrack->Clear();
   //
-  UInt_t detStat = 0; // status of track processing by each detector
   // process the track points for each detector, fill needed points in the fAlgTrack
-  for (int idet=0;idet<fNDet;idet++) if (GetDetector(idet)->ProcessTrack(esdTr, fAlgTrack)) detStat |= 0x1<<idet;
+  for (int idet=0;idet<fNDet;idet++) {
+    GetDetector(idet)->ProcessPoints(esdTr, fAlgTrack);
+  }
   //
   return kTRUE;
 }

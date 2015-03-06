@@ -17,6 +17,7 @@ class AliAlgDet;
 class AliAlgSteer : public TObject
 {
  public:
+  enum {kVIDmin,kVIDmax,kNVIDLim};
   enum {kMatStart,kNMat};
   enum {kNLrSkip=4};
   enum {kITS,kTPC,kTRD,kTOF,kHMPID,kNDetectors};
@@ -47,23 +48,31 @@ class AliAlgSteer : public TObject
   //----------------------------------------
   Bool_t ProcessTrack(const AliESDtrack* esdTr);
   Bool_t AcceptTrack(const AliESDtrack* esdTr)            const;
-  AliAlgDet* GetDetector(Int_t i)                         const {return (AliAlgDet*)fDetectors[i];}
+  AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
+  AliAlgDet* GetDetectorByType(Int_t i)                   const {return fDetPos[i]<0 ? 0 : fDetectors[fDetPos[i]];}
+  AliAlgDet* GetDetectorByVID(Int_t id)                   const;
   Bool_t AddDetector(AliAlgDet* det);
   //----------------------------------------
+  //
+ protected:
+  Bool_t        VIDofDetector(Int_t id)                   const;
+
 
  protected:
   //
-  Int_t         fNDet;                            // number of deectors participating in the alignment
-  Int_t         fRunNumber;                       // current run number
-  AliAlgTrack*  fAlgTrack;                        // current alignment track 
-  TObjArray     fDetectors;                       // detectors participating in the alignment
+  Int_t         fNDet;                                    // number of deectors participating in the alignment
+  Int_t         fRunNumber;                               // current run number
+  AliAlgTrack*  fAlgTrack;                                // current alignment track 
+  AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
+  UShort_t      fDetVolMinMax[kNDetectors][kNVIDLim];     // min/max vol ID for each detector
+  Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
   //
-  Int_t fMatrixID[2][AliGeomManager::kLastLayer]; // start and N matrices for each layer in fMatrix
-  TClonesArray* fMatrixT2G[kNGeoms];              // tracking to global matrices for different geometries
-  TClonesArray* fMatrixT2L[kNGeoms];              // tracking to local matrices for different geometries
+  Int_t fMatrixID[2][AliGeomManager::kLastLayer];         // start and N matrices for each layer in fMatrix
+  TClonesArray* fMatrixT2G[kNGeoms];                      // tracking to global matrices for different geometries
+  TClonesArray* fMatrixT2L[kNGeoms];                      // tracking to local matrices for different geometries
   //
-  static const Int_t  fgkSkipLayers[kNLrSkip];      //! detector layers for which we don't need module matrices
-  static const char*  fgkDetectorName[kNDetectors]; //! names of detectors
+  static const Int_t  fgkSkipLayers[kNLrSkip];           //  detector layers for which we don't need module matrices
+  static const char*  fgkDetectorName[kNDetectors];      //  names of detectors
   //
   ClassDef(AliAlgSteer,1)
 };
@@ -97,6 +106,21 @@ inline TGeoHMatrix* AliAlgSteer::GetMatrixT2L(Int_t geomTyp, Int_t volID)  const
   // get module tracking to local matrix
   int id = GetMatrixID(volID);
   return id<0 ? 0 : (TGeoHMatrix*)fMatrixT2L[geomTyp]->At(id);
+}
+
+//__________________________________________________________________
+inline AliAlgDet* AliAlgSteer::GetDetectorByVID(Int_t id) const
+{
+  // get detector according to volume ID
+  for (int i=fNDet;i--;) if (VIDofDetector(i)) return fDetectors[i];
+  return 0;
+}
+
+//__________________________________________________________________
+inline Bool_t AliAlgSteer::VIDofDetector(Int_t id) const
+{
+  // check if vid belongs to detector
+  return id>=fDetVolMinMax[i][kVIDmin] && id<=fDetVolMinMax[i][kVIDmax]);
 }
 
 #endif
