@@ -35,6 +35,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* fAlgTrack)
   int npSel = 0;
   for (int ip=0;ip<np;ip++) {
     if ( !VIDofDetector(vidArr[ip]) ) continue;
+    AliAlgPoint* apnt = TrackPoint2AlgPoint(ip, trPoints);
     npSel++;
   }
   //
@@ -54,8 +55,11 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPoitArray* 
   Int_t sid = GetSensorIndex(vid); // sensor index within the detector
   if (!sid) return 0;
   //
+  double tra[3],loc[3],glo[3] = {pnt->GetX()[pntId], pnt->GetY()[pntId], pnt->GetY()[pntId]};
+  AliAlgSens* sens = GetSensor(sid);
+  TGeoHMatrix* matG2L = sens->GetMatrixG2L(); // local to global matrix
+  matG2L->MastorToLocal(glo,loc)
   TGeoHMatrix *sMatrix = GetSensorT2GMatrixBySID(sid);  // matrix for global - tracking frame translation
-  double tra[3],glo[3] = {pnt->GetX()[pntId], pnt->GetY()[pntId], pnt->GetY()[pntId]};
   //
   
 

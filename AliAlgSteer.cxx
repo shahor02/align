@@ -209,7 +209,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   //
   fAlgTrack->Clear();
   //
-  // process the track points for each detector, fill needed points in the fAlgTrack
+  // process the track points for each detector, fill needed points (tracking frame) in the fAlgTrack
   for (int idet=0;idet<fNDet;idet++) {
     GetDetector(idet)->ProcessPoints(esdTr, fAlgTrack);
   }

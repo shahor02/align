@@ -52,6 +52,7 @@ class AliAlgVol : public TNamed
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //
+
  protected:
   //
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
@@ -68,6 +69,9 @@ class AliAlgVol : public TNamed
   Float_t*   fParVals;            // values of the fitted params
   Float_t*   fParErrs;            // errors of the fitted params
   Float_t*   fParCstr;            // Gaussian type constraint on parameter, 0 means fixed param
+  //
+  TGeoHMatrix* fMatL2G;           // local to global matrix, including current alignment
+  TGeoHMatrix* fMatL2GIdeal;      // local to global matrix, ideal
   //
   ClassDef(AliAlgVol,1)
 };
