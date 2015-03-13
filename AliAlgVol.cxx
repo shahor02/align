@@ -14,12 +14,14 @@
  **************************************************************************/
 
 #include "AliAlgVol.h"
+#include "AliAlignObjParams.h"
 
 ClassImp(AliAlgVol)
 
-//------------------------------------------------------------
-AliAlgVol::AliAlgVol(const char* name,const char* title) :
-  TNamed(name,title)
+//_________________________________________________________
+AliAlgVol::AliAlgVol(const char* name,UInt_t id) :
+  TNamed(name,"")
+  ,fVolID(id)
   ,fFirstParOffs(-1)
   ,fParOffs(0)
   ,fDOF(0)
@@ -34,11 +36,14 @@ AliAlgVol::AliAlgVol(const char* name,const char* title) :
   ,fParVals(0)
   ,fParErrs(0)
   ,fParCstr(0)
+  //
+  ,fMatL2G()
+  ,fMatL2GIdeal()
 {
   // def c-tor
 }
 
-//------------------------------------------------------------
+//_________________________________________________________
 AliAlgVol::~AliAlgVol()
 {
   // d-tor
@@ -49,45 +54,37 @@ AliAlgVol::~AliAlgVol()
   delete fChildren;
 }
 
-//-------------------------------------------------------------
-TGeoHMatrix *AliAlgVol::GetSensitiveVolumeModifiedMatrix(UShort_t voluid, const Double_t *delta,Bool_t local)
+//_________________________________________________________
+void AliAlgVol::GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta) const
 {
-  // modify the original TGeoHMatrix of the sensitive module 'voluid' according
-  // with a delta transform. applied to the supermodule matrix
-  // return NULL if error
-
-  if (!IsIn(voluid)) return NULL;
-  if (!gGeoManager)  return NULL;
-
-  // prepare the TGeoHMatrix
-  Double_t tr[3],ang[3];
-  tr[0]=delta[0]; // in centimeter
-  tr[1]=delta[1]; 
-  tr[2]=delta[2];
-  ang[0]=delta[3]; // psi   (X)  in deg
-  ang[1]=delta[4]; // theta (Y)
-  ang[2]=delta[5]; // phi   (Z)
-  //
-  static AliAlignObjParams tempAlignObj;
-  tempAlignObj.SetRotation(ang[0],ang[1],ang[2]);
+  // prepare delta matrix for the volume from its
+  // local delta vector (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
+  const double *tr=&delta[0],*rt=&delta[3]; // translation(cm) and rotation(degree) 
+  AliAlignObjParams tempAlignObj;
+  tempAlignObj.SetRotation(rt[0],rt[1],rt[2]);
   tempAlignObj.SetTranslation(tr[0],tr[1],tr[2]);
-  AliDebug(3,Form("Delta angles: psi=%f  theta=%f   phi=%f",ang[0],ang[1],ang[2]));
-  TGeoHMatrix hm;
-  tempAlignObj.GetMatrix(hm);
-  //printf("\n0: delta matrix\n");hm.Print();
+  tempAlignObj.GetMatrix(deltaM);
+  //  
+}
 
-  // 1) start setting fSensVolModif = fSensVol
-  if (SensVolMatrix(voluid, fSensVolModifMatrix)) return NULL;
-  //
-  if (local) {
-    // 2) set fSensVolModif = SensVolRel
-    fSensVolModifMatrix->MultiplyLeft( &fMatrix->Inverse() );
-    // 3) multiply left by delta
-    fSensVolModifMatrix->MultiplyLeft( &hm );
-    // 4) multiply left by fMatrix
-    fSensVolModifMatrix->MultiplyLeft( fMatrix );
+//_________________________________________________________
+void AliAlgVol::GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
+				  const Double_t *delta, const TGeoHMatrix* relMat) const
+{
+  // prepare delta matrix for the child volume from 
+  // local delta vector of the parent (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
+  // since it requires calculation of child->parent transition matrix, it can be provided
+  // as an optional parameter relMat
+  // The calculation is done as deltaM = L2G * DeltaM * L2G^-1 l2g
+  // where DeltaM is the loca variation matrix of parent volume, 
+  // L2G parent local-global matrix and l2g is sensor local-global matrix
+  // 
+  parent->GetDeltaMatrixLoc(deltaM,delta);
+  deltaM.MultiplyLeft(&parent->GetMatrixL2G());
+  if (relMat) deltaM.Multiply(relMat);
+  else {
+    deltaM.Multiply(&parent->GetMatrixL2G().Inverse());
+    deltaM.Multiply(&GetMatrixL2G());
   }
-  else fSensVolModifMatrix->MultiplyLeft( &hm );
-  //
-  return fSensVolModifMatrix;
+  //  
 }
