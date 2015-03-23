@@ -19,7 +19,8 @@ ClassImp(AliAlgSens)
 
 //_________________________________________________________
 AliAlgSens::AliAlgSens(const char* name,UInt_t id) 
-: AliAlgVol(name,id)
+: AliAlgVol(name)
+  ,fVolID(id)
   ,fXTracking(0)
   ,fAlpTracking(0)
   ,fMatT2L()
@@ -113,9 +114,9 @@ void AliAlgSens::DPosTraDParLoc(const AliAlgVol* parent, const double *tra, doub
   const double kDelta[kNDOFGeom]={0.1,0.1,0.1,0.5,0.5,0.5};
   double delta[kNDOFGeom],loc[3],pos0[3],pos1[3],pos2[3],pos3[3];
   TGeoHMatrix matMod;
-  TGeoHMatrix matRel = parent->GetMatrixL2G().Inverse(); // 
+  TGeoHMatrix matRel = parent->GetMatrixG2L().Inverse(); // 
   // this is the matrix for transition from sensor to parent volume local frames
-  matRel *= GetMatrixL2G();
+  matRel *= GetMatrixG2L();
   //
   fMatT2L.MasterToLocal(tra,loc);
   for (int ip=kNDOFGeom;ip--;) delta[ip] = 0;
@@ -150,12 +151,12 @@ void AliAlgSens::DPosTraDParLoc(const AliAlgVol* parent, const double *tra, doub
 }
 
 //__________________________________________________________________
-void AliAlgSens::GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const
+void AliAlgSens::GetModifiedMatrixG2L(TGeoHMatrix& matMod, const Double_t *delta) const
 {
   // prepare for the sensitive module global2local matrix from its current matrix 
   // by applying local delta
   GetDeltaMatrixLoc(matMod, delta);
-  matMod.MultiplyLeft(&GetMatrixL2G());
+  matMod.MultiplyLeft(&GetMatrixG2L());
 }
 
 //__________________________________________________________________

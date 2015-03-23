@@ -19,9 +19,8 @@
 ClassImp(AliAlgVol)
 
 //_________________________________________________________
-AliAlgVol::AliAlgVol(const char* name,UInt_t id) :
+AliAlgVol::AliAlgVol(const char* name) :
   TNamed(name,"")
-  ,fVolID(id)
   ,fFirstParOffs(-1)
   ,fParOffs(0)
   ,fDOF(0)
@@ -37,8 +36,8 @@ AliAlgVol::AliAlgVol(const char* name,UInt_t id) :
   ,fParErrs(0)
   ,fParCstr(0)
   //
-  ,fMatL2G()
-  ,fMatL2GIdeal()
+  ,fMatG2L()
+  ,fMatG2LIdeal()
 {
   // def c-tor
 }
@@ -75,16 +74,26 @@ void AliAlgVol::GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM,
   // local delta vector of the parent (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
   // since it requires calculation of child->parent transition matrix, it can be provided
   // as an optional parameter relMat
-  // The calculation is done as deltaM = L2G * DeltaM * L2G^-1 l2g
+  // The calculation is done as deltaM = G2L * DeltaM * G2L^-1 l2g
   // where DeltaM is the loca variation matrix of parent volume, 
-  // L2G parent local-global matrix and l2g is sensor local-global matrix
+  // G2L parent local-global matrix and l2g is sensor local-global matrix
   // 
   parent->GetDeltaMatrixLoc(deltaM,delta);
-  deltaM.MultiplyLeft(&parent->GetMatrixL2G());
+  deltaM.MultiplyLeft(&parent->GetMatrixG2L());
   if (relMat) deltaM.Multiply(relMat);
   else {
-    deltaM.Multiply(&parent->GetMatrixL2G().Inverse());
-    deltaM.Multiply(&GetMatrixL2G());
+    deltaM.Multiply(&parent->GetMatrixG2L().Inverse());
+    deltaM.Multiply(&GetMatrixG2L());
   }
   //  
+}
+
+//_________________________________________________________
+Int_t AliAlgVol::CountParents() const
+{
+  // count parents in the chain
+  int cnt = 0;
+  const AliAlgVol* p = this;
+  while( (p=p->GetParent()) ) cnt++;
+  return cnt;
 }

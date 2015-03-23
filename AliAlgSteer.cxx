@@ -16,6 +16,7 @@
 #include "AliAlgSteer.h"
 #include "AliAlgDet.h"
 #include "AliLog.h"
+#include "AliAlgDetITS.h"
 #include <TGeoMatrix.h>
 
 const char* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
@@ -103,7 +104,7 @@ void AliAlgSteer::LoadMatrices(Int_t geomTyp)
     if (!nmat) continue; // skip layer
     for (int imd=0;imd<nmat;imd++) {
       int vid = AliGeomManager::LayerToVolUID(il,imd);
-      const TGeoHMatrix *matL2G=0,*matT2L=0;
+      const TGeoHMatrix *matG2L=0,*matT2L=0;
       // attention: some layer's matrices are somewhat special
       switch (il) {
 	/*
@@ -118,11 +119,11 @@ void AliAlgSteer::LoadMatrices(Int_t geomTyp)
 	//
 	*/
       default:	
-	matL2G = AliGeomManager::GetMatrix(vid); // g2l
+	matG2L = AliGeomManager::GetMatrix(vid); // g2l
 	matT2L = AliGeomManager::GetTracking2LocalMatrix(vid); // t2l
       }
-      if (!matL2G || !matT2L) {AliDebug(1,Form("No matrix for module %d",vid)); continue;}
-      mtt = *matL2G;
+      if (!matG2L || !matT2L) {AliDebug(1,Form("No matrix for module %d",vid)); continue;}
+      mtt = *matG2L;
       mtt.Multiply(matT2L);
       int id = GetMatrixID(il,imd);
       if (id<0) AliFatal(Form("MatrixID for VolID=%d should have been defined",vid));
@@ -149,10 +150,10 @@ void AliAlgSteer::AddDetector(const char* name)
   if (id<0) AliFatal(Form("Detector %s is not known to alignment framework",name));
   AliAlgDet* det = 0;
   switch(id) {
-  case kITS: det = new AliAlgITS(); break;
-    //  case kTPC: det = new AliAlgTPC(); break;
-    //  case kTRD: det = new AliAlgTRD(); break;
-    //  case kTOF: det = new AliAlgTOF(); break;
+  case kITS: det = new AliAlgDetITS(); break;
+    //  case kTPC: det = new AliAlgDetTPC(); break;
+    //  case kTRD: det = new AliAlgDetTRD(); break;
+    //  case kTOF: det = new AliAlgDetTOF(); break;
   default: AliErrorF("%s not implemented yet",name); break;
   };
   //

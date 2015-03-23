@@ -19,17 +19,15 @@ class AliAlgVol : public TNamed
   enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS};
   enum {kNDOFGeom=6,kNDOFMax=32};
   //
-  AliAlgVol(const char* name=0,UInt_t id=0);
+  AliAlgVol(const char* name=0);
   virtual ~AliAlgVol();
-  //
-  UInt_t     GetVolID()                          const  {return fVolID;}
-  void       GetVolID(UInt_t v)                         {fVolID = v;}
   //
   Bool_t IsFreeDOFGeom(DOFGeom_t dof)            const {return (fDOF&(0x1<<dof))!=0;}
   void   SetFreeDOFGeom(DOFGeom_t dof)                 {fDOF |= 0x1<<dof;}
   //
   AliAlgVol* GetParent()                         const {return fParent;}
   void       SetParent(AliAlgVol* par)                 {fParent = par;}
+  Int_t      CountParents()                      const;
   //
   Int_t      GetNChildren()                      const {return fChildren ? fChildren->GetEntriesFast():0;}
   AliAlgVol* GetChild(int i)                     const {return fChildren ? (AliAlgVol*)fChildren->UncheckedAt(i):0;}
@@ -55,19 +53,18 @@ class AliAlgVol : public TNamed
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //
-  const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
-  const TGeoHMatrix&  GetMatrixL2GIdeal()        const {return fMatL2GIdeal;}
-  void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
-  void  SetMatrixL2GIdeal(const TGeoHMatrix& m)        {fMatL2GIdeal = m;}
+  const TGeoHMatrix&  GetMatrixG2L()             const {return fMatG2L;}
+  const TGeoHMatrix&  GetMatrixG2LIdeal()        const {return fMatG2LIdeal;}
+  void  SetMatrixG2L(const TGeoHMatrix& m)             {fMatG2L = m;}
+  void  SetMatrixG2LIdeal(const TGeoHMatrix& m)        {fMatG2LIdeal = m;}
   //
   void GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
   void GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
 			 const Double_t *delta, const TGeoHMatrix* relMat=0) const;
-
-
+  //
+  virtual Bool_t IsSensor()                     const {return kFALSE;}
  protected:
   //
-  UInt_t     fVolID;                  // TGeo volume id
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
   Char_t*    fParOffs;                // offset for every parameters wrt the 1st free in global results array
   UInt_t     fDOF;                    // degrees of freedom
@@ -83,8 +80,8 @@ class AliAlgVol : public TNamed
   Float_t*   fParErrs;            // errors of the fitted params
   Float_t*   fParCstr;            // Gaussian type constraint on parameter, 0 means fixed param
   //
-  TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
-  TGeoHMatrix fMatL2GIdeal;       // local to global matrix, ideal
+  TGeoHMatrix fMatG2L;            // local to global matrix, including current alignment
+  TGeoHMatrix fMatG2LIdeal;       // local to global matrix, ideal
   //
   ClassDef(AliAlgVol,1)
 };
