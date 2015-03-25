@@ -11,8 +11,10 @@ ClassImp(AliAlgDet)
 
 //____________________________________________
 AliAlgDet::AliAlgDet()
-  :fVolIDMin(0)
-  ,fVolIDMax(0)
+  :fVolIDMin(-1)
+  ,fVolIDMax(-1)
+  ,fNSensors(0)
+  ,fVID2SID(0)
   //
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
@@ -26,8 +28,8 @@ AliAlgDet::AliAlgDet()
 //____________________________________________
 AliAlgDet::AliAlgDet(const char* name, const char* title) 
   : TNamed(name,title)
-  ,fVolIDMin(0)
-  ,fVolIDMax(0)
+  ,fVolIDMin(-1)
+  ,fVolIDMax(-1)
   //
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
@@ -163,7 +165,12 @@ void AliAlgDet::AddVolume(AliAlgVol* vol)
     AliFatalF("Volume %s was already added to %s",vol->GetName(),GetName());
   }
   fVolumes.AddLast(vol);
-  if (vol->IsSensor()) fSensors.AddLast(vol);
+  if (vol->IsSensor()) {
+    fSensors.AddLast(vol);
+    Int_t vid = ((AliAlgSens*)vol)->GetVolID();
+    if (fVolIDMin<0 || vid<fVolIDMin) fVolIDMin = vid;
+    if (fVolIDMax<0 || vid>fVolIDMax) fVolIDMax = vid;
+  }
   //
 }
 
@@ -184,3 +191,31 @@ UShort_t AliAlgDet::GetVolumeIDFromSymname(const Char_t *symname)
   return 0;
 }
 
+//_________________________________________________________
+void AliAlgDet::DefineMatrices()
+{
+  // define transformation matrices. Detectors may override this method
+  //
+  TGeoHMatrix mtmp;
+  //
+  for (int iv=0;iv<GetNVolumes();iv++) {
+    AliAlgVol* vol = GetVolume(iv);
+    //
+    // modified global-local matrix
+    TGeoHMatrix* g2lp = AliGeomManager::GetMatrix(vol->GetSymName());
+    if (!g2lp) AliFatalF("Failed to find G2L matrix for %s",vol->GetSymName());
+    vol->SetSetMatrixG2L(g2lp);
+    //
+    // ideal global-local matrix
+    GetOrigGlobalMatrix(const char *symname, TGeoHMatrix &m);
+    if (!AliGeomManager::GetOrigGlobalMatrix(vol->GetSymName(),mtmp)) 
+      AliFatalF("Failed to find ideal G2L matrix for %s",vol->GetSymName());
+    vol->SetSetMatrixG2LIdeal(mtmp);
+    //
+    if (vol->IsSensor()) { // tracking-local matrix
+      TGeoHMatrix* t2lp = AliGeomManager::GetTracking2LocalMatrix();
+      ((AliAlgSens*)vol)->SetMatriT2L((AliAlgSens*)vol)->GetVolID());
+    }
+  }
+  //
+}

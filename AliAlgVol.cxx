@@ -19,8 +19,8 @@
 ClassImp(AliAlgVol)
 
 //_________________________________________________________
-AliAlgVol::AliAlgVol(const char* name) :
-  TNamed(name,"")
+AliAlgVol::AliAlgVol(const char* symname) :
+  TNamed(symname,"")
   ,fFirstParOffs(-1)
   ,fParOffs(0)
   ,fDOF(0)

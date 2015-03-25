@@ -10,7 +10,9 @@ class TObjArray;
 
 /*--------------------------------------------------------
   Base class of alignable volume. Has at least geometric 
-  degrees of freedom + user defined calibration DOFs
+  degrees of freedom + user defined calibration DOFs.
+  The name provided to constructor must be the SYMNAME which
+  AliGeomManager can trace to geometry.
   -------------------------------------------------------*/
 
 class AliAlgVol : public TNamed
@@ -19,8 +21,10 @@ class AliAlgVol : public TNamed
   enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS};
   enum {kNDOFGeom=6,kNDOFMax=32};
   //
-  AliAlgVol(const char* name=0);
+  AliAlgVol(const char* symname=0);
   virtual ~AliAlgVol();
+  //
+  const char* GetSymName()                       const {return GetName();}
   //
   Bool_t IsFreeDOFGeom(DOFGeom_t dof)            const {return (fDOF&(0x1<<dof))!=0;}
   void   SetFreeDOFGeom(DOFGeom_t dof)                 {fDOF |= 0x1<<dof;}

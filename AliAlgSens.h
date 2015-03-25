@@ -15,7 +15,7 @@ class TObjArray;
 class AliAlgSens : public AliAlgVol
 {
  public:
-  AliAlgSens(const char* name=0, UInt_t id=0);
+  AliAlgSens(const char* name=0, Int_t id=0);
   virtual ~AliAlgSens();
   //
   virtual void AddChild(AliAlgVol*);
@@ -23,8 +23,8 @@ class AliAlgSens : public AliAlgVol
   const TGeoHMatrix&  GetMatrixT2L()             const {return fMatT2L;}
   void  SetMatrixT2L(const TGeoHMatrix& m)             {fMatT2L = m;}
   //
-  UInt_t     GetVolID()                          const  {return fVolID;}
-  void       GetVolID(UInt_t v)                         {fVolID = v;}
+  Int_t      GetVolID()                          const  {return fVolID;}
+  void       SetVolID(Int_t v)                          {fVolID = v;}
   //
   Double_t GetXTracking()                        const {return fXTracking;}
   Double_t GetAlpTracking()                      const {return fAlpTracking;}
@@ -42,7 +42,7 @@ class AliAlgSens : public AliAlgVol
   //
  protected:
   //
-  UInt_t   fVolID;                    // TGeo volume id
+  Int_t    fVolID;                    // TGeo volume id
   Double_t fXTracking;                // tracking frame X offset
   Double_t fAlpTracking;              // tracking frame alpa
   TGeoHMatrix fMatT2L;                // tracking to local matrix

@@ -18,7 +18,7 @@
 ClassImp(AliAlgSens)
 
 //_________________________________________________________
-AliAlgSens::AliAlgSens(const char* name,UInt_t id) 
+AliAlgSens::AliAlgSens(const char* name,Int_t id) 
 : AliAlgVol(name)
   ,fVolID(id)
   ,fXTracking(0)

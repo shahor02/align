@@ -36,6 +36,7 @@ class AliAlgDet : public TNamed
   //
   virtual void AddVolume(AliAlgVol* vol);
   virtual void DefineVolumes();
+  virtual void DefineMatrices();
   virtual void PrintHierarchy();
   virtual void ExtractSensorMatrices();
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack);
@@ -49,6 +50,8 @@ class AliAlgDet : public TNamed
   
   Int_t     fVolIDMin;                   // min volID for this detector
   Int_t     fVolIDMax;                   // max volID for this detector
+  Int_t     fNSensors;                   // number of sensors (i.e. volID's)
+  Int_t*    fVID2SID;                    //[fNSensors] table of conversion from VID to sid
   //
   Int_t     fPoolNPoints;            // number of points in the pool
   Int_t     fPoolFreePointID;        // id of the last free point in the pool

@@ -1,13 +1,19 @@
-void BuildAlg()
+Bool_t LoadAlgLibs();
+
+void buildAlg()
 {
-  if (!LoadLibs()) return;
+  if (!LoadAlgLibs()) return;
+  AliGeomManager::LoadGeometry("geometry.root");
+  AliAlgDet* its = new AliAlgDetITS("its");
+  its->DefineVolumes();
+  its->PrintHierarchy();
 }
 
 
 
 
 
-Bool_t LoadLibs()
+Bool_t LoadAlgLibs()
 {
   gROOT->ProcessLine(".L AliAlgAux.cxx+");
   gROOT->ProcessLine(".L AliAlgPoint.cxx+");
@@ -28,8 +34,5 @@ Bool_t LoadLibs()
   gROOT->ProcessLine(".L AliAlgDetITS.cxx+");
   if (gClassTable->GetID("AliAlgDetITS")<0) return kFALSE;
   //
-  AliGeomManager::LoadGeometry("geometry.root");
-  AliAlgDet* its = new AliAlgDetITS("its");
-  its->DefineVolumes();
-  its->PrintHierarchy();
+  return kTRUE;
 }
