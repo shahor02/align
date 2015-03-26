@@ -34,8 +34,6 @@ AliAlgSens::~AliAlgSens()
   // d-tor
 }
 
-
-
 //__________________________________________________________________
 void AliAlgSens::GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const
 {

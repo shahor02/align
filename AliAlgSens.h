@@ -24,7 +24,7 @@ class AliAlgSens : public AliAlgVol
   void  SetMatrixT2L(const TGeoHMatrix& m)             {fMatT2L = m;}
   //
   Int_t GetVolID()                              const  {return (Int_t)GetUniqueID();}
-  void  SetVolID(Int_t v    )                          {SetUniqueID(v);}
+  void  SetVolID(Int_t v)                              {SetUniqueID(v);}
   //
   Double_t GetXTracking()                        const {return fXTracking;}
   Double_t GetAlpTracking()                      const {return fAlpTracking;}
