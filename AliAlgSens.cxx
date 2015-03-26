@@ -18,14 +18,14 @@
 ClassImp(AliAlgSens)
 
 //_________________________________________________________
-AliAlgSens::AliAlgSens(const char* name,Int_t id) 
+AliAlgSens::AliAlgSens(const char* name,Int_t vid) 
 : AliAlgVol(name)
-  ,fVolID(id)
   ,fXTracking(0)
   ,fAlpTracking(0)
   ,fMatT2L()
 {
   // def c-tor
+  SetVolID(vid);
 }
 
 //_________________________________________________________
@@ -169,9 +169,16 @@ void AliAlgSens::GetModifiedMatrixT2L(TGeoHMatrix& matMod, const Double_t *delta
 }
 
 
-//-------------------------------------------------------------
+//__________________________________________________________________
 void AliAlgSens::AddChild(AliAlgVol*)
 {
-  AliFatalF("Sensor volume cannot have childs: id=%d %s",fVolID,GetName());
+  AliFatalF("Sensor volume cannot have childs: id=%d %s",GetVolID(),GetName());
+}
+
+//__________________________________________________________________
+Int_t AliAlgSens::Compare(const TObject* b) const
+{
+  // compare VolIDs
+  return GetUniqueID()<b->GetUniqueID() ? -1 : 1;
 }
 

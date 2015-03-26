@@ -17,41 +17,41 @@ class AliAlgDet : public TNamed
   AliAlgDet(const char* name, const char* title="");
   virtual ~AliAlgDet();
   //
-  Int_t   GetVolIDMin()              const {return fVolIDMin;}
-  Int_t   GetVolIDMax()              const {return fVolIDMax;}
-
-  void    SetVolIDMin(Int_t v)             {fVolIDMin = v;}
-  void    SetVolIDMax(Int_t v)             {fVolIDMax = v;}
-  //
   void    AcknowledgeNewRun(Int_t run);
   //
-  Int_t   VID2SID(Int_t vid)         const {return 0;} //todo
-  Int_t   SID2VID(Int_t sid)         const {return 0;} //todo
-  AliAlgSens* GetSensor(Int_t id)    const {return (AliAlgSens*)fSensors.UncheckedAt(id);}
-  AliAlgVol*  GetVolume(Int_t id)    const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
-  Int_t   GetNSensors()              const {return fSensors.GetEntriesFast();}
-  Int_t   GetNVolumes()              const {return fVolumes.GetEntriesFast();}
+  Int_t   VolID2SID(Int_t vid)                  const;
+  Int_t   SID2VolID(Int_t sid)                  const {return sid<GetNSensors() ? fSID2VolID[sid] : -1;} //todo
+  Int_t   GetNSensors()                         const {return fSensors.GetEntriesFast();}
+  Int_t   GetNVolumes()                         const {return fVolumes.GetEntriesFast();}
+  Int_t   GetVolIDMin()                         const {return fVolIDMin;}
+  Int_t   GetVolIDMax()                         const {return fVolIDMax;}
+  Bool_t  SensorOfDetector(Int_t vid)           const {return vid>=fVolIDMin && vid<=fVolIDMax;}
   //
-  Bool_t  VIDofDetector(Int_t id)    const {return id>=fVolIDMin && id<=fVolIDMax;}
+  AliAlgSens* GetSensor(Int_t id)               const {return (AliAlgSens*)fSensors.UncheckedAt(id);}
+  AliAlgSens* GetSensor(const char* symname)    const {return (AliAlgSens*)fSensors.FindObject(symname);}
+  AliAlgVol*  GetVolume(Int_t id)               const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
+  AliAlgVol*  GetVolume(const char* symname)    const {return (AliAlgVol*)fVolumes.FindObject(symname);}
   //
+  virtual void Init();
   virtual void AddVolume(AliAlgVol* vol);
   virtual void DefineVolumes();
   virtual void DefineMatrices();
-  virtual void PrintHierarchy();
-  virtual void ExtractSensorMatrices();
+  virtual void Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
   //
   virtual AliAlgPoint* GetPointFromPool();
   void    ResetPool();
-  UShort_t GetVolumeIDFromSymname(const Char_t *symname);
+  //
+ protected:
+  void     SortSensors();
   //
  protected:
   
-  Int_t     fVolIDMin;                   // min volID for this detector
-  Int_t     fVolIDMax;                   // max volID for this detector
+  Int_t     fVolIDMin;                   // min volID for this detector (for sensors only)
+  Int_t     fVolIDMax;                   // max volID for this detector (for sensors only)
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
-  Int_t*    fVID2SID;                    //[fNSensors] table of conversion from VID to sid
+  Int_t*    fSID2VolID;                    //[fNSensors] table of conversion from VolID to sid
   //
   Int_t     fPoolNPoints;            // number of points in the pool
   Int_t     fPoolFreePointID;        // id of the last free point in the pool

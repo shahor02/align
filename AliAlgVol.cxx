@@ -14,7 +14,9 @@
  **************************************************************************/
 
 #include "AliAlgVol.h"
+#include "AliAlgSens.h"
 #include "AliAlignObjParams.h"
+#include <TString.h>
 
 ClassImp(AliAlgVol)
 
@@ -96,4 +98,27 @@ Int_t AliAlgVol::CountParents() const
   const AliAlgVol* p = this;
   while( (p=p->GetParent()) ) cnt++;
   return cnt;
+}
+
+//____________________________________________
+void AliAlgVol::Print(const Option_t *opt) const
+{
+  // print info
+  TString opts = opt;
+  opts.ToLower();
+  printf("Lev:%2d ",CountParents());
+  printf("%s",GetSymName());
+  if (IsSensor()) printf(" VId: %6d", ((AliAlgSens*)this)->GetVolID());
+  printf("\n");
+  if (opts.Contains("mat")) { // print matrices
+    printf("G2L idead: "); 
+    GetMatrixG2LIdeal().Print();
+    printf("G2L misal: "); 
+    GetMatrixG2L().Print();
+    if (IsSensor()) {
+      printf("T2L      : "); 
+      ((AliAlgSens*)this)->GetMatrixT2L().Print();
+    }
+  }
+  //
 }

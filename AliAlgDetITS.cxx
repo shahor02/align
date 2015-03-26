@@ -35,7 +35,7 @@ void AliAlgDetITS::DefineVolumes()
   AliAlgSens *sens=0;
   //
   AddVolume( volITS = new AliAlgVol("ITS") );
-  int cntVID=0;
+  int cntVolID=0;
   //
   // SPD
   AliAlgVol *sect[kNSPDSect] = {0};
@@ -45,7 +45,7 @@ void AliAlgDetITS::DefineVolumes()
   }
   for (int ilr=0;ilr<=1;ilr++) { // SPD layers
     //
-    cntVID = 0;
+    cntVolID = 0;
     int nst = AliITSgeomTGeo::GetNLadders(ilr+1)/kNSPDSect; // 2 or 4 staves per sector
     for (int isc=0;isc<kNSPDSect;isc++) { // sectors
       for (int ist=0;ist<nst;ist++) { // staves of SPDi
@@ -53,8 +53,9 @@ void AliAlgDetITS::DefineVolumes()
 	  AddVolume ( hstave = new AliAlgVol(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d",ilr,isc,ist,ihst)) );
 	  hstave->SetParent(sect[isc]);
 	  for (int isn=0;isn<2;isn++) { // "ladder" (sensor)	    
-	    AddVolume( sens = new AliAlgSens(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",ilr,isc,ist,ihst,isn), 
-					     AliGeomManager::LayerToVolUID(ilr+1,cntVID++)) );
+	    AddVolume( sens = new AliAlgSens(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",
+						  ilr,isc,ist,ihst,isn+ihst*2), 
+					     AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	    sens->SetParent(hstave);
 	  }
 	}
@@ -64,13 +65,13 @@ void AliAlgDetITS::DefineVolumes()
   //
   // SDD
   for (int ilr=2;ilr<=3;ilr++) { // layer
-    cntVID = 0;
+    cntVolID = 0;
     for (int ist=0;ist<AliITSgeomTGeo::GetNLadders(ilr+1);ist++) { // ladder
       AddVolume( ladd = new AliAlgVol(Form("ITS/SDD%d/Ladder%d",ilr,ist)) );
       ladd->SetParent(volITS);
       for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
 	AddVolume( sens = new AliAlgSens(Form("ITS/SDD%d/Ladder%d/Sensor%d",ilr,ist,isn), 
-					 AliGeomManager::LayerToVolUID(ilr+1,cntVID++)) );
+					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	sens->SetParent(ladd); 
       }
     } // ladder
@@ -78,13 +79,13 @@ void AliAlgDetITS::DefineVolumes()
   //
   // SSD
   for (int ilr=4;ilr<=5;ilr++) { // layer
-    cntVID = 0;
+    cntVolID = 0;
     for (int ist=0;ist<AliITSgeomTGeo::GetNLadders(ilr+1);ist++) { // ladder
       AddVolume( ladd = new AliAlgVol(Form("ITS/SSD%d/Ladder%d",ilr,ist)) );
       ladd->SetParent(volITS);
       for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
-	AddVolume( sens = new AliAlgSens(Form("ITS/SDD%d/Ladder%d/Sensor%d",ilr,ist,isn),
-					 AliGeomManager::LayerToVolUID(ilr+1,cntVID++)) );
+	AddVolume( sens = new AliAlgSens(Form("ITS/SSD%d/Ladder%d/Sensor%d",ilr,ist,isn),
+					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	sens->SetParent(ladd); 
       }
     } // ladder
@@ -93,16 +94,3 @@ void AliAlgDetITS::DefineVolumes()
   //
 }
 
-//____________________________________________
-void AliAlgDetITS::PrintHierarchy()
-{
-  // print ITS volumes
-  for (int iv=0;iv<GetNVolumes();iv++) {
-    const AliAlgVol* vol = GetVolume(iv);
-    int offs = vol->CountParents();
-    for (int i=offs;i--;) printf("  ");
-    if (vol->IsSensor()) printf(" VId: %6d ", ((AliAlgSens*)vol)->GetVolID());
-    printf("%s\n",vol->GetName());
-  }
-  //
-}

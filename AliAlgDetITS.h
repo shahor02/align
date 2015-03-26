@@ -11,7 +11,6 @@ class AliAlgDetITS : public AliAlgDet
   virtual ~AliAlgDetITS();
   //
   virtual void DefineVolumes();  
-  virtual void PrintHierarchy();
   //
  protected:
 

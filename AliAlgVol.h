@@ -67,6 +67,7 @@ class AliAlgVol : public TNamed
 			 const Double_t *delta, const TGeoHMatrix* relMat=0) const;
   //
   virtual Bool_t IsSensor()                     const {return kFALSE;}
+  virtual void Print(const Option_t *opt="")    const;
  protected:
   //
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array

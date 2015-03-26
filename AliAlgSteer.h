@@ -17,7 +17,7 @@ class AliAlgDet;
 class AliAlgSteer : public TObject
 {
  public:
-  enum {kVIDmin,kVIDmax,kNVIDLim};
+  enum {kVolIDmin,kVolIDmax,kNVolIDLim};
   enum {kMatStart,kNMat};
   enum {kNLrSkip=4};
   enum {kITS,kTPC,kTRD,kTOF,kHMPID,kNDetectors};
@@ -50,12 +50,12 @@ class AliAlgSteer : public TObject
   Bool_t AcceptTrack(const AliESDtrack* esdTr)            const;
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByType(Int_t i)                   const {return fDetPos[i]<0 ? 0 : fDetectors[fDetPos[i]];}
-  AliAlgDet* GetDetectorByVID(Int_t id)                   const;
+  AliAlgDet* GetDetectorByVolID(Int_t id)                   const;
   Bool_t AddDetector(AliAlgDet* det);
   //----------------------------------------
   //
  protected:
-  Bool_t        VIDofDetector(Int_t id)                   const;
+  Bool_t        VolIDofDetector(Int_t id)                   const;
 
 
  protected:
@@ -64,7 +64,7 @@ class AliAlgSteer : public TObject
   Int_t         fRunNumber;                               // current run number
   AliAlgTrack*  fAlgTrack;                                // current alignment track 
   AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
-  UShort_t      fDetVolMinMax[kNDetectors][kNVIDLim];     // min/max vol ID for each detector
+  UShort_t      fDetVolMinMax[kNDetectors][kNVolIDLim];     // min/max vol ID for each detector
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
   //
   Int_t fMatrixID[2][AliGeomManager::kLastLayer];         // start and N matrices for each layer in fMatrix
@@ -109,18 +109,18 @@ inline TGeoHMatrix* AliAlgSteer::GetMatrixT2L(Int_t geomTyp, Int_t volID)  const
 }
 
 //__________________________________________________________________
-inline AliAlgDet* AliAlgSteer::GetDetectorByVID(Int_t id) const
+inline AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t id) const
 {
   // get detector according to volume ID
-  for (int i=fNDet;i--;) if (VIDofDetector(i)) return fDetectors[i];
+  for (int i=fNDet;i--;) if (VolIDofDetector(i)) return fDetectors[i];
   return 0;
 }
 
 //__________________________________________________________________
-inline Bool_t AliAlgSteer::VIDofDetector(Int_t id) const
+inline Bool_t AliAlgSteer::VolIDofDetector(Int_t id) const
 {
   // check if vid belongs to detector
-  return id>=fDetVolMinMax[i][kVIDmin] && id<=fDetVolMinMax[i][kVIDmax]);
+  return id>=fDetVolMinMax[i][kVolIDmin] && id<=fDetVolMinMax[i][kVolIDmax]);
 }
 
 #endif

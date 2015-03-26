@@ -6,6 +6,8 @@
 #include "AliLog.h"
 #include "AliGeomManager.h"
 
+#include <TString.h>
+
 ClassImp(AliAlgDet)
 
 
@@ -14,7 +16,7 @@ AliAlgDet::AliAlgDet()
   :fVolIDMin(-1)
   ,fVolIDMax(-1)
   ,fNSensors(0)
-  ,fVID2SID(0)
+  ,fSID2VolID(0)
   //
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
@@ -56,19 +58,18 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
 {
   // extract the points corresponding to this detector, recalibrate/realign them to the
   // level of the "starting point" for the alignment/calibration session
-  const AliESDfriendTrack* trF=0;
-  const AliTrackPointArray* trP=0;
+  const AliESDfriendTrack* trF(0);
+  const AliTrackPointArray* trP(0);
   //
   ResetPool();
   //
   if (!(trF=esdTr->GetFriendTrack()) || !(trP=trF->GetTrackPointArray())) return 0;
   //
-  const UShort_t* vidArr = trP->GetVolumeID();
-  int np = trP->GetNPoints();  
-  int npSel = 0;
+  int np(trP->GetNPoints());
+  int npSel(0);
+  AliAlgPoint* apnt(0);
   for (int ip=0;ip<np;ip++) {
-    if ( !VIDofDetector(vidArr[ip]) ) continue;
-    AliAlgPoint* apnt = TrackPoint2AlgPoint(ip, trP);
+    if (!(apnt=TrackPoint2AlgPoint(ip, trP))) continue;
     algTrack->AddPoint(apnt);
     npSel++;
   }
@@ -81,13 +82,12 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
 AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr)
 {
   // convert the pntId-th point to AliAlgPoint, detectors may override this method
-  AliAlgPoint* pnt = GetPointFromPool();
   //
   // convert to detector tracking frame
   UShort_t vid = trpArr->GetVolumeID()[pntId];
-  //
-  Int_t sid = VID2SID(vid); // sensor index within the detector
+  Int_t sid = VolID2SID(vid); // sensor index within the detector
   if (!sid) return 0;
+  AliAlgPoint* pnt = GetPointFromPool();
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetY()[pntId]};
   AliAlgSens* sens = GetSensor(sid);
@@ -107,17 +107,6 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
 void AliAlgDet::AcknowledgeNewRun(Int_t run)
 {
   // update parameters needed to process this run
-}
-
-//_________________________________________________________
-void AliAlgDet::ExtractSensorMatrices()
-{
-  // extract matrices for sensors
-  for (int sid=0;sid<GetNSensors();sid++) {
-    int volID = SID2VID(sid);
-    TGeoHMatrix *mcurr = new TGeoHMatrix();
-    // to do
-  }  
 }
 
 //_________________________________________________________
@@ -151,17 +140,10 @@ void AliAlgDet::DefineVolumes()
 }
 
 //_________________________________________________________
-void AliAlgDet::PrintHierarchy()
-{
-  // dummy method
-  AliError("This method must be implemented by specific detector");
-}
-
-//_________________________________________________________
 void AliAlgDet::AddVolume(AliAlgVol* vol)
 {
   // add volume
-  if (fVolumes.FindObject(vol->GetName())) {
+  if (GetVolume(vol->GetSymName())) {
     AliFatalF("Volume %s was already added to %s",vol->GetName(),GetName());
   }
   fVolumes.AddLast(vol);
@@ -175,47 +157,80 @@ void AliAlgDet::AddVolume(AliAlgVol* vol)
 }
 
 //_________________________________________________________
-UShort_t AliAlgDet::GetVolumeIDFromSymname(const Char_t *symname) 
-{
-  // volume ID from symname
-  if (!symname) return 0;
-  //
-  for (UShort_t vid=fVolIDMin;vid<fVolIDMax;vid++) {
-    Int_t modId;
-    AliGeomManager::ELayerID layerId = AliGeomManager::VolUIDToLayer(vid,modId);
-    if (layerId>0 && layerId<=AliGeomManager::kLastLayer && 
-	modId>=0 && modId<AliGeomManager::LayerSize(layerId)) {
-      if (!strcmp(symname,AliGeomManager::SymName(layerId,modId))) return vid;
-    }
-  }
-  return 0;
-}
-
-//_________________________________________________________
 void AliAlgDet::DefineMatrices()
 {
   // define transformation matrices. Detectors may override this method
   //
   TGeoHMatrix mtmp;
   //
-  for (int iv=0;iv<GetNVolumes();iv++) {
-    AliAlgVol* vol = GetVolume(iv);
-    //
+  TIter next(&fVolumes);
+  AliAlgVol* vol(0);
+  while ( (vol=(AliAlgVol*)next()) ) {
     // modified global-local matrix
-    TGeoHMatrix* g2lp = AliGeomManager::GetMatrix(vol->GetSymName());
-    if (!g2lp) AliFatalF("Failed to find G2L matrix for %s",vol->GetSymName());
-    vol->SetSetMatrixG2L(g2lp);
+    const TGeoHMatrix* g2l = AliGeomManager::GetMatrix(vol->GetSymName());
+    if (!g2l) AliFatalF("Failed to find G2L matrix for %s",vol->GetSymName());
+    vol->SetMatrixG2L(*g2l);
     //
     // ideal global-local matrix
-    GetOrigGlobalMatrix(const char *symname, TGeoHMatrix &m);
     if (!AliGeomManager::GetOrigGlobalMatrix(vol->GetSymName(),mtmp)) 
       AliFatalF("Failed to find ideal G2L matrix for %s",vol->GetSymName());
-    vol->SetSetMatrixG2LIdeal(mtmp);
+    vol->SetMatrixG2LIdeal(mtmp);
     //
     if (vol->IsSensor()) { // tracking-local matrix
-      TGeoHMatrix* t2lp = AliGeomManager::GetTracking2LocalMatrix();
-      ((AliAlgSens*)vol)->SetMatriT2L((AliAlgSens*)vol)->GetVolID());
+      AliAlgSens* sens = (AliAlgSens*)vol;
+      const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(sens->GetVolID());
+      sens->SetMatrixT2L(*t2l);
     }
   }
+  //
+}
+
+//_________________________________________________________
+void AliAlgDet::SortSensors()
+{
+  // build local tables for internal numbering
+  fNSensors = fSensors.GetEntriesFast();
+  if (!fNSensors) {
+    AliWarning("No sensors defined");
+    return;
+  }
+  fSensors.Sort();
+  fSID2VolID = new Int_t[fNSensors]; // cash id's for fast binary search
+  for (int i=0;i<fNSensors;i++) fSID2VolID[i] = GetSensor(i)->GetVolID();
+  //
+}
+
+//_________________________________________________________
+void AliAlgDet::Init()
+{
+  // define hiearchy, initialize matrices
+  DefineVolumes();
+  SortSensors();    // VolID's must be in increasing order
+  DefineMatrices();
+}
+
+//_________________________________________________________
+Int_t AliAlgDet::VolID2SID(Int_t vid) const 
+{
+  // find SID corresponding to VolID
+  int mn(0),mx(fNSensors-1);
+  while (mx>=mn) {
+    int md( (mx+mn)>>1 ), vids(GetSensor(md)->GetVolID());
+    if (vid<vids)      mx = md-1;
+    else if (vid>vids) mn = md+1;
+    else return md;
+  }
+  return -1;
+}
+
+//____________________________________________
+void AliAlgDet::Print(const Option_t *opt) const
+{
+  // print info
+  TString opts = opt;
+  opts.ToLower();
+  printf("Detector:%s %d volumes %d sensors {VolID: %d-%d}\n",
+	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),GetVolIDMax());
+  if (opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }

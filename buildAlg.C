@@ -5,8 +5,7 @@ void buildAlg()
   if (!LoadAlgLibs()) return;
   AliGeomManager::LoadGeometry("geometry.root");
   AliAlgDet* its = new AliAlgDetITS("its");
-  its->DefineVolumes();
-  its->PrintHierarchy();
+  its->Init();
 }
 
 
