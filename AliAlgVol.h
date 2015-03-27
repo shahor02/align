@@ -57,17 +57,18 @@ class AliAlgVol : public TNamed
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //
-  const TGeoHMatrix&  GetMatrixG2L()             const {return fMatG2L;}
-  const TGeoHMatrix&  GetMatrixG2LIdeal()        const {return fMatG2LIdeal;}
-  void  SetMatrixG2L(const TGeoHMatrix& m)             {fMatG2L = m;}
-  void  SetMatrixG2LIdeal(const TGeoHMatrix& m)        {fMatG2LIdeal = m;}
+  const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
+  const TGeoHMatrix&  GetMatrixL2GOrig()        const {return fMatL2GOrig;}
+  void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
+  void  SetMatrixL2GOrig(const TGeoHMatrix& m)        {fMatL2GOrig = m;}
   //
-  void GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
-  void GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
-			 const Double_t *delta, const TGeoHMatrix* relMat=0) const;
+  void  GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
+  void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
+			  const Double_t *delta, const TGeoHMatrix* relMat=0) const;
   //
   virtual Bool_t IsSensor()                     const {return kFALSE;}
   virtual void Print(const Option_t *opt="")    const;
+  //
  protected:
   //
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
@@ -85,8 +86,8 @@ class AliAlgVol : public TNamed
   Float_t*   fParErrs;            // errors of the fitted params
   Float_t*   fParCstr;            // Gaussian type constraint on parameter, 0 means fixed param
   //
-  TGeoHMatrix fMatG2L;            // local to global matrix, including current alignment
-  TGeoHMatrix fMatG2LIdeal;       // local to global matrix, ideal
+  TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
+  TGeoHMatrix fMatL2GOrig;       // local to global matrix, ideal
   //
   ClassDef(AliAlgVol,1)
 };

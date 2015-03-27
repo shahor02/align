@@ -13,9 +13,13 @@ class AliTrackPointArray;
 class AliAlgDet : public TNamed
 {
  public:
+  enum {kInitDone=BIT(14)};
+  //
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
   virtual ~AliAlgDet();
+  Int_t   GetType()                             const {return GetUniqueID();}
+  void    SetType(UInt_t tp);
   //
   void    AcknowledgeNewRun(Int_t run);
   //
@@ -36,12 +40,17 @@ class AliAlgDet : public TNamed
   virtual void AddVolume(AliAlgVol* vol);
   virtual void DefineVolumes();
   virtual void DefineMatrices();
+  virtual void SetTrackingFrames();
   virtual void Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
+  virtual Bool_t PresentInTrack(const AliESDtrack* trc) const = 0;
   //
   virtual AliAlgPoint* GetPointFromPool();
   void    ResetPool();
+  //
+  void    SetInitDone()                               {SetBit(kInitDone);}
+  Bool_t  GetInitDone()                         const {return TestBit(kInitDone);}
   //
  protected:
   void     SortSensors();

@@ -3,6 +3,7 @@
 #include "AliAlgAux.h"
 
 using namespace AliAlgAux;
+using namespace TMath;
 
 //_____________________________________
 AliAlgPoint::AliAlgPoint() :
@@ -55,14 +56,14 @@ void AliAlgPoint::Init()
       double dfd = 0.5*(fErrYZTracking[2] - fErrYZTracking[0]);
       double phi = 0;
       // special treatment if errors are equal
-      if (TMath::Abs(dfd)<kDiagToler) phi = fErrYZTracking[1]>0 ? (TMath::Pi()*0.25) : (TMath::Pi()*0.75);
-      else                            phi = 0.5*TMath::ATan2(fErrYZTracking[1],dfd);
+      if (Abs(dfd)<kDiagToler) phi = fErrYZTracking[1]>0 ? (Pi()*0.25) : (Pi()*0.75);
+      else                            phi = 0.5*ATan2(fErrYZTracking[1],dfd);
       //
-      fCosDiagErr = TMath::Cos(phi);
-      fSinDiagErr = TMath::Sin(phi);
+      fCosDiagErr = Cos(phi);
+      fSinDiagErr = Sin(phi);
       //
       double det = dfd*dfd + fErrYZTracking[1]*fErrYZTracking[1];
-      det = det>0 ? (TMath::Sqrt(det)) : 0;
+      det = det>0 ? Sqrt(det) : 0;
       double smd = 0.5*(fErrYZTracking[0] + fErrYZTracking[2]);
       fErrDiag[0] = smd + det;
       fErrDiag[1] = smd - det;

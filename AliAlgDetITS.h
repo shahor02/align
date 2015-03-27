@@ -12,6 +12,8 @@ class AliAlgDetITS : public AliAlgDet
   //
   virtual void DefineVolumes();  
   //
+  Bool_t PresentInTrack(const AliESDtrack* trc) const;
+
  protected:
 
   ClassDef(AliAlgDetITS,1);

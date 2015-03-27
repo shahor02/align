@@ -16,9 +16,12 @@
 #include "AliAlgVol.h"
 #include "AliAlgSens.h"
 #include "AliAlignObjParams.h"
+#include "AliAlgAux.h"
 #include <TString.h>
 
 ClassImp(AliAlgVol)
+
+using namespace TMath;
 
 //_________________________________________________________
 AliAlgVol::AliAlgVol(const char* symname) :
@@ -38,8 +41,8 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fParErrs(0)
   ,fParCstr(0)
   //
-  ,fMatG2L()
-  ,fMatG2LIdeal()
+  ,fMatL2G()
+  ,fMatL2GOrig()
 {
   // def c-tor
 }
@@ -76,16 +79,16 @@ void AliAlgVol::GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM,
   // local delta vector of the parent (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
   // since it requires calculation of child->parent transition matrix, it can be provided
   // as an optional parameter relMat
-  // The calculation is done as deltaM = G2L * DeltaM * G2L^-1 l2g
+  // The calculation is done as deltaM = L2G * DeltaM * L2G^-1 l2g
   // where DeltaM is the loca variation matrix of parent volume, 
-  // G2L parent local-global matrix and l2g is sensor local-global matrix
+  // L2G parent local-global matrix and l2g is sensor local-global matrix
   // 
   parent->GetDeltaMatrixLoc(deltaM,delta);
-  deltaM.MultiplyLeft(&parent->GetMatrixG2L());
+  deltaM.MultiplyLeft(&parent->GetMatrixL2G());
   if (relMat) deltaM.Multiply(relMat);
   else {
-    deltaM.Multiply(&parent->GetMatrixG2L().Inverse());
-    deltaM.Multiply(&GetMatrixG2L());
+    deltaM.Multiply(&parent->GetMatrixL2G().Inverse());
+    deltaM.Multiply(&GetMatrixL2G());
   }
   //  
 }
@@ -101,24 +104,11 @@ Int_t AliAlgVol::CountParents() const
 }
 
 //____________________________________________
-void AliAlgVol::Print(const Option_t *opt) const
+void AliAlgVol::Print(const Option_t */*opt*/) const
 {
   // print info
-  TString opts = opt;
-  opts.ToLower();
-  printf("Lev:%2d ",CountParents());
-  printf("%s",GetSymName());
-  if (IsSensor()) printf(" VId: %6d", ((AliAlgSens*)this)->GetVolID());
-  printf("\n");
-  if (opts.Contains("mat")) { // print matrices
-    printf("G2L idead: "); 
-    GetMatrixG2LIdeal().Print();
-    printf("G2L misal: "); 
-    GetMatrixG2L().Print();
-    if (IsSensor()) {
-      printf("T2L      : "); 
-      ((AliAlgSens*)this)->GetMatrixT2L().Print();
-    }
-  }
+  //  TString opts = opt;
+  //  opts.ToLower();
+  printf("Lev:%2d %s\n",CountParents(),GetSymName());
   //
 }

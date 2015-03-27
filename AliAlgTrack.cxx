@@ -4,6 +4,7 @@
 #include "AliAlgAux.h"
 
 using namespace AliAlgAux;
+using namespace TMath;
 
 // RS: this is not good: we define constants outside the class, but it is to
 // bypass the CINT limitations on static arrays initializations 
@@ -110,7 +111,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
     SetParams(probD,kNRDClones, GetX(),GetAlpha(),params);
     double del = kDelta[ipar];
     if (ipar==kNKinParBON-1) { // for 1/pt variation use fractional increment
-      del *= TMath::Abs(Get1P());
+      del *= Abs(Get1P());
       if (del<1e-4) del = 1e-4;
     }
     for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
@@ -157,7 +158,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       if (ipar==kELoss) {
 	if(!pnt->GetELossVaried()) continue;      
 	// for eloss variation variation use fractional increment
-	del *= TMath::Abs(Get1P());
+	del *= Abs(Get1P());
 	if (del<1e-4) del = 1e-4;
       }
       //
@@ -326,12 +327,12 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double tms,double pms)
   //
   double *par = (double*) trPar.GetParameter();
   //
-  if (TMath::Abs(tms)<1e-7) return kTRUE;
+  if (Abs(tms)<1e-7) return kTRUE;
   //
-  double snTms = TMath::Sin(tms), csTms = TMath::Cos(tms);
-  double snPms = TMath::Sin(pms), csPms = TMath::Cos(pms);  
-  double snPhi = par[2],  csPhi = TMath::Sqrt((1.-snPhi)*(1.+snPhi));
-  double csLam = 1./TMath::Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
+  double snTms = Sin(tms), csTms = Cos(tms);
+  double snPms = Sin(pms), csPms = Cos(pms);  
+  double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
+  double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
   //
   double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
   double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
@@ -343,7 +344,7 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double tms,double pms)
   double py = r10*v0 + r11*v1 + r12*v2;
   double pz = r20*v0 - r21*v1;
   //
-  double pt = TMath::Sqrt(px*px + py*py);
+  double pt = Sqrt(px*px + py*py);
   par[2] = py/pt;
   par[3] = pz/pt;
   par[4]*= csLam/pt;
@@ -372,15 +373,15 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2)
   double snt2 = ms1*ms1 + ms2*ms2;
   if (snt2>kAlmostOneD) return kFALSE;
   if (IsZeroPos(snt2)) return kTRUE; // no scattering
-  double snTms = TMath::Sqrt(snt2);
-  double csTms = TMath::Sqrt(1.-snt2);
-  double phiMS = TMath::ATan2(ms2,ms1);
-  double snPms = TMath::Sin(phiMS), csPms = TMath::Cos(phiMS);  
+  double snTms = Sqrt(snt2);
+  double csTms = Sqrt(1.-snt2);
+  double phiMS = ATan2(ms2,ms1);
+  double snPms = Sin(phiMS), csPms = Cos(phiMS);  
   //
   double *par = (double*) trPar.GetParameter();
   //
-  double snPhi = par[2],  csPhi = TMath::Sqrt((1.-snPhi)*(1.+snPhi));
-  double csLam = 1./TMath::Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
+  double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
+  double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
   //
   double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
   double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
@@ -392,7 +393,7 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2)
   double py = r10*v0 + r11*v1 + r12*v2;
   double pz = r20*v0 - r21*v1;
   //
-  double pt = TMath::Sqrt(px*px + py*py);
+  double pt = Sqrt(px*px + py*py);
   par[2] = py/pt;
   par[3] = pz/pt;
   par[4]*= csLam/pt;
@@ -408,13 +409,13 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* 
    double &p4 = ((double*)trPar.GetParameter())[4];
    double p = trPar.GetP();
    double p2 = p*p;
-   Double_t e = TMath::Sqrt(p2 + fMass*fMass);
+   Double_t e = Sqrt(p2 + fMass*fMass);
    Double_t bg = p/fMass;
    double dE = AliExternalTrackParam::BetheBlochSolid(bg)*pnt->GetXTimesRho();
-   if ( TMath::Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
+   if ( Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
    if ( (1.+ dE/p2*(dE + 2*e)) < 0. ) return kFALSE;
-   double cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
-   if (TMath::Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
+   double cP4 = 1./Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
+   if (Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
    p4 *= cP4;
    return kTRUE;
  }
@@ -426,11 +427,11 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, double dE)
    double &p4 = ((double*)trPar.GetParameter())[4];
    double p = trPar.GetP();
    double p2 = p*p;
-   Double_t e = TMath::Sqrt(p2 + fMass*fMass);
-   if ( TMath::Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
+   Double_t e = Sqrt(p2 + fMass*fMass);
+   if ( Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
    if ( (1.+ dE/p2*(dE + 2*e)) < 0. ) return kFALSE;
-   double cP4 = 1./TMath::Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
-   if (TMath::Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
+   double cP4 = 1./Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
+   if (Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
    p4 *= cP4;
    return kTRUE;
  }
@@ -454,16 +455,16 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,do
   //
   // VECTORIZE THIS
   //
-  if (TMath::Abs(tms)<1e-7) return kTRUE;
+  if (Abs(tms)<1e-7) return kTRUE;
   //
-  double snTms = TMath::Sin(tms), csTms = TMath::Cos(tms);
-  double snPms = TMath::Sin(pms), csPms = TMath::Cos(pms);  
+  double snTms = Sin(tms), csTms = Cos(tms);
+  double snPms = Sin(pms), csPms = Cos(pms);  
   //
   for (int itr=ntr;itr--;) { // at the moment just loop
     double *par = (double*) trSet[itr].GetParameter();
     //
-    double snPhi = par[2],  csPhi = TMath::Sqrt((1.-snPhi)*(1.+snPhi));
-    double csLam = 1./TMath::Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
+    double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
+    double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
     //
     double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
     double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
@@ -475,7 +476,7 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,do
     double py = r10*v0 + r11*v1 + r12*v2;
     double pz = r20*v0 - r21*v1;
     //
-    double pt = TMath::Sqrt(px*px + py*py);
+    double pt = Sqrt(px*px + py*py);
     par[2] = py/pt;
     par[3] = pz/pt;
     par[4]*= csLam/pt;
@@ -506,16 +507,16 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,do
   double snt2 = ms1*ms1 + ms2*ms2;
   if (snt2>kAlmostOneD) return kFALSE;
   if (IsZeroPos(snt2)) return kTRUE; // no scattering
-  double snTms = TMath::Sqrt(snt2);
-  double csTms = TMath::Sqrt(1.-snt2);
-  double phiMS = TMath::ATan2(ms2,ms1);
-  double snPms = TMath::Sin(phiMS), csPms = TMath::Cos(phiMS);  
+  double snTms = Sqrt(snt2);
+  double csTms = Sqrt(1.-snt2);
+  double phiMS = ATan2(ms2,ms1);
+  double snPms = Sin(phiMS), csPms = Cos(phiMS);  
   //
   for (int itr=ntr;itr--;) { // at the moment just loop
     double *par = (double*) trSet[itr].GetParameter();
     //
-    double snPhi = par[2],  csPhi = TMath::Sqrt((1.-snPhi)*(1.+snPhi));
-    double csLam = 1./TMath::Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
+    double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
+    double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
     //
     double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
     double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
@@ -527,7 +528,7 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,do
     double py = r10*v0 + r11*v1 + r12*v2;
     double pz = r20*v0 - r21*v1;
     //
-    double pt = TMath::Sqrt(px*px + py*py);
+    double pt = Sqrt(px*px + py*py);
     par[2] = py/pt;
     par[3] = pz/pt;
     par[4]*= csLam/pt;

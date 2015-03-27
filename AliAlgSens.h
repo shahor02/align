@@ -26,19 +26,21 @@ class AliAlgSens : public AliAlgVol
   Int_t GetVolID()                              const  {return (Int_t)GetUniqueID();}
   void  SetVolID(Int_t v)                              {SetUniqueID(v);}
   //
-  Double_t GetXTracking()                        const {return fXTracking;}
-  Double_t GetAlpTracking()                      const {return fAlpTracking;}
+  Double_t GetXTracking()                        const {return fX;}
+  Double_t GetAlpTracking()                      const {return fAlp;}
   //
   virtual void DPosTraDParLoc(const double *tra, double* deriv) const;
   virtual void DPosTraDParLoc(const AliAlgVol* parent, const double *tra, double* deriv) const;
   //
-  void GetModifiedMatrixG2L(TGeoHMatrix& matMod, const Double_t *delta) const;
+  void GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2L(TGeoHMatrix& matMod, const Double_t *delta) const;
 
   void GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const;
   void DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const;
   //
-  virtual Bool_t IsSensor()                            const {return kTRUE;}
+  virtual void   SetTrackingFrame();
+  virtual Bool_t IsSensor()                       const {return kTRUE;}
+  virtual void   Print(const Option_t *opt="")    const;
   //
  protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
@@ -46,8 +48,8 @@ class AliAlgSens : public AliAlgVol
 
  protected:
   //
-  Double_t fXTracking;                // tracking frame X offset
-  Double_t fAlpTracking;              // tracking frame alpa
+  Double_t fX;                        // tracking frame X offset
+  Double_t fAlp;                      // tracking frame alpa
   TGeoHMatrix fMatT2L;                // tracking to local matrix
   //
   ClassDef(AliAlgSens,1)

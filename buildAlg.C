@@ -6,6 +6,8 @@ void buildAlg()
   AliGeomManager::LoadGeometry("geometry.root");
   AliAlgDet* its = new AliAlgDetITS("its");
   its->Init();
+
+  its->Print();
 }
 
 
@@ -32,6 +34,9 @@ Bool_t LoadAlgLibs()
   //
   gROOT->ProcessLine(".L AliAlgDetITS.cxx+");
   if (gClassTable->GetID("AliAlgDetITS")<0) return kFALSE;
+  //
+  gROOT->ProcessLine(".L AliAlgSteer.cxx+");
+  if (gClassTable->GetID("AliAlgSteer")<0) return kFALSE;
   //
   return kTRUE;
 }

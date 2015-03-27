@@ -1,6 +1,7 @@
 #include "AliAlgDet.h"
 #include "AliAlgSens.h"
 #include "AliAlgDet.h"
+#include "AliAlgSteer.h"
 #include "AliESDtrack.h"
 #include "AliAlgTrack.h"
 #include "AliLog.h"
@@ -25,6 +26,7 @@ AliAlgDet::AliAlgDet()
   ,fVolumes()
 {
   // def c-tor
+  SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
 }
 
 //____________________________________________
@@ -40,7 +42,7 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
   ,fVolumes()
 {
   // def c-tor
-  
+  SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this  
 }
 
 //____________________________________________
@@ -69,6 +71,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
   int npSel(0);
   AliAlgPoint* apnt(0);
   for (int ip=0;ip<np;ip++) {
+    if (SensorOfDetector(trP->GetVolumeID()[ip])) continue;
     if (!(apnt=TrackPoint2AlgPoint(ip, trP))) continue;
     algTrack->AddPoint(apnt);
     npSel++;
@@ -76,7 +79,6 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
   //
   return npSel;
 }
-
 
 //____________________________________________
 AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr)
@@ -91,8 +93,8 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetY()[pntId]};
   AliAlgSens* sens = GetSensor(sid);
-  const TGeoHMatrix& matG2L = sens->GetMatrixG2L(); // local to global matrix
-  matG2L.MasterToLocal(glo,loc);
+  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
+  matL2G.MasterToLocal(glo,loc);
   const TGeoHMatrix& matT2L = sens->GetMatrixT2L();  // matrix for tracking to local frame translation
   matT2L.MasterToLocal(loc,tra);
   //
@@ -168,13 +170,13 @@ void AliAlgDet::DefineMatrices()
   while ( (vol=(AliAlgVol*)next()) ) {
     // modified global-local matrix
     const TGeoHMatrix* g2l = AliGeomManager::GetMatrix(vol->GetSymName());
-    if (!g2l) AliFatalF("Failed to find G2L matrix for %s",vol->GetSymName());
-    vol->SetMatrixG2L(*g2l);
+    if (!g2l) AliFatalF("Failed to find L2G matrix for %s",vol->GetSymName());
+    vol->SetMatrixL2G(*g2l);
     //
     // ideal global-local matrix
     if (!AliGeomManager::GetOrigGlobalMatrix(vol->GetSymName(),mtmp)) 
-      AliFatalF("Failed to find ideal G2L matrix for %s",vol->GetSymName());
-    vol->SetMatrixG2LIdeal(mtmp);
+      AliFatalF("Failed to find ideal L2G matrix for %s",vol->GetSymName());
+    vol->SetMatrixL2GOrig(mtmp);
     //
     if (vol->IsSensor()) { // tracking-local matrix
       AliAlgSens* sens = (AliAlgSens*)vol;
@@ -183,6 +185,13 @@ void AliAlgDet::DefineMatrices()
     }
   }
   //
+}
+
+//_________________________________________________________
+void AliAlgDet::SetTrackingFrames()
+{
+  // define tracking frames for sensors
+  for (int isn=GetNSensors();isn--;) GetSensor(isn)->SetTrackingFrame();
 }
 
 //_________________________________________________________
@@ -204,9 +213,14 @@ void AliAlgDet::SortSensors()
 void AliAlgDet::Init()
 {
   // define hiearchy, initialize matrices
+  if (GetInitDone()) return;
+  //
   DefineVolumes();
   SortSensors();    // VolID's must be in increasing order
   DefineMatrices();
+  SetTrackingFrames();
+  //
+  SetInitDone();
 }
 
 //_________________________________________________________
@@ -229,8 +243,17 @@ void AliAlgDet::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Detector:%s %d volumes %d sensors {VolID: %d-%d}\n",
+  printf("Detector:%5s %d volumes %d sensors {VolID: %d-%d}\n",
 	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),GetVolIDMax());
   if (opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }
+//____________________________________________
+void AliAlgDet::SetType(UInt_t tp)
+{
+  // assign type
+  if (tp>=AliAlgSteer::kNDetectors) AliFatalF("Detector type %d exceeds allowed range %d:%d",
+					      tp,0,AliAlgSteer::kNDetectors-1);
+  SetUniqueID(tp);
+}
+

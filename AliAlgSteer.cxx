@@ -14,28 +14,25 @@
  **************************************************************************/
 
 #include "AliAlgSteer.h"
-#include "AliAlgDet.h"
 #include "AliLog.h"
+#include "AliAlgDet.h"
 #include "AliAlgDetITS.h"
-#include <TGeoMatrix.h>
 
 const char* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
-const int   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
-								 AliGeomManager::kMUON,AliGeomManager::kEMCAL};
+const int AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
+							       AliGeomManager::kMUON,AliGeomManager::kEMCAL};
 
 ClassImp(AliAlgSteer)
 
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer()
-  :fNDet(0)
+:  fNDet(0)
   ,fRunNumber(-1)
   ,fAlgTrack(0)
-
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
     fDetectors[i] = 0;
-    fDetVolMinMax[i][0] = fDetVolMinMax[i][1] = 0;
     fDetPos[i] = -1;
   }
 }
@@ -46,149 +43,56 @@ AliAlgSteer::~AliAlgSteer()
   // d-tor
   delete fAlgTrack;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
-  for (int i=0;i<kNGeoms;i++) {
-    delete fMatrixT2G[i];
-    delete fMatrixT2L[i];
-  }
 }
 
 //________________________________________________________________
-void AliAlgSteer::LocalInit()
+void AliAlgSteer::Init()
 {
-  // init all structures
+  // init all detectors
   //
   static Bool_t done = kFALSE;
   if (done) return;
   done = kTRUE;
   //
   fAlgTrack = new AliAlgTrack();
-
   //
-  int nLrSkip = sizeof(fgkSkipLayers)/sizeof(int);
-  //
-  // fill start and end of matrices for each used layer
-  int nmat = 0;
-  for (int i=0;i<AliGeomManager::kLastLayer;i++) {
-    fMatrixID[kMatStart][i] = nmat;
-    fMatrixID[kNMat][i] = 0;
-    if (i<AliGeomManager::kFirstLayer) continue;
-    Bool_t skip = kFALSE;
-    for (int j=nLrSkip;j--;) if (fgkSkipLayers[j]==i) {skip=kTRUE; break;}
-    if (skip) continue;
-    nmat += fMatrixID[kNMat][i] = AliGeomManager::LayerSize(i);
-  }
-  for (int i=0;i<kNGeoms;i++) {
-    fMatrixT2L[i] = new TClonesArray("TGeoHMatrix",nmat); // book the space for matrices
-    fMatrixT2G[i] = new TClonesArray("TGeoHMatrix",nmat); // book the space for matrices
-  }
-  //
+  for (int i=0;i<fNDet;i++) fDetectors[i]->Init();
 }
 
 //________________________________________________________________
-void AliAlgSteer::LoadMatrices(Int_t geomTyp)
+  void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
 {
-  // fetch matrices for given geom type
-  if (geomTyp<0||geomTyp>=kNGeoms) return;
-  if (!AliGeomManager::GetGeometry()) AliFatal("No geometry is loaded");
+  // add detector participating in the alignment, optionally constructed externally
+  if (id>=kNDetectors)  AliFatalF("Detector type %d exceeds allowed range %d:%d",
+				  id,0,kNDetectors-1);
   //
-  TClonesArray &arrT2G  = *fMatrixT2G[geomTyp];
-  TClonesArray &arrT2L  = *fMatrixT2L[geomTyp];
-  arrT2G.Clear();
-  arrT2L.Clear();
-  //
-  TGeoHMatrix mtt;
-  //
-  for (int il=AliGeomManager::kFirstLayer;il<AliGeomManager::kLastLayer;il++) {
-    int nmat = fMatrixID[kNMat][il];
-    AliInfo(Form("Loading %4d matrices%d for Layer: %s",nmat,geomTyp,AliGeomManager::LayerName(il)));
-    if (!nmat) continue; // skip layer
-    for (int imd=0;imd<nmat;imd++) {
-      int vid = AliGeomManager::LayerToVolUID(il,imd);
-      const TGeoHMatrix *matG2L=0,*matT2L=0;
-      // attention: some layer's matrices are somewhat special
-      switch (il) {
-	/*
-      case AliGeomManager::kSPD1 : 
-      case AliGeomManager::kSPD2 : 
-      case AliGeomManager::kSDD1 : 
-      case AliGeomManager::kSDD2 : 
-      case AliGeomManager::kSSD1 : 
-      case AliGeomManager::kSSD2 : 
-	mat = GetITSSensVolMatrix(vid); 
-	break;
-	//
-	*/
-      default:	
-	matG2L = AliGeomManager::GetMatrix(vid); // g2l
-	matT2L = AliGeomManager::GetTracking2LocalMatrix(vid); // t2l
-      }
-      if (!matG2L || !matT2L) {AliDebug(1,Form("No matrix for module %d",vid)); continue;}
-      mtt = *matG2L;
-      mtt.Multiply(matT2L);
-      int id = GetMatrixID(il,imd);
-      if (id<0) AliFatal(Form("MatrixID for VolID=%d should have been defined",vid));
-      printf("Add %s at %d\n", AliGeomManager::SymName(vid) ,id);
-      TGeoHMatrix* m0 = new( arrT2G[id] ) TGeoHMatrix(mtt);
-      TGeoHMatrix* m1 = new( arrT2L[id] ) TGeoHMatrix(*matT2L);
-      m0->SetName(AliGeomManager::SymName(vid));
-      m1->SetName(AliGeomManager::SymName(vid));
-      //
-    }
+  if (fDetPos[id]!=-1) AliFatalF("Detector %d was already added",id);
+  if (!det) {
+    switch(id) {
+    case kITS: det = new AliAlgDetITS("ITS"); break;
+      //  case kTPC: det = new AliAlgDetTPC(); break;
+      //  case kTRD: det = new AliAlgDetTRD(); break;
+      //  case kTOF: det = new AliAlgDetTOF(); break;
+    default: AliErrorF("%d not implemented yet",id); break;
+    };
   }
-  //
-}
-
-
-//________________________________________________________________
-void AliAlgSteer::AddDetector(const char* name)
-{
-  // add detector participating in the alignment
-  int id = -1;
-  TString names = name;
-  names.ToUpper();
-  for (int i=kNDetectors;i--;) if (names==fgkDetectorName[i]) {id=i;break;}
-  if (id<0) AliFatal(Form("Detector %s is not known to alignment framework",name));
-  AliAlgDet* det = 0;
-  switch(id) {
-  case kITS: det = new AliAlgDetITS(); break;
-    //  case kTPC: det = new AliAlgDetTPC(); break;
-    //  case kTRD: det = new AliAlgDetTRD(); break;
-    //  case kTOF: det = new AliAlgDetTOF(); break;
-  default: AliErrorF("%s not implemented yet",name); break;
-  };
   //
   fDetectors[fNDet] = det;
-  fDetVolMinMax[fNDet][0] = det->GetVolIDMin();
-  fDetVolMinMax[fNDet][1] = det->GetVolIDMax();
   fDetPos[id] = fNDet;
-  //
   fNDet++;
   //
 }
 
-//________________________________________________________________
-/*
-TGeoHMatrix* AliAlgSteer::GetITSSensVolMatrix(Int_t vid)
+//_________________________________________________________
+void AliAlgSteer::AddDetector(AliAlgDet* det)
 {
-  // special matrix extraction for its
-  static TGeoHMatrix mat;
-  AliGeomManager::ELayerID lay = AliGeomManager::VolUIDToLayer(vid);
-  if (lay<1|| lay>6) return 0;
-  Int_t idx=Int_t(vid)-2048*lay;
-  if (idx>=AliGeomManager::LayerSize(lay)) return -1;
-  for (Int_t ilay=1; ilay<lay; ilay++) idx += AliGeomManager::LayerSize(ilay);
-  Double_t rot[9];
-  if (!AliITSgeomTGeo::GetRotation(idx,rot)) return 0;
-  mat.SetRotation(rot);
-  Double_t oLoc[3]={0,0,0}, oGlo[3]={0,0,0};
-  if (!AliITSgeomTGeo::LocalToGlobal(idx,oLoc,oGlo)) return -3;
-  mat.SetTranslation(oGlo);
-  return &mat;
+  // add detector constructed externally to alignment framework
+  AddDetector(det->GetType(), det);
 }
-*/
+
 
 //_________________________________________________________
-Bool_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr) const
+Bool_t AliAlgSteer::AcceptTrack(const AliESDtrack* /*esdTr*/) const
 {
   // decide if the track should be processed
   return kTRUE;
@@ -211,24 +115,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   fAlgTrack->Clear();
   //
   // process the track points for each detector, fill needed points (tracking frame) in the fAlgTrack
-  for (int idet=0;idet<fNDet;idet++) {
+  AliAlgDet* det = 0;
+  for (int idet=0;idet<kNDetectors;idet++) {
+    if (!(det=GetDetectorByType(idet))) continue;
+    if (!det->PresentInTrack(esdTr) ) continue;
+    //
     GetDetector(idet)->ProcessPoints(esdTr, fAlgTrack);
   }
   //
-  return kTRUE;
-}
-
-//_________________________________________________________
-Bool_t AliAlgSteer::AddDetector(AliAlgDet* det)
-{
-  // add new detector to alignment
-  if (!det) return kFALSE;
-  if (fDetectors.FindObject(det->GetName())) {
-    AliError(Form("Detector %s was already added",det->GetName()));
-    return kFALSE;
-  }
-  fDetectors.AddLast(det);
-  fNDet++;
   return kTRUE;
 }
 
@@ -247,4 +141,24 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   fRunNumber = run;
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
   //
+}
+
+//_________________________________________________________
+AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t vid) const
+{
+  // get detector by sensor volid
+  for (int i=fNDet;i--;) if (fDetectors[i]->SensorOfDetector(vid)) return fDetectors[i];
+  return 0;
+}
+
+//____________________________________________
+void AliAlgSteer::Print(const Option_t *opt) const
+{
+  // print info
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByType(idt);
+    if (det) det->Print(opt);
+    else printf("Detector:%5s is not defined\n",fgkDetectorName[idt]);
+  }
+  
 }

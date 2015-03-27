@@ -1,8 +1,10 @@
 #include "AliAlgDetITS.h"
 #include "AliAlgVol.h"
 #include "AliAlgSens.h"
+#include "AliAlgSteer.h"
 #include "AliITSgeomTGeo.h"
 #include "AliGeomManager.h"
+#include "AliESDtrack.h"
 
 ClassImp(AliAlgDetITS);
 
@@ -10,13 +12,14 @@ ClassImp(AliAlgDetITS);
 AliAlgDetITS::AliAlgDetITS()
 {
   // default c-tor
+  SetType(AliAlgSteer::kITS);
 }
 
 //____________________________________________
 AliAlgDetITS::AliAlgDetITS(const char* name, const char* title)
   :AliAlgDet(name,title)
 {
-
+  SetType(AliAlgSteer::kITS);
 }
 
 //____________________________________________
@@ -50,7 +53,8 @@ void AliAlgDetITS::DefineVolumes()
     for (int isc=0;isc<kNSPDSect;isc++) { // sectors
       for (int ist=0;ist<nst;ist++) { // staves of SPDi
 	for (int ihst=0;ihst<2;ihst++) { // halfstave
-	  AddVolume ( hstave = new AliAlgVol(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d",ilr,isc,ist,ihst)) );
+	  AddVolume ( hstave = new AliAlgVol(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d",
+						  ilr,isc,ist,ihst)) );
 	  hstave->SetParent(sect[isc]);
 	  for (int isn=0;isn<2;isn++) { // "ladder" (sensor)	    
 	    AddVolume( sens = new AliAlgSens(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",
@@ -94,3 +98,9 @@ void AliAlgDetITS::DefineVolumes()
   //
 }
 
+//____________________________________________
+Bool_t AliAlgDetITS::PresentInTrack(const AliESDtrack* trc) const 
+{
+  // test if detector had seed this track
+  return trc->IsOn(AliESDtrack::kITSrefit);
+}
