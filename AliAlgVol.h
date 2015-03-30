@@ -58,9 +58,11 @@ class AliAlgVol : public TNamed
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //
   const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
-  const TGeoHMatrix&  GetMatrixL2GOrig()        const {return fMatL2GOrig;}
+  const TGeoHMatrix&  GetMatrixL2GOrig()         const {return fMatL2GOrig;}
   void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
-  void  SetMatrixL2GOrig(const TGeoHMatrix& m)        {fMatL2GOrig = m;}
+  void  SetMatrixL2GOrig(const TGeoHMatrix& m)         {fMatL2GOrig = m;}
+  virtual void   PrepareMatrixL2G();
+  virtual void   PrepareMatrixL2GOrig();
   //
   void  GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
   void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 

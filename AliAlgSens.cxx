@@ -16,6 +16,7 @@
 #include "AliAlgSens.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
+#include "AliGeomManager.h"
 ClassImp(AliAlgSens)
 
 using namespace AliAlgAux;
@@ -189,6 +190,7 @@ Int_t AliAlgSens::Compare(const TObject* b) const
 void AliAlgSens::SetTrackingFrame()
 {
   // define tracking frame of the sensor
+  AliWarningF("BaseClass called for %s",GetSymName());
   double tra[3]={0},loc[3],glo[3];
   const TGeoHMatrix &t2l = GetMatrixT2L();
   const double* t = t2l.GetTranslation();
@@ -221,5 +223,15 @@ void AliAlgSens::Print(const Option_t *opt) const
       ((AliAlgSens*)this)->GetMatrixT2L().Print();
     }
   }
+  //
+}
+
+//____________________________________________
+void AliAlgSens::PrepareMatrixT2L()
+{
+  // extract from geometry T2L matrix
+  const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(GetVolID());
+  if (!t2l) AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
+  SetMatrixT2L(*t2l);
   //
 }

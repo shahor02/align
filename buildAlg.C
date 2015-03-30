@@ -25,12 +25,17 @@ AliAlgSteer * algSteer = 0;
 
 void buildAlg()
 {
+  LoadESD();
+  LoadEvent(4);
+  esdEv->InitMagneticField();
+  //
   AliGeomManager::LoadGeometry("data/geometry.root");
   //
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
   algSteer->AddDetector(AliAlgSteer::kTRD);
+  algSteer->AddDetector(AliAlgSteer::kTOF);
   //  AliAlgDet* its = new AliAlgDetITS("its");
   //  its->Init();
   algSteer->Init();
@@ -40,8 +45,6 @@ void buildAlg()
   //  its->Print();
   //  trd->Print();
   //
-  LoadESD();
-  LoadEvent(4);
   PrintTracks();
   AliESDtrack* tr = esdEv->GetTrack(1);
   algSteer->ProcessTrack(tr);

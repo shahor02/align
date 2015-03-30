@@ -1,14 +1,14 @@
-#ifndef ALIALGDETITS_H
-#define ALIALGDETITS_H
+#ifndef ALIALGDETTOF_H
+#define ALIALGDETTOF_H
 
 #include "AliAlgDet.h"
 
-class AliAlgDetITS : public AliAlgDet
+class AliAlgDetTOF : public AliAlgDet
 {
  public:
-  AliAlgDetITS();
-  AliAlgDetITS(const char* name, const char* title="");
-  virtual ~AliAlgDetITS();
+  AliAlgDetTOF();
+  AliAlgDetTOF(const char* name, const char* title="");
+  virtual ~AliAlgDetTOF();
   //
   virtual void DefineVolumes();  
   //
@@ -16,7 +16,7 @@ class AliAlgDetITS : public AliAlgDet
 
  protected:
 
-  ClassDef(AliAlgDetITS,1);
+  ClassDef(AliAlgDetTOF,1);
 };
 
 #endif

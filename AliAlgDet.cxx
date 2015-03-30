@@ -174,17 +174,13 @@ void AliAlgDet::DefineMatrices()
   AliAlgVol* vol(0);
   while ( (vol=(AliAlgVol*)next()) ) {
     // modified global-local matrix
-    const TGeoHMatrix* g2l = AliGeomManager::GetMatrix(vol->GetSymName());
-    if (!g2l) AliFatalF("Failed to find L2G matrix for %s",vol->GetSymName());
-    vol->SetMatrixL2G(*g2l);
-    //
+    vol->PrepareMatrixL2G();
     // ideal global-local matrix
-    if (!AliGeomManager::GetOrigGlobalMatrix(vol->GetSymName(),mtmp)) 
-      AliFatalF("Failed to find ideal L2G matrix for %s",vol->GetSymName());
-    vol->SetMatrixL2GOrig(mtmp);
+    vol->PrepareMatrixL2GOrig();
     //
     if (vol->IsSensor()) { // tracking-local matrix
       AliAlgSens* sens = (AliAlgSens*)vol;
+      sens->PrepareMatrixT2L();
       const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(sens->GetVolID());
       sens->SetMatrixT2L(*t2l);
     }

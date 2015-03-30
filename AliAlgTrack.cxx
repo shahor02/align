@@ -615,6 +615,7 @@ void AliAlgTrack::RichardsonDeriv(const AliExternalTrackParam* trSet, const doub
 void AliAlgTrack::Print(Option_t *opt) const
 {
   // print track data
+  printf("%s ",IsCosmic() ? "  Cosmic  ":"Collision ");
   AliExternalTrackParam::Print();
   printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f | Chi2: %.3f\n",fNLocPar,fNLocExtPar,
 	 GetNPoints(),fMass,fChi2);
@@ -633,4 +634,25 @@ void AliAlgTrack::Print(Option_t *opt) const
       }
     }
   }
+}
+
+//______________________________________________
+Bool_t AliAlgTrack::IniFit() 
+{
+  // perform initial fit of the track
+  // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
+  const Double_t kOverShootX = 5;
+  AliExternalTrackParam trc = *this;
+  Bool_t isInverted = kFALSE;
+  //
+  // prepare seed at outer point
+  AliAlgPoint* p0 = GetPoint(0);
+  if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
+  if (!trc.PropagateParamOnlyTo(p->GetXPoint()+kOverShootX)) return kFALSE;
+  //
+  int np = GetNPoints();
+  for (int ip=0;ip<np;ip++) {
+    
+  }
+
 }

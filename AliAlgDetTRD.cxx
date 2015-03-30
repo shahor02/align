@@ -48,7 +48,7 @@ void AliAlgDetTRD::DefineVolumes()
       const char *symname = Form("TRD/sm%02d/st%d/pl%d",isector,istack,ilr);
       if (!gGeoManager->GetAlignableEntry(symname)) continue;
       UShort_t vid    = AliGeomManager::LayerToVolUID(AliGeomManager::kTRD1+ilr,ich);
-      AddVolume(chamb = new AliAlgSensTRD(symname,vid,lid) );
+      AddVolume(chamb = new AliAlgSensTRD(symname,vid,lid,isector) );
       if (!sect[isector]) sect[isector] = new AliAlgVol(Form("TRD/sm%02d",isector));
       chamb->SetParent(sect[isector]);
     } // chamber

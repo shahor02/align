@@ -1,106 +1,63 @@
-#include "AliAlgDetITS.h"
+#include "AliAlgDetTOF.h"
 #include "AliAlgVol.h"
-#include "AliAlgSens.h"
+#include "AliAlgSensTOF.h"
 #include "AliAlgSteer.h"
-#include "AliITSgeomTGeo.h"
 #include "AliGeomManager.h"
+#include "AliTOFGeometry.h"
 #include "AliESDtrack.h"
+#include <TGeoManager.h>
 
-ClassImp(AliAlgDetITS);
+ClassImp(AliAlgDetTOF);
 
 //____________________________________________
-AliAlgDetITS::AliAlgDetITS()
+AliAlgDetTOF::AliAlgDetTOF()
 {
   // default c-tor
-  SetDetID(AliAlgSteer::kITS);
+  SetDetID(AliAlgSteer::kTOF);
 }
 
 //____________________________________________
-AliAlgDetITS::AliAlgDetITS(const char* name, const char* title)
+AliAlgDetTOF::AliAlgDetTOF(const char* name, const char* title)
   :AliAlgDet(name,title)
 {
-  SetDetID(AliAlgSteer::kITS);
+  SetDetID(AliAlgSteer::kTOF);
 }
 
 //____________________________________________
-AliAlgDetITS::~AliAlgDetITS()
+AliAlgDetTOF::~AliAlgDetTOF()
 {
   // d-tor
 }
 
 //____________________________________________
-void AliAlgDetITS::DefineVolumes()
+void AliAlgDetTOF::DefineVolumes()
 {
-  // define ITS volumes
+  // define TOF volumes
   //
-  const int kNSPDSect = 10;
-  AliAlgVol *volITS=0,*hstave=0,*ladd=0;
-  AliAlgSens *sens=0;
+  const int kNSect = 18,kNStrips = AliTOFGeometry::NStripA()+2*AliTOFGeometry::NStripB()+2*AliTOFGeometry::NStripC();
+  AliAlgSensTOF *strip=0;
   //
-  AddVolume( volITS = new AliAlgVol("ITS") );
-  int cntVolID=0;
+  //  AddVolume( volTOF = new AliAlgVol("TOF") ); // no main volume, why?
+  AliAlgVol *sect[kNSect] = {0};
   //
-  // SPD
-  AliAlgVol *sect[kNSPDSect] = {0};
-  for (int isc=0;isc<kNSPDSect;isc++) { // sectors
-    AddVolume( sect[isc] = new AliAlgVol(Form("ITS/SPD0/Sector%d",isc)) );
-    sect[isc]->SetParent(volITS);
-  }
-  for (int ilr=0;ilr<=1;ilr++) { // SPD layers
-    //
-    cntVolID = 0;
-    int nst = AliITSgeomTGeo::GetNLadders(ilr+1)/kNSPDSect; // 2 or 4 staves per sector
-    for (int isc=0;isc<kNSPDSect;isc++) { // sectors
-      for (int ist=0;ist<nst;ist++) { // staves of SPDi
-	for (int ihst=0;ihst<2;ihst++) { // halfstave
-	  AddVolume ( hstave = new AliAlgVol(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d",
-						  ilr,isc,ist,ihst)) );
-	  hstave->SetParent(sect[isc]);
-	  for (int isn=0;isn<2;isn++) { // "ladder" (sensor)	    
-	    AddVolume( sens = new AliAlgSens(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",
-						  ilr,isc,ist,ihst,isn+ihst*2), 
-					     AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
-	    sens->SetParent(hstave);
-	  }
-	}
-      } // staves of SPDi
-    } // sectors
-  } // SPD layers
-  //
-  // SDD
-  for (int ilr=2;ilr<=3;ilr++) { // layer
-    cntVolID = 0;
-    for (int ist=0;ist<AliITSgeomTGeo::GetNLadders(ilr+1);ist++) { // ladder
-      AddVolume( ladd = new AliAlgVol(Form("ITS/SDD%d/Ladder%d",ilr,ist)) );
-      ladd->SetParent(volITS);
-      for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
-	AddVolume( sens = new AliAlgSens(Form("ITS/SDD%d/Ladder%d/Sensor%d",ilr,ist,isn), 
-					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
-	sens->SetParent(ladd); 
-      }
-    } // ladder
+  for (int isc=0;isc<kNSect;isc++) AddVolume(sect[isc]=new AliAlgVol(Form("TOF/sm%02d",isc)));
+  
+  int iid = -1;
+  for (int isc=0;isc<kNSect;isc++) {
+    for (int istr=1;istr<=kNStrips;istr++) { // strip
+      int vid = AliGeomManager::LayerToVolUID(AliGeomManager::kTOF, ++iid);
+      const char *symname = Form("TOF/sm%02d/strip%02d",isc,istr);
+      if (!gGeoManager->GetAlignableEntry(symname)) continue;
+      AddVolume(strip = new AliAlgSensTOF(symname,vid,iid,isc) );
+      strip->SetParent(sect[isc]);
+    } // strip
   } // layer
-  //
-  // SSD
-  for (int ilr=4;ilr<=5;ilr++) { // layer
-    cntVolID = 0;
-    for (int ist=0;ist<AliITSgeomTGeo::GetNLadders(ilr+1);ist++) { // ladder
-      AddVolume( ladd = new AliAlgVol(Form("ITS/SSD%d/Ladder%d",ilr,ist)) );
-      ladd->SetParent(volITS);
-      for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
-	AddVolume( sens = new AliAlgSens(Form("ITS/SSD%d/Ladder%d/Sensor%d",ilr,ist,isn),
-					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
-	sens->SetParent(ladd); 
-      }
-    } // ladder
-  } // layer
-  //
   //
 }
 
 //____________________________________________
-Bool_t AliAlgDetITS::PresentInTrack(const AliESDtrack* trc) const 
+Bool_t AliAlgDetTOF::PresentInTrack(const AliESDtrack* trc) const 
 {
   // test if detector had seed this track
-  return trc->IsOn(AliESDtrack::kITSrefit);
+  return trc->IsOn(AliESDtrack::kTOFout);
 }

@@ -40,8 +40,9 @@ class AliAlgSteer : public TObject
   //
   virtual void Print(const Option_t *opt="")              const;
   //
+  static Char_t* GetDetNameByDetID(Int_t id)                    {return (Char_t*)fgkDetectorName[id];}
+  //
  protected:
-
 
  protected:
   //

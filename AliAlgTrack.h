@@ -9,7 +9,7 @@
 class AliAlgTrack: public AliExternalTrackParam
 {
  public:
-  enum {kFieldONBit=BIT(14),kResidDoneBit=BIT(15),kDerivDoneBit=BIT(16)};
+  enum {kCosmicBit=BIT(14),kFieldONBit=BIT(15),kResidDoneBit=BIT(16),kDerivDoneBit=BIT(17)};
   enum {kNKinParBOFF=4                       // N params for ExternalTrackParam part w/o field
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
 	,kNMSPar=2                           // N params per MS act       
@@ -37,12 +37,16 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t CalcResiduals(const double *params);
   Bool_t CalcResidDeriv(const double *params);
   //
+  Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
+  void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit);}
   Bool_t GetFieldON()                            const {return TestBit(kFieldONBit);}
   void   SetFieldON(Bool_t v=kTRUE)                    {SetBit(kFieldONBit,v);}
   Bool_t GetResidDone()                          const {return TestBit(kResidDoneBit);}
   void   SetResidDone(Bool_t v=kTRUE)                  {SetBit(kResidDoneBit,v);}
   Bool_t GetDerivDone()                          const {return TestBit(kDerivDoneBit);}
   void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit,v);}
+  //
+  Bool_t SortPoints()                                  {fPoints.Sort();}
   // propagation methods
   //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
   Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);

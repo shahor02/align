@@ -14,6 +14,7 @@
  **************************************************************************/
 
 #include "AliAlgSensTRD.h"
+#include "AliTRDgeometry.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
 ClassImp(AliAlgSensTRD)
@@ -22,8 +23,9 @@ using namespace AliAlgAux;
 using namespace TMath;
 
 //_________________________________________________________
-AliAlgSensTRD::AliAlgSensTRD(const char* name,Int_t vid, Int_t iid) 
-  : AliAlgSens(name,vid,iid)
+AliAlgSensTRD::AliAlgSensTRD(const char* name,Int_t vid, Int_t iid, Int_t isec) 
+  :AliAlgSens(name,vid,iid)
+  ,fSector(isec)
 {
   // def c-tor
 }
@@ -37,13 +39,8 @@ AliAlgSensTRD::~AliAlgSensTRD()
 //__________________________________________________________________
 void AliAlgSensTRD::SetTrackingFrame()
 {
-  // define tracking frame of the sensor
-  double tra[3]={0},loc[3],glo[3];
-  // TRD defines tracking frame with origin in sensor, others at 0
-  GetMatrixT2L().LocalToMaster(tra,loc);
-  GetMatrixL2GOrig().LocalToMaster(loc,glo);
-  fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
-  fAlp = ATan2(glo[1],glo[0]);
-  AliAlgAux::BringTo02Pi(fAlp);
+  // define tracking frame of the sensor: just rotation by sector angle
+  fAlp = SectAlpha(fSector);
+  fX = 0;
 }
 

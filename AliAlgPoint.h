@@ -1,23 +1,29 @@
 #ifndef ALIALGPOINT_H
 #define ALIALGPOINT_H
 
-
 #include <TObject.h>
+
 class AliExternalTrackParam;
 
 
 class AliAlgPoint : public TObject
 {
  public:
-  enum {kMaterialBit=BIT(14),kMeasurementBit=BIT(15),kVaryELossBit=BIT(16),kUseBzOnly=BIT(17)};
-
+  enum {kMaterialBit=BIT(14)     // point contains material
+	,kMeasurementBit=BIT(15) // point contains measurement
+	,kVaryELossBit=BIT(16)   // ELoss variation allowed
+	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
+	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
+  };
+  
   AliAlgPoint();
   virtual ~AliAlgPoint() {}
   //
   void       Init();
-
+  //
   Double_t   GetAlphaSens()          const {return fAlphaSens;}
   Double_t   GetXSens()              const {return fXSens;}
+  Double_t   GetXPoint()             const {return fXSens + GetXTracking();}
   Double_t   GetXTracking()          const {return fXYZTracking[0];}
   Double_t   GetYTracking()          const {return fXYZTracking[1];}
   Double_t   GetZTracking()          const {return fXYZTracking[2];}
@@ -30,6 +36,7 @@ class AliAlgPoint : public TObject
   Bool_t     ContainsMeasurement()   const {return TestBit(kMeasurementBit);}
   Bool_t     GetELossVaried()        const {return TestBit(kVaryELossBit);}
   Bool_t     GetUseBzOnly()          const {return TestBit(kUseBzOnly);}
+  Bool_t     IsInvDir()              const {return TestBit(kInvDir);}
   //
   Double_t   GetXTimesRho()          const {return fXTimesRho;}
   Double_t   GetX2X0()               const {return fX2X0;}
@@ -44,15 +51,16 @@ class AliAlgPoint : public TObject
   void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
   void       SetContainsMeasurement(Bool_t v=kTRUE)   {SetBit(kMeasurementBit,v);}
   void       SetUseBzOnly(Bool_t v=kTRUE)             {SetBit(kUseBzOnly,v);}
+  void       SetInvDir(Bool_t v=kTRUE)                {SetBit(kInvDir,v);}
   //
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;
   //
   void       SetAlphaSens(double a)                   {fAlphaSens = a;}
   void       SetXSens(double x)                       {fXSens = x;}
-  void       SetXYZTracking(double r[3])   {for (int i=3;i--;) fXYZTracking[i]=r[i];}
+  void       SetXYZTracking(const double r[3])   {for (int i=3;i--;) fXYZTracking[i]=r[i];}
   void       SetXYZTracking(double x,double y,double z);
   void       SetYZErrTracking(double sy2, double syz, double sz2);
-  void       SetYZErrTracking(double *err) {for (int i=3;i--;) fErrYZTracking[i]=err[i];}
+  void       SetYZErrTracking(const double *err) {for (int i=3;i--;) fErrYZTracking[i]=err[i];}
   Double_t   GetErrDiag(int i)             const {return fErrDiag[i];}
   //
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
@@ -63,7 +71,11 @@ class AliAlgPoint : public TObject
   //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
-
+  //
+  protected:
+  virtual Bool_t  IsSortable()                         const {return kTRUE;}
+  virtual Int_t   Compare(const TObject* a)            const;
+  //
  protected:
   //
   Int_t    fMaxLocVarID;                               // The residuals/derivatives depend on params<fMaxLocVarID.

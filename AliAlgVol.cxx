@@ -17,6 +17,7 @@
 #include "AliAlgSens.h"
 #include "AliAlignObjParams.h"
 #include "AliAlgAux.h"
+#include "AliLog.h"
 #include <TString.h>
 
 ClassImp(AliAlgVol)
@@ -110,5 +111,26 @@ void AliAlgVol::Print(const Option_t */*opt*/) const
   //  TString opts = opt;
   //  opts.ToLower();
   printf("Lev:%2d %s\n",CountParents(),GetSymName());
+  //
+}
+
+//____________________________________________
+void AliAlgVol::PrepareMatrixL2G()
+{
+  // extract from geometry L2G matrix
+  const TGeoHMatrix* g2l = AliGeomManager::GetMatrix(GetSymName());
+  if (!g2l) AliFatalF("Failed to find L2G matrix for %s",GetSymName());
+  SetMatrixL2G(*g2l);
+  //
+}
+
+//____________________________________________
+void AliAlgVol::PrepareMatrixL2GOrig()
+{
+  // extract from geometry ideal L2G matrix
+  TGeoHMatrix mtmp;
+  if (!AliGeomManager::GetOrigGlobalMatrix(GetSymName(),mtmp)) 
+    AliFatalF("Failed to find ideal L2G matrix for %s",GetSymName());
+  SetMatrixL2GOrig(mtmp);
   //
 }

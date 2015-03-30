@@ -2,7 +2,7 @@
 #define ALIALGSENS_H
 
 #include "AliAlgVol.h"
-
+#include <TMath.h>
 
 class TObjArray;
 
@@ -41,9 +41,14 @@ class AliAlgSens : public AliAlgVol
   void GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const;
   void DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const;
   //
+  virtual void   PrepareMatrixT2L();
+  //
   virtual void   SetTrackingFrame();
   virtual Bool_t IsSensor()                       const {return kTRUE;}
   virtual void   Print(const Option_t *opt="")    const;
+  //
+  static Double_t SectAlpha(int i)                      {return (i+0.5)*TMath::Pi()/9;}
+  static Double_t SectDAlpha(int i)                     {return TMath::Pi()/9;}
   //
  protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}

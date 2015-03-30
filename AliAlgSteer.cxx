@@ -18,12 +18,14 @@
 #include "AliAlgDet.h"
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTRD.h"
-
-const char* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
-const int AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
-							       AliGeomManager::kMUON,AliGeomManager::kEMCAL};
+#include "AliAlgDetTOF.h"
 
 ClassImp(AliAlgSteer)
+
+
+const Char_t* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
+const Int_t   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
+								   AliGeomManager::kMUON,AliGeomManager::kEMCAL};
 
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer()
@@ -73,7 +75,7 @@ void AliAlgSteer::Init()
     case kITS: det = new AliAlgDetITS("ITS"); break;
       //  case kTPC: det = new AliAlgDetTPC(); break;
     case kTRD: det = new AliAlgDetTRD("TRD"); break;
-      //  case kTOF: det = new AliAlgDetTOF(); break;
+    case kTOF: det = new AliAlgDetTOF("TOF"); break;
     default: AliErrorF("%d not implemented yet",id); break;
     };
   }
@@ -125,6 +127,10 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     det->ProcessPoints(esdTr, fAlgTrack);
   }
   //
+  fAlgTrack->SortPoints();
+  //
+  fAlgTrack->AliExternalTrackParam::operator=(*esdTr);
+
   return kTRUE;
 }
 
@@ -160,7 +166,8 @@ void AliAlgSteer::Print(const Option_t *opt) const
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (det) det->Print(opt);
-    else printf("Detector:%5s is not defined\n",fgkDetectorName[idt]);
+    else printf("Detector:%5s is not defined\n",GetDetNameByDetID(idt));
   }
-  
+  //  
 }
+

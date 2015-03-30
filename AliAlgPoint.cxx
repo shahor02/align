@@ -82,7 +82,10 @@ void AliAlgPoint::Init()
 void AliAlgPoint::Print(Option_t* ) const
 {
   // print
-  printf("Det%d SID:%4d Alp:%+.3f X:%+9.4f",GetDetID(),GetSID(),GetAlphaSens(),GetXSens());
+  printf("%cDet%d SID:%4d Alp:%+.3f X:%+9.4f",IsInvDir() ? '*':' ',
+	 //	 AliAlgSteer::GetDetNameByDetID(GetDetID()),
+	 GetDetID(),
+	 GetSID(),GetAlphaSens(),GetXSens());
   if (ContainsMeasurement()) {
     printf(" Meas: Xtr: %+8.4f Ytr: %+8.4f Ztr: %+8.4f",
 	   GetXTracking(),GetYTracking(),GetZTracking());
@@ -102,3 +105,29 @@ void AliAlgPoint::Clear(Option_t* )
   fDetID = -1;
   fSID   = -1;
 }
+
+//__________________________________________________________________
+Int_t AliAlgPoint::Compare(const TObject* b) const
+{
+  // sort points in direction opposite to track propagation, i.e.
+  // 1) for tracks from collision: range in decreasing tracking X
+  // 2) for cosmic tracks: upper leg (pnt->IsInvDir()==kTRUE) ranged in increasing X
+  //                       lower leg - in decreasing X
+  AliAlgPoint* pnt = (AliAlgPoint*)b;
+  double x = GetXSens()+GetXTracking();
+  double xp = pnt->GetXSens()+pnt->GetXTracking();
+  if (!IsInvDir()) { // track propagates from low to large X via this point
+    if (!pnt->IsInvDir()) { // via this one also
+      return x>xp ? -1:1;   
+    }
+    else return 1; // range points of lower leg 1st
+  }
+  else { // this point is from upper cosmic leg: track propagates from large to low X
+    if (pnt->IsInvDir()) { // this one also
+      return x>xp ? 1:-1;
+    }
+    else return x>xp ? 1:-1; // other point is from lower leg
+  }
+  //
+}
+
