@@ -641,6 +641,10 @@ Bool_t AliAlgTrack::IniFit()
 {
   // perform initial fit of the track
   // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
+  
+  const double kIniErr[15] = {
+    50*50,
+  };
   const Double_t kOverShootX = 5;
   AliExternalTrackParam trc = *this;
   Bool_t isInverted = kFALSE;
@@ -649,6 +653,7 @@ Bool_t AliAlgTrack::IniFit()
   AliAlgPoint* p0 = GetPoint(0);
   if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
   if (!trc.PropagateParamOnlyTo(p->GetXPoint()+kOverShootX)) return kFALSE;
+  trc.
   //
   int np = GetNPoints();
   for (int ip=0;ip<np;ip++) {
