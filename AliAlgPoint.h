@@ -17,7 +17,7 @@ class AliAlgPoint : public TObject
   };
   
   AliAlgPoint();
-  virtual ~AliAlgPoint() {}
+  virtual   ~AliAlgPoint() {}
   //
   void       Init();
   //
@@ -27,7 +27,9 @@ class AliAlgPoint : public TObject
   Double_t   GetXTracking()          const {return fXYZTracking[0];}
   Double_t   GetYTracking()          const {return fXYZTracking[1];}
   Double_t   GetZTracking()          const {return fXYZTracking[2];}
+  const Double_t* GetYZTracking()    const {return &fXYZTracking[1];}
   const Double_t* GetXYZTracking()   const {return fXYZTracking;}
+  const Double_t* GetYZErrTracking() const {return fErrYZTracking;}
   //
   Int_t      GetDetID()              const {return fDetID;}
   Int_t      GetSID()                const {return fSID;}

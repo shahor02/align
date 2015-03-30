@@ -163,7 +163,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       }
       //
       // we will vary the tracks starting from the original parameters propagated to given point and stored there
-      SetParams(probD,kNRDClones, pnt->GetXSens()+pnt->GetXTracking(),pnt->GetAlphaSens(),pnt->GetTrParamWS());
+      SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWS());
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
@@ -285,22 +285,22 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   //
   if (GetFieldON()) {
     if (pnt->GetUseBzOnly()) {
-      if (!tr.PropagateParamOnlyTo(pnt->GetXSens()+pnt->GetXTracking(),AliTrackerBase::GetBz(xyz))) {
-	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
+      if (!tr.PropagateParamOnlyTo(pnt->GetXPoint(),AliTrackerBase::GetBz(xyz))) {
+	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXPoint()));
 	return kFALSE;
       }
     }
     else {
       AliTrackerBase::GetBxByBz(xyz,bxyz);
-      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXSens()+pnt->GetXTracking(),bxyz)) {
-	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
+      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXPoint(),bxyz)) {
+	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXPoint()));
 	return kFALSE;
       }
     }
   }    
   else { // straigth line propagation
-    if ( !tr.PropagateParamOnlyTo(pnt->GetXSens()+pnt->GetXTracking(),0) ) {
-      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
+    if ( !tr.PropagateParamOnlyTo(pnt->GetXPoint(),0) ) {
+      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXPoint()));
       return kFALSE;
     }
   }
@@ -641,23 +641,44 @@ Bool_t AliAlgTrack::IniFit()
 {
   // perform initial fit of the track
   // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
-  
-  const double kIniErr[15] = {
-    50*50,
+  const double kErrSpace=50.;
+  const double kErrAng = 0.3;
+  const double kErrRelPtI = 0.5;
+  const double kIniErr[15] = { // initial error
+    kErrSpace*kErrSpace,
+    0                  , kErrSpace*kErrSpace,
+    0                  ,                   0, kErrAng*kErrAng,
+    0                  ,                   0,               0, kErrAng*kErrAng,
+    0                  ,                   0,               0,               0, kErrRelPtI*kErrRelPtI
   };
   const Double_t kOverShootX = 5;
   AliExternalTrackParam trc = *this;
   Bool_t isInverted = kFALSE;
   //
+  fChi2 = 0;
   // prepare seed at outer point
   AliAlgPoint* p0 = GetPoint(0);
   if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
   if (!trc.PropagateParamOnlyTo(p->GetXPoint()+kOverShootX)) return kFALSE;
-  trc.
+  double* cov = (double*)trc.GetCovariance();
+  memcpy(cov,kIniErr,15*sizeof(double));
+  cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
   //
   int np = GetNPoints();
+  Bool_t res = 0;
   for (int ip=0;ip<np;ip++) {
-    
+    AliAlgPoint* pnt = GetPoint(ip);
+    if (!PropagateToPoint(trc, pnt)) return kFALSE; // failed
+    //
+    // to do: material corrections
+    //
+    if (pnt->ContainsMeasurement()) {
+      const double* yz    = pnt->GetYZTracking();
+      const double* errYZ = pnt->GetYZErrTracking();
+      double chi = trc.GetPredictedChi2(yz,errYZ);
+      if (!trc.Update(yz,errYZ)) return kFALSE;
+      fChi2 += chi2;
+    }
   }
-
+  //
 }

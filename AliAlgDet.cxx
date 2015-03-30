@@ -105,7 +105,7 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   pnt->SetSID(sid);
   //
   pnt->SetContainsMeasurement();
-  // todo
+  //
   return pnt;
   //
 }

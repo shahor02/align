@@ -1,10 +1,10 @@
 #ifndef ALIALGTRACK_H
 #define ALIALGTRACK_H
 
-#include <AliExternalTrackParam.h>
+#include "AliExternalTrackParam.h"
+#include "AliAlgPoint.h"
 #include <TObjArray.h>
 #include <TArrayD.h>
-#include "AliAlgPoint.h"
 
 class AliAlgTrack: public AliExternalTrackParam
 {
