@@ -202,7 +202,7 @@ void AliAlgSens::SetTrackingFrame()
   GetMatrixL2GOrig().LocalToMaster(loc,glo);
   fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
   fAlp = ATan2(glo[1],glo[0]);
-  AliAlgAux::BringTo02Pi(fAlp);
+  AliAlgAux::BringToPiPM(fAlp);
 }
 
 //____________________________________________

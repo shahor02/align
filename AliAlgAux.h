@@ -12,6 +12,7 @@ namespace AliAlgAux {
   const double kAlmostOneF = 1.-kAlmostZeroF;
   //
   template<typename F> void   BringTo02Pi(F &phi);
+  template<typename F> void   BringToPiPM(F &phi);
   void   PrintBits(ULong64_t patt, Int_t maxBits);
   Int_t  NumberOfBitsSet(UInt_t x);
   Bool_t SmallerAbs(double d, double tolD)    {return Abs(d)<tolD;}
@@ -29,6 +30,13 @@ template<typename F>
 inline void AliAlgAux::BringTo02Pi(F &phi) {
   // bring phi to 0-2pi range
   if (phi<0) phi+=TwoPi(); else if (phi>TwoPi()) phi-=TwoPi();
+}
+
+//_________________________________________________________________________________
+template<typename F>
+inline void AliAlgAux::BringToPiPM(F &phi) {
+  // bring phi to -pi:pi range
+  if (phi>TMath::Pi()) phi-=TwoPi();
 }
 
 //_________________________________________________________________________________

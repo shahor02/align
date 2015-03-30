@@ -642,8 +642,8 @@ Bool_t AliAlgTrack::IniFit()
   // perform initial fit of the track
   // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
   const double kErrSpace=50.;
-  const double kErrAng = 0.3;
-  const double kErrRelPtI = 0.5;
+  const double kErrAng = 0.5;
+  const double kErrRelPtI = 0.7;
   const double kIniErr[15] = { // initial error
     kErrSpace*kErrSpace,
     0                  , kErrSpace*kErrSpace,
@@ -666,12 +666,16 @@ Bool_t AliAlgTrack::IniFit()
   //
   int np = GetNPoints();
   Bool_t res = 0;
+  printf("Start "); trc.Print();
+
   for (int ip=0;ip<np;ip++) {
     AliAlgPoint* pnt = GetPoint(ip);
+    printf("GoTo%d ",ip);     pnt->Print();
     if (!PropagateToPoint(trc, pnt)) return kFALSE; // failed
     //
     // to do: material corrections
     //
+    trc.Print();
     if (pnt->ContainsMeasurement()) {
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
@@ -679,6 +683,10 @@ Bool_t AliAlgTrack::IniFit()
       if (!trc.Update(yz,errYZ)) return kFALSE;
       fChi2 += chi;
     }
+    printf("pnt%d chi2: %f ",ip,fChi2); trc.Print();
   }
   //
+  this->AliExternalTrackParam::operator=(trc);
+  //
+  return kTRUE;
 }

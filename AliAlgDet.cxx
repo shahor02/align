@@ -91,13 +91,35 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   if (!sid<0) return 0;
   AliAlgPoint* pnt = GetPointFromPool();
   //
-  double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetY()[pntId]};
+  double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
   AliAlgSens* sens = GetSensor(sid);
   const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
   matL2G.MasterToLocal(glo,loc);
   const TGeoHMatrix& matT2L = sens->GetMatrixT2L();  // matrix for tracking to local frame translation
   matT2L.MasterToLocal(loc,tra);
   //
+  // convert error
+  TGeoHMatrix hcov;
+  Double_t hcovel[9];
+  const TGeoHMatrix& matL2Gor = sens->GetMatrixL2GOrig(); // local to global matrix
+  const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
+  hcovel[0] = double(pntcov[0]);
+  hcovel[1] = double(pntcov[1]);
+  hcovel[2] = double(pntcov[2]);
+  hcovel[3] = double(pntcov[1]);
+  hcovel[4] = double(pntcov[3]);
+  hcovel[5] = double(pntcov[4]);
+  hcovel[6] = double(pntcov[2]);
+  hcovel[7] = double(pntcov[4]);
+  hcovel[8] = double(pntcov[5]);
+  hcov.SetRotation(hcovel);
+  hcov.Multiply(&matL2Gor);
+  hcov.MultiplyLeft(&matL2Gor.Inverse());
+  hcov.Multiply(&matT2L);
+  hcov.MultiplyLeft(&matT2L.Inverse());
+  //
+  Double_t *hcovscl = hcov.GetRotationMatrix();
+  pnt->SetYZErrTracking(hcovscl[4],hcovscl[5],hcovscl[8]);
   pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
   pnt->SetAlphaSens(sens->GetAlpTracking());
   pnt->SetXSens(sens->GetXTracking());

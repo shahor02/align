@@ -47,7 +47,7 @@ class AliAlgSens : public AliAlgVol
   virtual Bool_t IsSensor()                       const {return kTRUE;}
   virtual void   Print(const Option_t *opt="")    const;
   //
-  static Double_t SectAlpha(int i)                      {return (i+0.5)*TMath::Pi()/9;}
+  static Double_t SectAlpha(int i)                      {if (i>8)i-=18; return (i+0.5)*TMath::Pi()/9;}
   static Double_t SectDAlpha(int i)                     {return TMath::Pi()/9;}
   //
  protected:
