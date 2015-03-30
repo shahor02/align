@@ -39,6 +39,8 @@
   //  gSystem->SetMakeSharedLib(cmd.Data());
   //
   // LOAD NECESSARY ADDITIONAL LIBRARIES
+  gSystem->AddIncludePath(" -I./ -I$ALICE_ROOT/include");
+  //
   if (gClassTable->GetID("HistoManager")<0) {
     gROOT->ProcessLine(".L HistoManager.cxx+");
     if (gClassTable->GetID("HistoManager")<0) {
