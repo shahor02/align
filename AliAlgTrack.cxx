@@ -659,7 +659,7 @@ Bool_t AliAlgTrack::IniFit()
   // prepare seed at outer point
   AliAlgPoint* p0 = GetPoint(0);
   if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
-  if (!trc.PropagateParamOnlyTo(p->GetXPoint()+kOverShootX)) return kFALSE;
+  if (!trc.PropagateParamOnlyTo(p0->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) return kFALSE;
   double* cov = (double*)trc.GetCovariance();
   memcpy(cov,kIniErr,15*sizeof(double));
   cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
@@ -677,7 +677,7 @@ Bool_t AliAlgTrack::IniFit()
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);
       if (!trc.Update(yz,errYZ)) return kFALSE;
-      fChi2 += chi2;
+      fChi2 += chi;
     }
   }
   //

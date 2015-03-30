@@ -47,6 +47,7 @@ class AliAlgTrack: public AliExternalTrackParam
   void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit,v);}
   //
   Bool_t SortPoints()                                  {fPoints.Sort();}
+  Bool_t IniFit();
   // propagation methods
   //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
   Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
