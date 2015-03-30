@@ -17,6 +17,7 @@
 #include "AliLog.h"
 #include "AliAlgDet.h"
 #include "AliAlgDetITS.h"
+#include "AliAlgDetTRD.h"
 
 const char* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
 const int AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
@@ -63,7 +64,7 @@ void AliAlgSteer::Init()
   void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
 {
   // add detector participating in the alignment, optionally constructed externally
-  if (id>=kNDetectors)  AliFatalF("Detector type %d exceeds allowed range %d:%d",
+  if (id>=kNDetectors)  AliFatalF("Detector typeID %d exceeds allowed range %d:%d",
 				  id,0,kNDetectors-1);
   //
   if (fDetPos[id]!=-1) AliFatalF("Detector %d was already added",id);
@@ -71,7 +72,7 @@ void AliAlgSteer::Init()
     switch(id) {
     case kITS: det = new AliAlgDetITS("ITS"); break;
       //  case kTPC: det = new AliAlgDetTPC(); break;
-      //  case kTRD: det = new AliAlgDetTRD(); break;
+    case kTRD: det = new AliAlgDetTRD("TRD"); break;
       //  case kTOF: det = new AliAlgDetTOF(); break;
     default: AliErrorF("%d not implemented yet",id); break;
     };
@@ -87,7 +88,7 @@ void AliAlgSteer::Init()
 void AliAlgSteer::AddDetector(AliAlgDet* det)
 {
   // add detector constructed externally to alignment framework
-  AddDetector(det->GetType(), det);
+  AddDetector(det->GetDetID(), det);
 }
 
 
@@ -114,13 +115,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   //
   fAlgTrack->Clear();
   //
-  // process the track points for each detector, fill needed points (tracking frame) in the fAlgTrack
+  // process the track points for each detector, 
+  // fill needed points (tracking frame) in the fAlgTrack
   AliAlgDet* det = 0;
   for (int idet=0;idet<kNDetectors;idet++) {
-    if (!(det=GetDetectorByType(idet))) continue;
+    if (!(det=GetDetectorByDetID(idet))) continue;
     if (!det->PresentInTrack(esdTr) ) continue;
     //
-    GetDetector(idet)->ProcessPoints(esdTr, fAlgTrack);
+    det->ProcessPoints(esdTr, fAlgTrack);
   }
   //
   return kTRUE;
@@ -156,7 +158,7 @@ void AliAlgSteer::Print(const Option_t *opt) const
 {
   // print info
   for (int idt=0;idt<kNDetectors;idt++) {
-    AliAlgDet* det = GetDetectorByType(idt);
+    AliAlgDet* det = GetDetectorByDetID(idt);
     if (det) det->Print(opt);
     else printf("Detector:%5s is not defined\n",fgkDetectorName[idt]);
   }

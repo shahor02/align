@@ -1,6 +1,6 @@
 #include "AliAlgDetITS.h"
 #include "AliAlgVol.h"
-#include "AliAlgSensITS.h"
+#include "AliAlgSens.h"
 #include "AliAlgSteer.h"
 #include "AliITSgeomTGeo.h"
 #include "AliGeomManager.h"
@@ -35,7 +35,7 @@ void AliAlgDetITS::DefineVolumes()
   //
   const int kNSPDSect = 10;
   AliAlgVol *volITS=0,*hstave=0,*ladd=0;
-  AliAlgSensITS *sens=0;
+  AliAlgSens *sens=0;
   //
   AddVolume( volITS = new AliAlgVol("ITS") );
   int cntVolID=0;
@@ -57,11 +57,9 @@ void AliAlgDetITS::DefineVolumes()
 						  ilr,isc,ist,ihst)) );
 	  hstave->SetParent(sect[isc]);
 	  for (int isn=0;isn<2;isn++) { // "ladder" (sensor)	    
-	    AddVolume( sens = 
-		       new AliAlgSensITS(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",
-					      ilr,isc,ist,ihst,isn+ihst*2), 
-					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID), cntVolID) );
-	    cntVolID++;
+	    AddVolume( sens = new AliAlgSens(Form("ITS/SPD%d/Sector%d/Stave%d/HalfStave%d/Ladder%d",
+						  ilr,isc,ist,ihst,isn+ihst*2), 
+					     AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	    sens->SetParent(hstave);
 	  }
 	}
@@ -76,8 +74,8 @@ void AliAlgDetITS::DefineVolumes()
       AddVolume( ladd = new AliAlgVol(Form("ITS/SDD%d/Ladder%d",ilr,ist)) );
       ladd->SetParent(volITS);
       for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
-	AddVolume( sens = new AliAlgSensITS(Form("ITS/SDD%d/Ladder%d/Sensor%d",ilr,ist,isn), 
-					    AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
+	AddVolume( sens = new AliAlgSens(Form("ITS/SDD%d/Ladder%d/Sensor%d",ilr,ist,isn), 
+					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	sens->SetParent(ladd); 
       }
     } // ladder
@@ -90,8 +88,8 @@ void AliAlgDetITS::DefineVolumes()
       AddVolume( ladd = new AliAlgVol(Form("ITS/SSD%d/Ladder%d",ilr,ist)) );
       ladd->SetParent(volITS);
       for (int isn=0;isn<AliITSgeomTGeo::GetNDetectors(ilr+1);isn++) { // sensor
-	AddVolume( sens = new AliAlgSensITS(Form("ITS/SSD%d/Ladder%d/Sensor%d",ilr,ist,isn),
-					    AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
+	AddVolume( sens = new AliAlgSens(Form("ITS/SSD%d/Ladder%d/Sensor%d",ilr,ist,isn),
+					 AliGeomManager::LayerToVolUID(ilr+1,cntVolID++)) );
 	sens->SetParent(ladd); 
       }
     } // ladder

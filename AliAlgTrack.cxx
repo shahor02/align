@@ -163,7 +163,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       }
       //
       // we will vary the tracks starting from the original parameters propagated to given point and stored there
-      SetParams(probD,kNRDClones, pnt->GetXTracking(),pnt->GetAlpha(),pnt->GetTrParamWS());
+      SetParams(probD,kNRDClones, pnt->GetXSens()+pnt->GetXTracking(),pnt->GetAlphaSens(),pnt->GetTrParamWS());
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
@@ -277,30 +277,30 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   // propagate tracks to the point
   double xyz[3],bxyz[3];
   //
-  if (!tr.RotateParamOnly(pnt->GetAlpha())) {
-    AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlpha()));
+  if (!tr.RotateParamOnly(pnt->GetAlphaSens())) {
+    AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
     return kFALSE;
   }
   tr.GetXYZ(xyz);
   //
   if (GetFieldON()) {
     if (pnt->GetUseBzOnly()) {
-      if (!tr.PropagateParamOnlyTo(pnt->GetXTracking(),AliTrackerBase::GetBz(xyz))) {
-	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXTracking()));
+      if (!tr.PropagateParamOnlyTo(pnt->GetXSens()+pnt->GetXTracking(),AliTrackerBase::GetBz(xyz))) {
+	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
 	return kFALSE;
       }
     }
     else {
       AliTrackerBase::GetBxByBz(xyz,bxyz);
-      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXTracking(),bxyz)) {
-	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXTracking()));
+      if (!tr.PropagateParamOnlyBxByBzTo(pnt->GetXSens()+pnt->GetXTracking(),bxyz)) {
+	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
 	return kFALSE;
       }
     }
   }    
   else { // straigth line propagation
-    if ( !tr.PropagateParamOnlyTo(pnt->GetXTracking(),0) ) {
-      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXTracking()));
+    if ( !tr.PropagateParamOnlyTo(pnt->GetXSens()+pnt->GetXTracking(),0) ) {
+      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXSens()+pnt->GetXTracking()));
       return kFALSE;
     }
   }

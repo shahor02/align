@@ -16,12 +16,15 @@ class AliAlgPoint : public TObject
   //
   void       Init();
 
-  Double_t   GetAlpha()              const {return fAlpha;}
+  Double_t   GetAlphaSens()          const {return fAlphaSens;}
+  Double_t   GetXSens()              const {return fXSens;}
   Double_t   GetXTracking()          const {return fXYZTracking[0];}
   Double_t   GetYTracking()          const {return fXYZTracking[1];}
   Double_t   GetZTracking()          const {return fXYZTracking[2];}
   const Double_t* GetXYZTracking()   const {return fXYZTracking;}
   //
+  Int_t      GetDetID()              const {return fDetID;}
+  Int_t      GetSID()                const {return fSID;}
   Int_t      GetMaxLocVarID()        const {return fMaxLocVarID;}
   Bool_t     ContainsMaterial()      const {return TestBit(kMaterialBit);}
   Bool_t     ContainsMeasurement()   const {return TestBit(kMeasurementBit);}
@@ -33,6 +36,9 @@ class AliAlgPoint : public TObject
   void       SetXTimesRho(double v)        {fXTimesRho = v;}
   void       SetX2X0(double v)             {fX2X0 = v;}
   //
+  void       SetDetID(Int_t id)                       {fDetID = (Char_t)id;}
+  void       SetSID(Int_t id)                         {fSID = (Short_t)id;}
+  //
   void       SetMaxLocVarID(Int_t id)                 {fMaxLocVarID = id;}
   void       SetELossVaried(Bool_t v=kTRUE)           {SetBit(kVaryELossBit,v);}
   void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
@@ -41,7 +47,8 @@ class AliAlgPoint : public TObject
   //
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;
   //
-  void       SetAlpha(double a)            {fAlpha = a;}
+  void       SetAlphaSens(double a)                   {fAlphaSens = a;}
+  void       SetXSens(double x)                       {fXSens = x;}
   void       SetXYZTracking(double r[3])   {for (int i=3;i--;) fXYZTracking[i]=r[i];}
   void       SetXYZTracking(double x,double y,double z);
   void       SetYZErrTracking(double sy2, double syz, double sz2);
@@ -62,7 +69,10 @@ class AliAlgPoint : public TObject
   Int_t    fMaxLocVarID;                               // The residuals/derivatives depend on params<fMaxLocVarID.
                                                        // If the point contains materials, fMaxLocVarID also marks
                                                        // the parameters associated with this point
-  Double_t fAlpha;                                     // Alpha of tracking frame
+  Char_t   fDetID;                                     // DetectorID
+  Short_t  fSID;                                       // sensor ID in the detector
+  Double_t fAlphaSens;                                 // Alpha of tracking frame
+  Double_t fXSens;                                     // X of tracking frame
   Double_t fXYZTracking[3];                            // X,Y,Z in tracking frame
   Double_t fCosDiagErr;                                // Cos of Phi of rotation in YZ plane which diagonalize errors
   Double_t fSinDiagErr;                                // Sin of Phi of rotation in YZ plane which diagonalize errors

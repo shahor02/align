@@ -71,7 +71,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
   int npSel(0);
   AliAlgPoint* apnt(0);
   for (int ip=0;ip<np;ip++) {
-    if (SensorOfDetector(trP->GetVolumeID()[ip])) continue;
+    if (!SensorOfDetector(trP->GetVolumeID()[ip])) continue;
     if (!(apnt=TrackPoint2AlgPoint(ip, trP))) continue;
     algTrack->AddPoint(apnt);
     npSel++;
@@ -88,7 +88,7 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   // convert to detector tracking frame
   UShort_t vid = trpArr->GetVolumeID()[pntId];
   Int_t sid = VolID2SID(vid); // sensor index within the detector
-  if (!sid) return 0;
+  if (!sid<0) return 0;
   AliAlgPoint* pnt = GetPointFromPool();
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetY()[pntId]};
@@ -99,7 +99,12 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   matT2L.MasterToLocal(loc,tra);
   //
   pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
+  pnt->SetAlphaSens(sens->GetAlpTracking());
+  pnt->SetXSens(sens->GetXTracking());
+  pnt->SetDetID(GetDetID());
+  pnt->SetSID(sid);
   //
+  pnt->SetContainsMeasurement();
   // todo
   return pnt;
   //
@@ -249,10 +254,10 @@ void AliAlgDet::Print(const Option_t *opt) const
   //
 }
 //____________________________________________
-void AliAlgDet::SetType(UInt_t tp)
+void AliAlgDet::SetDetID(UInt_t tp)
 {
   // assign type
-  if (tp>=AliAlgSteer::kNDetectors) AliFatalF("Detector type %d exceeds allowed range %d:%d",
+  if (tp>=AliAlgSteer::kNDetectors) AliFatalF("Detector typeID %d exceeds allowed range %d:%d",
 					      tp,0,AliAlgSteer::kNDetectors-1);
   SetUniqueID(tp);
 }

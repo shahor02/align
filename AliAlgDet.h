@@ -18,8 +18,8 @@ class AliAlgDet : public TNamed
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
   virtual ~AliAlgDet();
-  Int_t   GetType()                             const {return GetUniqueID();}
-  void    SetType(UInt_t tp);
+  Int_t   GetDetID()                             const {return GetUniqueID();}
+  void    SetDetID(UInt_t tp);
   //
   void    AcknowledgeNewRun(Int_t run);
   //
@@ -32,6 +32,7 @@ class AliAlgDet : public TNamed
   Bool_t  SensorOfDetector(Int_t vid)           const {return vid>=fVolIDMin && vid<=fVolIDMax;}
   //
   AliAlgSens* GetSensor(Int_t id)               const {return (AliAlgSens*)fSensors.UncheckedAt(id);}
+  AliAlgSens* GetSensorByVolId(Int_t vid)       const {int sid=VolID2SID(vid); return sid<0 ? 0:GetSensor(sid);}
   AliAlgSens* GetSensor(const char* symname)    const {return (AliAlgSens*)fSensors.FindObject(symname);}
   AliAlgVol*  GetVolume(Int_t id)               const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
   AliAlgVol*  GetVolume(const char* symname)    const {return (AliAlgVol*)fVolumes.FindObject(symname);}

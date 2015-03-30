@@ -22,8 +22,9 @@ using namespace AliAlgAux;
 using namespace TMath;
 
 //_________________________________________________________
-AliAlgSens::AliAlgSens(const char* name,Int_t vid) 
-: AliAlgVol(name)
+AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid) 
+  : AliAlgVol(name)
+  ,fIntID(iid)
   ,fX(0)
   ,fAlp(0)
   ,fMatT2L()
@@ -189,7 +190,13 @@ void AliAlgSens::SetTrackingFrame()
 {
   // define tracking frame of the sensor
   double tra[3]={0},loc[3],glo[3];
-  GetMatrixT2L().LocalToMaster(tra,loc);
+  const TGeoHMatrix &t2l = GetMatrixT2L();
+  const double* t = t2l.GetTranslation();
+  double r = TMath::Sqrt(t[0]*t[0]+t[1]*t[1]);
+  // ITS defines tracking frame with origin in sensor, others at 0
+  if (r>1) tra[0] = r;
+  //
+  t2l.LocalToMaster(tra,loc);
   GetMatrixL2GOrig().LocalToMaster(loc,glo);
   fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
   fAlp = ATan2(glo[1],glo[0]);
@@ -202,8 +209,8 @@ void AliAlgSens::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s VId:%6d X:%8.4f Alp:%+.4f\n",
-	 CountParents(), GetSymName(), GetVolID(), fX, fAlp);
+  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f\n",
+	 CountParents(), GetSymName(), GetVolID(), GetInternalID(),fX, fAlp);
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
     GetMatrixL2GOrig().Print();

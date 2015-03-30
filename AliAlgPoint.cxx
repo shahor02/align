@@ -6,8 +6,12 @@ using namespace AliAlgAux;
 using namespace TMath;
 
 //_____________________________________
-AliAlgPoint::AliAlgPoint() :
-  fAlpha(0)
+AliAlgPoint::AliAlgPoint()
+  :fMaxLocVarID(0)
+  ,fDetID(-1)
+  ,fSID(-1)
+  ,fAlphaSens(0)
+  ,fXSens(0)
   ,fCosDiagErr(0)
   ,fSinDiagErr(0)
   ,fX2X0(0)
@@ -78,11 +82,16 @@ void AliAlgPoint::Init()
 void AliAlgPoint::Print(Option_t* ) const
 {
   // print
-  printf("Alp:%+.3f Xtr: %+8.4f Ytr: %+8.4f Ztr: %+8.4f\n",
-	 fAlpha,GetXTracking(),GetYTracking(),GetZTracking());
-  if (ContainsMaterial()) {
-    printf("X/X0: %.4f | X*rho: %.4f\n",fX2X0,fXTimesRho);
+  printf("Det%d SID:%4d Alp:%+.3f X:%+9.4f",GetDetID(),GetSID(),GetAlphaSens(),GetXSens());
+  if (ContainsMeasurement()) {
+    printf(" Meas: Xtr: %+8.4f Ytr: %+8.4f Ztr: %+8.4f",
+	   GetXTracking(),GetYTracking(),GetZTracking());
   }
+  if (ContainsMaterial()) {
+    printf(" Mat: X/X0: %.4f | X*rho: %.4f\n",fX2X0,fXTimesRho);
+  }
+  //
+  printf("\n");
 }
 
 //_____________________________________
@@ -90,4 +99,6 @@ void AliAlgPoint::Clear(Option_t* )
 {
   // reset the point
   ResetBit(0xfffffff);
+  fDetID = -1;
+  fSID   = -1;
 }

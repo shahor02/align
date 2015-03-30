@@ -30,10 +30,11 @@ class AliAlgSteer : public TObject
   Int_t GetRunNumber()                                    const {return fRunNumber;}
   //
   //----------------------------------------
+  AliAlgTrack* GetAlgTrack()                              const {return (AliAlgTrack*)fAlgTrack;}
   Bool_t ProcessTrack(const AliESDtrack* esdTr);
   Bool_t AcceptTrack(const AliESDtrack* esdTr)            const;
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
-  AliAlgDet* GetDetectorByType(Int_t i)                   const {return fDetPos[i]<0 ? 0 : fDetectors[fDetPos[i]];}
+  AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
   //----------------------------------------
   //
