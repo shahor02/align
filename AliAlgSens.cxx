@@ -218,10 +218,8 @@ void AliAlgSens::Print(const Option_t *opt) const
     GetMatrixL2GOrig().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
-    if (IsSensor()) {
-      printf("T2L         : "); 
-      ((AliAlgSens*)this)->GetMatrixT2L().Print();
-    }
+    printf("T2L         : "); 
+    ((AliAlgSens*)this)->GetMatrixT2L().Print();
   }
   //
 }
