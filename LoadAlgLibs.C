@@ -24,6 +24,12 @@ Bool_t LoadAlgLibs()
   gROOT->ProcessLine(".L AliAlgDetITS.cxx+g");
   if (gClassTable->GetID("AliAlgDetITS")<0) return kFALSE;
   //
+  gROOT->ProcessLine(".L AliAlgSensTPC.cxx+g");
+  if (gClassTable->GetID("AliAlgSensTPC")<0) return kFALSE;
+  //
+  gROOT->ProcessLine(".L AliAlgDetTPC.cxx+g");
+  if (gClassTable->GetID("AliAlgDetTPC")<0) return kFALSE;
+  //
   gROOT->ProcessLine(".L AliAlgSensTRD.cxx+g");
   if (gClassTable->GetID("AliAlgSensTRD")<0) return kFALSE;
   //

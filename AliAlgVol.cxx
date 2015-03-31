@@ -16,9 +16,12 @@
 #include "AliAlgVol.h"
 #include "AliAlgSens.h"
 #include "AliAlignObjParams.h"
+#include "AliGeomManager.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
 #include <TString.h>
+#include <TGeoManager.h>
+#include <TGeoPhysicalNode.h>
 
 ClassImp(AliAlgVol)
 
@@ -105,12 +108,18 @@ Int_t AliAlgVol::CountParents() const
 }
 
 //____________________________________________
-void AliAlgVol::Print(const Option_t */*opt*/) const
+void AliAlgVol::Print(const Option_t *opt) const
 {
   // print info
-  //  TString opts = opt;
-  //  opts.ToLower();
+  TString opts = opt;
+  opts.ToLower();
   printf("Lev:%2d %s\n",CountParents(),GetSymName());
+  if (opts.Contains("mat")) { // print matrices
+    printf("L2G original: "); 
+    GetMatrixL2GOrig().Print();
+    printf("L2G misalign: "); 
+    GetMatrixL2G().Print();
+  }
   //
 }
 
@@ -118,9 +127,27 @@ void AliAlgVol::Print(const Option_t */*opt*/) const
 void AliAlgVol::PrepareMatrixL2G()
 {
   // extract from geometry L2G matrix
-  const TGeoHMatrix* g2l = AliGeomManager::GetMatrix(GetSymName());
-  if (!g2l) AliFatalF("Failed to find L2G matrix for %s",GetSymName());
-  SetMatrixL2G(*g2l);
+  const char* path = GetSymName();
+  if (gGeoManager->GetAlignableEntry(path)) {
+    const TGeoHMatrix* l2g = AliGeomManager::GetMatrix(path);
+    if (!l2g) AliFatalF("Failed to find L2G matrix for alignable %s",path);
+    SetMatrixL2G(*l2g);
+  }
+  else { // extract from path
+    if (!gGeoManager->CheckPath(path)) AliFatalF("Volume path %s not valid!",path);
+    TGeoPhysicalNode* node = (TGeoPhysicalNode*)gGeoManager->GetListOfPhysicalNodes()->FindObject(path);
+    TGeoHMatrix l2g;
+    if (!node) {
+      AliWarningF("Attention: volume %s was not misaligned, extracting original matrix",path);
+      if (!AliGeomManager::GetOrigGlobalMatrix(path,l2g)) {
+	AliFatalF("Failed to find ideal L2G matrix for %s",path);
+      }      
+    } 
+    else {
+      l2g = *node->GetMatrix();
+    }
+    SetMatrixL2G(l2g);
+  }
   //
 }
 

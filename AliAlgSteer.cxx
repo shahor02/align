@@ -17,6 +17,7 @@
 #include "AliLog.h"
 #include "AliAlgDet.h"
 #include "AliAlgDetITS.h"
+#include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
 #include "AliTrackerBase.h"
@@ -76,10 +77,10 @@ void AliAlgSteer::Init()
   if (fDetPos[id]!=-1) AliFatalF("Detector %d was already added",id);
   if (!det) {
     switch(id) {
-    case kITS: det = new AliAlgDetITS("ITS"); break;
-      //  case kTPC: det = new AliAlgDetTPC(); break;
-    case kTRD: det = new AliAlgDetTRD("TRD"); break;
-    case kTOF: det = new AliAlgDetTOF("TOF"); break;
+    case kITS: det = new AliAlgDetITS(GetDetNameByDetID(kITS)); break;
+    case kTPC: det = new AliAlgDetTPC(GetDetNameByDetID(kTPC)); break;
+    case kTRD: det = new AliAlgDetTRD(GetDetNameByDetID(kTRD)); break;
+    case kTOF: det = new AliAlgDetTOF(GetDetNameByDetID(kTOF)); break;
     default: AliErrorF("%d not implemented yet",id); break;
     };
   }

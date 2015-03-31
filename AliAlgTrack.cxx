@@ -731,23 +731,31 @@ Bool_t AliAlgTrack::IniFit()
   //
   int np = GetNPoints();
   Bool_t res = 0;
-  printf("Start "); trc.Print();
+  //  printf("Start "); trc.Print();
 
   for (int ip=0;ip<np;ip++) { // fit from outer point towards the vertex
     AliAlgPoint* pnt = GetPoint(ip);
-    printf("GoTo%d ",ip);     pnt->Print();
-    if (!PropagateToPoint(trc, pnt)) return kFALSE; // failed
-    //
+    //    printf("GoTo%d ",ip);     pnt->Print();
+    if (!trc.Rotate(pnt->GetAlphaSens())) {
+      AliDebugF(5,"Failed to rotate to alpha=%f",pnt->GetAlphaSens());
+      return kFALSE;
+    }
+    if (!AliTrackerBase::PropagateTrackToBxByBz(&trc,pnt->GetXPoint(),fMass,1.,kFALSE)) {
+      AliDebugF(5,"Failed to rotate to X:%f",pnt->GetXPoint());
+      pnt->Print();
+      Print();
+      return kFALSE;
+    }
     // to do: material corrections
     //
-    trc.Print();
+    //    trc.Print();
     if (pnt->ContainsMeasurement()) {
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);
       if (!trc.Update(yz,errYZ)) return kFALSE;
       fChi2 += chi;
-      printf("pnt%d chi2: %f [%+e %+e / %e %e %e] ",ip,fChi2,yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]); trc.Print();
+      //      printf("pnt%d chi2: %f [%+e %+e / %e %e %e] ",ip,fChi2,yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]); trc.Print();
 
     }
   }

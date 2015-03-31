@@ -38,6 +38,7 @@ void buildAlg()
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
+  algSteer->AddDetector(AliAlgSteer::kTPC);
   algSteer->AddDetector(AliAlgSteer::kTRD);
   algSteer->AddDetector(AliAlgSteer::kTOF);
   //
