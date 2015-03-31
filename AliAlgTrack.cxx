@@ -17,6 +17,7 @@ const Int_t kNRDClones = kRichardsonN*2     ;// number of variations for derivat
 AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
+  ,fInnerPointID(0)
   ,fMass(0.14)
   ,fChi2(0)
   ,fPoints(0)
@@ -39,6 +40,7 @@ void AliAlgTrack::Clear(Option_t *)
   ResetBit(0xffffffff);
   fPoints.Clear();
   fChi2 = 0;
+  fInnerPointID = -1;
 }
 
 //____________________________________________________________________________
@@ -54,14 +56,29 @@ void AliAlgTrack::DefineDOFs()
   //
   // TODO: sort in order the tracking will be done
   //
-  // materials of including and beyond last measured point are irrelevant
-  for (int ip=np;ip--;) {
-    AliAlgPoint* pnt = GetPoint(ip);
-    pnt->SetContainsMaterial(kFALSE);
-    if (pnt->ContainsMeasurement()) break;
-  }
+  // the points are sorted in order opposite to track direction -> outer points come 1st,
+  // but for the 2-leg cosmic track the innermost points are in the middle (1st lower leg, then upper one)
   //
   for (int ip=0;ip<np;ip++) {
+    AliAlgPoint* pnt = GetPoint(ip);
+    pnt->SetContainsMaterial(kFALSE);  // materials of including and beyond last measured point are irrelevant
+    if (pnt->ContainsMeasurement()) break;
+  }
+  if (IsCosmic()) { // if there is an upper leg, its points are in the end
+    for (int ip=np;ip>fInnerPointID;ip--) {
+      AliAlgPoint* pnt = GetPoint(ip);
+      if (!pnt->IsInvDir()) { 
+	AliErrorF("Point %d must belong to cosmic upper leg but is not marked",ip);
+	Print();
+	break;
+      }
+      pnt->SetContainsMaterial(kFALSE); // materials of including and beyond last measured point are irrelevant
+      if (pnt->ContainsMeasurement()) break;
+    }
+  }
+  //
+  // the points are sorted in order opposite to track direction, start from last one
+  for (int ip=np;ip--;) {
     AliAlgPoint* pnt = GetPoint(ip);
     pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
     if (pnt->ContainsMaterial()) {
@@ -121,9 +138,9 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
       del *= 0.5;
     }
     // propagate varied tracks to each point
-    for (int ip=0;ip<np;ip++) {
+    for (int ip=np;ip--;) {
       AliAlgPoint* pnt = GetPoint(ip);
-      if ( !PropagateToPoint(probD, kNRDClones, pnt) ) return kFALSE;
+      if ( !PropagateParamToPoint(probD, kNRDClones, pnt) ) return kFALSE;
       //
       if (pnt->ContainsMeasurement()) {  
 	int offsDer = ip*fNLocPar + ipar;
@@ -146,7 +163,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
   //
   // now vary material effect related parameters: MS and eventually ELoss
   //
-  for (int ip=0;ip<np;ip++) { // loop over all points of the track
+  for (int ip=np;ip--;) { // loop over all points of the track
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
@@ -188,9 +205,9 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
 	del *= 0.5;
       }
       //
-      for (int jp=ip+1;jp<np;jp++) { // loop over points whose residuals can be affected by the material effects on point ip
+      for (int jp=ip;jp--;) { // loop over points whose residuals can be affected by the material effects on point ip
 	AliAlgPoint* pntj = GetPoint(jp);
-	if ( !PropagateToPoint(probD, kNRDClones, pntj) ) return kFALSE;
+	if ( !PropagateParamToPoint(probD, kNRDClones, pntj) ) return kFALSE;
 	//
 	if (pntj->ContainsMeasurement()) {  
 	  int offsDer = jp*fNLocPar + offs + ipar;
@@ -212,6 +229,12 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
     } // << loop over DOFs related to MS and ELoss are point ip
   }  // << loop over all points of the track
   //  
+
+  if (IsCosmic()) {
+    AliError(" TODO ");
+  }
+
+  //
   SetDerivDone();
   return kTRUE;
 }
@@ -226,9 +249,9 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   //
   int np = GetNPoints();
   fChi2 = 0;
-  for (int ip=0;ip<np;ip++) {
+  for (int ip=np;ip--;) {
     AliAlgPoint* pnt = GetPoint(ip);
-    if ( !PropagateToPoint(probe, pnt) ) return kFALSE;
+    if ( !PropagateParamToPoint(probe, pnt) ) return kFALSE;
     //    probe.Print();
     pnt->SetTrParamWS(probe.GetParameter());    // store the current track kinematics at the point (RS: do we need it here?)
     //
@@ -255,26 +278,31 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
     }
   }
   //
+  if (IsCosmic()) {
+    AliError("TODO");
+
+  }
+  //
   SetResidDone();
   return kTRUE;
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam* tr, int nTr, const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam* tr, int nTr, const AliAlgPoint* pnt)
 {
-  // Propagate set of tracks to the point
+  // Propagate set of tracks to the point  (only parameters, no error matrix)
   // VECTORIZE this
   //
   for (int itr=nTr;itr--;) {
-    if (!PropagateToPoint(tr[itr],pnt)) return kFALSE;
+    if (!PropagateParamToPoint(tr[itr],pnt)) return kFALSE;
   }
   return kTRUE;
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt)
 {
-  // propagate tracks to the point
+  // propagate tracks to the point (only parameters, no error matrix)
   double xyz[3],bxyz[3];
   //
   if (!tr.RotateParamOnly(pnt->GetAlphaSens())) {
@@ -300,6 +328,43 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   }    
   else { // straigth line propagation
     if ( !tr.PropagateParamOnlyTo(pnt->GetXPoint(),0) ) {
+      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXPoint()));
+      return kFALSE;
+    }
+  }
+  //
+  return kTRUE;
+}
+
+//______________________________________________________
+Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt)
+{
+  // propagate tracks to the point
+  double xyz[3],bxyz[3];
+  //
+  if (!tr.Rotate(pnt->GetAlphaSens())) {
+    AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
+    return kFALSE;
+  }
+  tr.GetXYZ(xyz);
+  //
+  if (GetFieldON()) {
+    if (pnt->GetUseBzOnly()) {
+      if (!tr.PropagateTo(pnt->GetXPoint(),AliTrackerBase::GetBz(xyz))) {
+	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXPoint()));
+	return kFALSE;
+      }
+    }
+    else {
+      AliTrackerBase::GetBxByBz(xyz,bxyz);
+      if (!tr.PropagateToBxByBz(pnt->GetXPoint(),bxyz)) {
+	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXPoint()));
+	return kFALSE;
+      }
+    }
+  }    
+  else { // straigth line propagation
+    if ( !tr.PropagateTo(pnt->GetXPoint(),0) ) {
       AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXPoint()));
       return kFALSE;
     }
@@ -617,8 +682,8 @@ void AliAlgTrack::Print(Option_t *opt) const
   // print track data
   printf("%s ",IsCosmic() ? "  Cosmic  ":"Collision ");
   AliExternalTrackParam::Print();
-  printf("N Free Params: %d, for kinematics: %d | Npoints: %d | M : %.3f | Chi2: %.3f\n",fNLocPar,fNLocExtPar,
-	 GetNPoints(),fMass,fChi2);
+  printf("N Free Params: %d, for kinematics: %d | Npoints: %d (Inner:%d) | M : %.3f | Chi2: %.3f\n",fNLocPar,fNLocExtPar,
+	 GetNPoints(),GetInnerPointID(),fMass,fChi2);
   //
   TString optS = opt;
   optS.ToLower();
@@ -668,7 +733,7 @@ Bool_t AliAlgTrack::IniFit()
   Bool_t res = 0;
   printf("Start "); trc.Print();
 
-  for (int ip=0;ip<np;ip++) {
+  for (int ip=0;ip<np;ip++) { // fit from outer point towards the vertex
     AliAlgPoint* pnt = GetPoint(ip);
     printf("GoTo%d ",ip);     pnt->Print();
     if (!PropagateToPoint(trc, pnt)) return kFALSE; // failed
@@ -682,11 +747,37 @@ Bool_t AliAlgTrack::IniFit()
       double chi = trc.GetPredictedChi2(yz,errYZ);
       if (!trc.Update(yz,errYZ)) return kFALSE;
       fChi2 += chi;
+      printf("pnt%d chi2: %f [%+e %+e / %e %e %e] ",ip,fChi2,yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]); trc.Print();
+
     }
-    printf("pnt%d chi2: %f ",ip,fChi2); trc.Print();
   }
   //
   this->AliExternalTrackParam::operator=(trc);
   //
   return kTRUE;
+}
+
+//______________________________________________
+void AliAlgTrack::SortPoints()
+{
+  // sort points in order against track direction: innermost point is last
+  // for collision tracks. 
+  // For 2-leg cosmic tracks: 1st points of outgoing (lower) leg are added from large to
+  // small radii, then the points of incomint (upper) leg are added in increasing R direction
+  //
+  // The fInnerPointID will mark the id of the innermost point, i.e. the last one for collision-like
+  // tracks and in case of cosmics - the point of lower leg with smallest R
+  //
+  fPoints.Sort();
+  int np = GetNPoints();
+  fInnerPointID = np-1;
+  if (IsCosmic()) {
+    for (int ip=np;ip--;) {
+      AliAlgPoint* pnt = GetPoint(ip);
+      if (pnt->IsInvDir()) continue;   // this is a point of upper leg
+      fInnerPointID = ip;
+      break;
+    }
+  }
+  //
 }

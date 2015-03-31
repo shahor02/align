@@ -28,6 +28,10 @@ void buildAlg()
   LoadESD();
   LoadEvent(4);
   esdEv->InitMagneticField();
+  int run = esdEv->GetRunNumber();
+  AliCDBManager* man = AliCDBManager::Instance();
+  man->SetRaw(1);
+  man->SetRun(run);
   //
   AliGeomManager::LoadGeometry("data/geometry.root");
   //
@@ -36,6 +40,18 @@ void buildAlg()
   algSteer->AddDetector(AliAlgSteer::kITS);
   algSteer->AddDetector(AliAlgSteer::kTRD);
   algSteer->AddDetector(AliAlgSteer::kTOF);
+  //
+  TString detalg = "GRP";
+  for (int id=0;id<AliAlgSteer::kNDetectors;id++) {
+    if (algSteer->GetDetectorByDetID(id)) {
+      detalg += " ";
+      detalg += algSteer->GetDetNameByDetID(id);
+    }
+  }
+  // apply alignment
+  AliGeomManager::ApplyAlignObjsFromCDB(detalg.Data());
+  //
+
   //  AliAlgDet* its = new AliAlgDetITS("its");
   //  its->Init();
   algSteer->Init();
@@ -46,7 +62,7 @@ void buildAlg()
   //  trd->Print();
   //
   PrintTracks();
-  AliESDtrack* tr = esdEv->GetTrack(1);
+  AliESDtrack* tr = esdEv->GetTrack(2);
   algSteer->ProcessTrack(tr);
 
 }

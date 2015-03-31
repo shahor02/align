@@ -87,8 +87,9 @@ void AliAlgPoint::Print(Option_t* ) const
 	 GetDetID(),
 	 GetSID(),GetAlphaSens(),GetXSens());
   if (ContainsMeasurement()) {
-    printf(" Meas: Xtr: %+8.4f Ytr: %+8.4f Ztr: %+8.4f",
-	   GetXTracking(),GetYTracking(),GetZTracking());
+    printf(" Meas: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e",
+	   GetXTracking(),GetYTracking(),GetZTracking(),
+	   fErrYZTracking[0],fErrYZTracking[1],fErrYZTracking[2]);
   }
   if (ContainsMaterial()) {
     printf(" Mat: X/X0: %.4f | X*rho: %.4f\n",fX2X0,fXTimesRho);

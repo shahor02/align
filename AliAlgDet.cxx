@@ -93,15 +93,15 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
   AliAlgSens* sens = GetSensor(sid);
-  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
-  matL2G.MasterToLocal(glo,loc);
+  //  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
+  const TGeoHMatrix& matL2Gor = sens->GetMatrixL2GOrig(); // local to global orig matrix
+  matL2Gor.MasterToLocal(glo,loc);
   const TGeoHMatrix& matT2L = sens->GetMatrixT2L();  // matrix for tracking to local frame translation
   matT2L.MasterToLocal(loc,tra);
   //
   // convert error
   TGeoHMatrix hcov;
   Double_t hcovel[9];
-  const TGeoHMatrix& matL2Gor = sens->GetMatrixL2GOrig(); // local to global matrix
   const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
   hcovel[0] = double(pntcov[0]);
   hcovel[1] = double(pntcov[1]);
@@ -127,6 +127,8 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   pnt->SetSID(sid);
   //
   pnt->SetContainsMeasurement();
+  //
+  pnt->Init();
   //
   return pnt;
   //

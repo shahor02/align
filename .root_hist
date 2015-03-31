@@ -1,0 +1,491 @@
+.q
+.q
+.q
+.q
+ gROOT->ProcessLine(".L AliAlgAux.cxx+g");
+  gROOT->ProcessLine(".L AliAlgPoint.cxx+g");
+.q
+.q
+.q
+.q
+algSteer->GetAlgTrack()->Print()
+.x buildAlg.C
+algSteer->GetAlgTrack()->Print()
+AliTrackerBase::GetBz()
+fld = new AliMagF("fld")
+fld = new AliMagF("fld","fld")
+AliExternalTrackParam p
+p.GetParameter()[4] = 1
+p.GetParameter()[0] = 1
+p.Print()
+p.GetD(0,0,5)
+exp(-20/5)
+exp(-10/5)*
+exp(-10/5.)
+.q
+.x buildAlg.C
+algSteer->GetAlgTrack()->Print()
+.q
+.x buildAlg.C
+algSteer->GetAlgTrack()->Print()
+AliExternalTrackParam p
+p.Print()
+p.ResetCovariance(1000)
+p.Print()
+.q
+.q
+.q
+.x dumpy_185349_OP.C
+fe = new TF1("fe","[0]+[1]*exp(-x*[2])+[3]*exp(-x*[4])",0,80)
+fe->SetParameters(0,-0.1,1./5,0.02,1./20)
+.ls
+yy->Draw()
+yy->Fit(fe)
+yy->Fit(fe,"","",0,60)
+yy->Fit(fe,"","",0,80)
+1./(0.31*0.75)
+1./(0.031*0.75)
+c1->Print("dumpy_185349_OP_ft2.gif")
+c1->Print("dumpy_185349_OP_ft2.C")
+fe->FixParameter(5,0.1)
+yy->Fit(fe,"","",0,80)
+fe->FixParameter(4,0.1)
+yy->Fit(fe,"","",0,80)
+1./(0.1*0.75)
+c1->Print("dumpy_185349_OP_ft2_p4_0.1.C")
+c1->Print("dumpy_185349_OP_ft2_p4_0.1.gif")
+1./(0.1*0.75)
+1./(0.15*0.75)
+1./(0.07*0.75)
+.q
+fe->SetParLimits(4,0.01,0.5)
+yy->Fit(fe,"","",0,80)
+1./(0.03*0.75)
+fe->SetParLimits(4,0.05,0.3)
+yy->Fit(fe,"","",0,80)
+fe->SetParLimits(4,0.07,0.3)
+yy->Fit(fe,"","",0,80)
+c1->Print("dumpy_185349_OP_ft2_p4_dump20.gif")
+.q
+.x applyCorr.C+
+.q
+exp(-15/20.)
+exp(-15/20.)*0.15
+.q
+.L recCPass0.C
+recCPass0(); >> rcX.log
+.q
+ AliCDBManager * man = AliCDBManager::Instance();
+  man->SetDefaultStorage("raw://")
+man->SetSnapshotMode()
+man->SetRun(185375)
+ gROOT->LoadMacro("localOCDBaccessConfig.C");
+    localOCDBaccessConfig();
+man->Get("TPC/Calib/RecoParam")
+xx =man->Get("TPC/Calib/RecoParam")
+xx->GetObject()->Print()
+AliTPCRecoParam* par = xx->GetObject()->At(1)
+AliTPCRecoParam* par = () xx->GetObject()->At(1)
+AliTPCRecoParam* par = ((TObjArray*)xx->GetObject())->At(1)
+const Double_t *errInner = par->GetSystematicErrorClusterInner()
+double dr = 14
+double addErr
+const Double_t *errInnerDeep = par->GetSystematicErrorClusterInnerDeepY()
+addErr=errInner[0]*TMath::Exp(-dr/errInner[1]);
+addErr
+if (errInnerDeep[0]>0) addErr += errInnerDeep[0]*TMath::Exp(-dr/errInnerDeep[1]);
+addErr
+.q
+TFile *_file0 = TFile::Open("tpcOP185375.root")
+.ls
+tt =seed
+tt->Print()
+.q
+TFile *_file0 = TFile::Open("tpcOP185375.root")
+ TCut ctp="nclus>80 && row>=0 && abs(param.fP[4])<1 && abs(clZ - rwX*param.fP[3])<10";
+tt =seed
+tt->Print()
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<5")
+tt->Draw("trY-clY : row",ctp*"row<5")
+tt->Draw("trY-clY : row",ctp*"row<5 && clZ>-80&&clz<-20")
+tt->Draw("trY-clY : row",ctp*"row<5 && clZ>-80&&clZ<-20")
+tt->Draw("trY-clY : row",ctp*"row<5 && clZ>-80&&clZ<-20","prof")
+tt->Draw("trY-clY : row",ctp*"row<15 && clZ>-80&&clZ<-20","prof")
+tt->Draw("trY-clY : row",ctp*"row<35 && clZ>-80&&clZ<-20","prof")
+tt->Draw("trY-clY : row",ctp*"row<4 && clZ>-80&&clZ<-20","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<4 && clZ>-80&&clZ<-20","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<4 && abs(clZ+50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<4 && abs(clZ-50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<6 && abs(clZ-50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<8 && abs(clZ-50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<8 && abs(clZ+50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha >> hn",ctp*"row<8 && abs(clZ+50)<30","prof")
+tt->Draw("trY-clY : param.fAlpha >> hp",ctp*"row<8 && abs(clZ-50)<30","prof")
+hn->Draw()
+hp->Draw("Same")
+tt->Draw("trY-clY : param.fAlpha >> hp",ctp*"row<8 && abs(clZ-50)<30","")
+tt->Draw("trY-clY : param.fAlpha",ctp*"row<8 && abs(clZ-50)<30","")
+tt->Draw("(trY-clY)/sqrt(param.fC[0]) : param.fAlpha",ctp*"row<8 && abs(clZ-50)<30","")
+tt->Draw("(trY-clY)/sqrt(param.fC[0]) : param.fAlpha",ctp*"row<8 && abs(clZ-50)<30","prof")
+tt->Draw("(trY-clY)/sqrt(param.fC[0]) : param.fAlpha",ctp*"row<8 && abs(clZ+50)<30","prof")
+.q
+ AliCDBManager * man = AliCDBManager::Instance();
+man->SetRaw(1)
+man->SetRun(185375)
+xx =man->Get("TPC/Calib/RecoParam")
+AliTPCRecoParam* par = ((TObjArray*)xx->GetObject())->At(1)
+par->Print()
+par->GetSystematicErrorClusterInner()[0]
+par->GetSystematicErrorClusterInner()[1]
+par->GetSystematicErrorClusterInnerDeepY()[0]
+par->GetSystematicErrorClusterInnerDeepY()[1]
+par->GetSystematicErrorClusterInnerDeepZ()[0]
+par->GetSystematicErrorClusterInnerDeepZ()[1]
+.q
+,q
+.q
+.q
+ AliCDBManager * man = AliCDBManager::Instance();
+man->SetRaw(1)
+man->SetRun(185375)
+man->SetSnapshotMode()
+.!pwd
+.ls
+.!ls
+man->SetSnapshotMode("chtest_w1/OCDB.root")
+.x chtest_w1/localOCDBaccessConfig.C 
+man->GetAll("*/*/*")
+man->GetAll("TPC/*/*")
+xx =man->Get("TPC/Calib/RecoParam")
+AliTPCRecoParam* par = ((TObjArray*)xx->GetObject())->At(1)
+par->GetSystematicErrorClusterInnerDeepZ()[1]
+par->Print()
+.ls
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->Print(); >> v0
+tr->IniFit(); >> vf
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print(); >> v0
+tr->IniFit(); >> vf
+AliESDtrack* tr = esdEv->GetTrack(1);
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre);
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->Print()
+tr->Print()
+AliTOFGeometry::XPad()
+AliTOFGeometry::ZPad()
+AliTOFGeometry::ZPad()/sqrt(12)
+AliTOFGeometry::YPad()/sqrt(12)
+AliTOFGeometry::XPad()/sqrt(12)
+  Float_t sigmay2 = AliTOFGeometry::XPad()*AliTOFGeometry::XPad()/12.;
+  Float_t sigmaz2 = AliTOFGeometry::ZPad()*AliTOFGeometry::ZPad()/12.;
+sigmay2
+sigmaz2
+fr = tre->GetFriendTrack()
+AliTrackPoint p
+fr->GetTrackPointArray()->GetPo
+fr->GetTrackPointArray()->GetPoint(0,p)
+AliTrackPointArray* parr= fr->GetTrackPointArray()
+parr->GetPoint(p,0)
+p.Print()
+TMatrixDSym mm
+mm
+TMatrixDSym mt(3,3)
+mt.Print()
+TMatrixD mtd(3,3)
+mtd.Print()
+p.Print()
+p.Print()
+mtd(0,0)=0.465865
+mtd(1,1)=0.519124
+mtd(2,2)=0.556677
+mtd(0,1)=mtd(1,0)=-0.009692
+mtd(0,2)=mtd(2,0)=-0.500594
+mtd(2,1)=mtd(1,2)=-0.088268
+mtd.Print()
+TMatrixSym
+TVectorD ev(3)
+me = mtd.EigenVectors(ev)
+me.Print()
+ev
+ev.Print()
+sigmay2
+sigmaz2
+AliTOFGeometry::GetAngles(1,1)
+tr->Print()
+tr->Print(); >> t1b
+tr->IniFit(); >> t1a
+AliGeomManager::ApplyAlignObjsToGeom(AliGeomManager::GetNalignable("GRP")
+@
+AliGeomManager::GetNalignable("GRP")
+TFile *_file0 = TFile::Open("../../OCDB/GRP/Align/Data/Run0_999999999_v0_s0.root")
+.ls
+AliCDBEntry->GetObject()->Print()
+.q
+.q
+.x buildAlg.C
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->Print(); >> t1b
+tr->IniFit(); >> t1a
+AliTrackerBase::GetBz()
+.q
+.q
+.x buildAlg.C
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr->IniFit();
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+.q
+.x buildAlg.C
+tr->IniFit()
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+.q
+.L AliTr.h+
+AliTr::kMB
+AliTr::kMBOR
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+.q
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->GetFieldON()
+tr->IniFit()
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr->Print()
+AliExternalTrackParam sav = *tr
+sav
+tr->IniFit()
+sav->Pri
+sav.Print()
+tr->Rotate(0.759523)
+tr->PropagateTo(0.106944,5)
+tr->Print()
+sav.Print()
+algSteer->ProcessTrack(tre)
+tr->Print()
+tr->CalcResiduals(tr->GetParameter())
+.x buildAlg.C
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->CalcResiduals(tr->GetParameter())
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->CalcResid(tr->GetParameter())
+tr
+tr->CalcResiduals(tr->GetParameter())
+tr
+tr->Print()
+tr->GetPoint(0)->Print()
+tr->GetPoint(0)->Dump()
+tr->GetPoint(1)->Print()
+tr->GetPoint(1)->Dump()
+.q
+.q
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->IniFit()
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr->Print()
+tr->CalcResiduals(tr->GetParameter())
+tr->GetResidual(0,0)
+tr->GetResidual(1,0)
+tre->GetFriendTrack()->GetTrackPoints()
+tre->GetFriendTrack()->GetTrackPoint()
+tre->GetFriendTrack()->GetTrackPointArray()
+pntar = tre->GetFriendTrack()->GetTrackPointArray()
+pntar->Print()
+AliExternalTrackParam par = tre
+AliExternalTrackParam par = *tre
+par->Print()
+par->Rota
+par->Rota
+par.Rotate(tr->GetPoint(0)->GetAlphaSens())
+par->Print()
+tr->Print()
+tr->GetPoint(0)->GetAlphaSens()
+par.Print()
+AliTrackerBase::PropagateTrackToBxByBz(&par,tr->GetPoint(0)->GetXPoint(),0.14,1,0)
+par.Print()
+double xyz[3]
+par.GetXYZ(xyz)
+par[0]
+xyz[0]
+xyz[1]
+xyz[2]
+pntar->Print()
+tr->Print()
+tr->Print()
+pntar->Print()
+AliTrackPoint p
+pntar->GetPoint(p,0)
+p.Print()
+AliAlgPoint* ap = tr->GetPoint(0)
+ap->Print()
+AliAlgDet* tof = algSteer->GetDetector(2)
+tof->Print()
+AliAlgSens* sn = tof->GetSensor(2)
+sn
+tof->GetSensorByVolId(30722)
+sn->Print()
+sn->Print("mat")
+.q
+.x buildAlg.C
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr = algSteer->GetAlgTrack()
+tr->Print()
+pntar->Print()
+pntar = tre->GetFriendTrack()->GetTrackPointArray()
+pntar->Print()
+AliTrackPoint p
+pntar->GetPoint(p,1)
+p.Print()
+AliAlgPoint* ap = tr->GetPoint(1)
+ap->Print()
+AliAlgDet* trd = algSteer->GetDetector(1)
+trd->Print()
+AliAlgSens* sn = trd->GetSensor(175)
+sn->Print()
+sn->Print()
+sn->Print("mat")
+double glo[3] = {301.284149,93.373116,286.526978}
+double loc[3]
+double tra[3]
+sn->GetMatrixL2GOrig().Mas
+sn->GetMatrixL2GOrig().MasterToLocal(glo,loc)
+loc[0]
+loc[1]
+loc[2]
+sn->GetMatrixT2L().MasterToLocal(loc,tra)
+tra[0]
+tra[1]
+tra[2]
+p.Print()
+sn->Print()
+tr->Print()
+pntar->Print()
+.q
+.x buildAlg.C
+tr->IniFit()
+tr = algSteer->GetAlgTrack()
+tr->IniFit()
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr->CalcResiduals(tr->GetParameter())
+for (int ip=tr->GetNPoints();ip--) {tr->GetResiduals(
+@
+for (int ip=tr->GetNPoints();ip--) {printf("%d %+e %+e\n",tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%d %+e %+e\n",tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%d %+e %+e\n",tr->GetResidual(0,ip),tr->GetResidual(2,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%d %+e %+e\n",tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+tr->GetResidual(0,3)
+tr->GetResidual(1,3)
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",i,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+tr->Print()
+AliExternalTrackParam par = *tre
+par.Print()
+par.Rotate(0.850)
+par.PropagateTo(+4.1699--0.2245,AliTrackerBase::GetBz())
+par.Print()
+5.13405-+4.7514
+double xyz[3]
+par.GetXYZ(xyz)
+pnt
+fr = tre->GetFriendTrack()
+pntar = tre->GetFriendTrack()->GetTrackPointArray()
+pntar->Print()
+xyz[0]
+xyz[1]
+xyz[2]
+sqrt(2.771*2.771+2.818*2.818)
+sqrt(3.1015*3.1015+3.12457*3.12457)
+AliESDtrack* tre = esdEv->GetTrack(2);
+algSteer->ProcessTrack(tre)
+tr
+tr = algSteer->GetAlgTrack()
+tr->Print()
+AliExternalTrackParam par = *tre
+par.Print()
+par.Rotate(0.850)
+par.PropagateTo(+4.1699-0.2245,AliTrackerBase::GetBz())[D
+@
+par.PropagateTo(+4.1699-0.2245,AliTrackerBase::GetBz())
+par.Print()
+-0.221921--0.2237
++4.7514-4.74449
+tr->IniFit()
+par.Print()
+AliExternalTrackParam par = *tre
+tr->CalcResiduals(par.GetParameter())
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+tr->CalcResiduals(tr->GetParameter())
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+TGrid::Connect("alien://")
+ff = TFile::Open("alien:///alice/simulation/2008/v4-15-Release/Full/TPC/Calib/RecoParam/Run185349_185375_v7_s0.root")
+ff->Print()
+.ls
+AliCDBEntry->GetObject()->Print()
+AliTPCRecoParam* par = ((TObjArray*)AliCDBEntry->GetObject())->At(1)
+AliTPCRecoParam* parr = ((TObjArray*)AliCDBEntry->GetObject())->At(1)
+parr->GetSystematicErrorClusterInner()[0]
+parr->GetSystematicErrorClusterInner()[2]
+parr->GetSystematicErrorClusterInner()[1]
+parr->GetSystematicErrorClusterInnerDeepY()[0]
+parr->GetSystematicErrorClusterInnerDeepY()[2]
+parr->GetSystematicErrorClusterInnerDeepY()[1]
+.q
+TFile *_file0 = TFile::Open("/data/seedResTPC/tpcRun2/TPC/Calib/RecoParam/Run185349_185375_v0_s0.root")
+.ls
+AliTPCRecoParam* parr = ((TObjArray*)AliCDBEntry->GetObject())->At(1)
+parr->GetSystematicErrorClusterInnerDeepY()[1]
+parr->GetSystematicErrorClusterInnerDeepY()[0]
+parr->GetSystematicErrorClusterInner()[0]
+.q
+.q
+.x buildAlg.C
+tr = algSteer->GetAlgTrack()
+tr->Print()
+tr->CalcResiduals(tr->GetParameter())
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));} ; >> res0
+tr->IniFit()
+tr->CalcResiduals(tr->GetParameter())
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));}
+for (int ip=tr->GetNPoints();ip--;) {printf("%2d %+e %+e\n",ip,tr->GetResidual(0,ip),tr->GetResidual(1,ip));} ; >> res0
+.! more res0
+.q

@@ -19,6 +19,10 @@
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
+#include "AliTrackerBase.h"
+#include <TMath.h>
+
+using namespace TMath;
 
 ClassImp(AliAlgSteer)
 
@@ -127,10 +131,11 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     det->ProcessPoints(esdTr, fAlgTrack);
   }
   //
-  fAlgTrack->SortPoints();
-  //
   fAlgTrack->AliExternalTrackParam::operator=(*esdTr);
-
+  fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
+  fAlgTrack->SortPoints();
+  fAlgTrack->DefineDOFs();
+  //
   return kTRUE;
 }
 

@@ -27,12 +27,14 @@ class AliAlgTrack: public AliExternalTrackParam
   void         SetMass(double m)                       {fMass = m;}
   Int_t        GetNLocPar()                      const {return fNLocPar;}
   Int_t        GetNLocExtPar()                   const {return fNLocExtPar;}
+  Int_t        GetInnerPointID()                 const {return fInnerPointID;}
   //
   virtual void Clear(Option_t *opt="");
   virtual void Print(Option_t *opt="")           const;
   //
-  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt);
-  Bool_t PropagateToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt);
+  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param + errors
+  Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
+  Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
   Bool_t CalcResiduals(const double *params);
   Bool_t CalcResidDeriv(const double *params);
@@ -46,7 +48,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t GetDerivDone()                          const {return TestBit(kDerivDoneBit);}
   void   SetDerivDone(Bool_t v=kTRUE)                  {SetBit(kDerivDoneBit,v);}
   //
-  Bool_t SortPoints()                                  {fPoints.Sort();}
+  void   SortPoints();
   Bool_t IniFit();
   // propagation methods
   //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
@@ -81,6 +83,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Int_t     fNLocPar;                    // number of local params
   Int_t     fNLocExtPar;                 // number of local params for the external track param
+  Int_t     fInnerPointID;               // ID of inner point in sorted track. For 2-leg cosmics - innermost point of lower leg
   Double_t  fMass;                       // assumed mass
   Double_t  fChi2;                       // chi2 with current residuals
   TObjArray fPoints;                     // alignment points
