@@ -733,6 +733,9 @@ Bool_t AliAlgTrack::IniFit()
   Bool_t res = 0;
   //  printf("Start "); trc.Print();
 
+  const int kMaxDefStep = 3.0; 
+  const int kMinNStep = 3;
+
   for (int ip=0;ip<np;ip++) { // fit from outer point towards the vertex
     AliAlgPoint* pnt = GetPoint(ip);
     //    printf("GoTo%d ",ip);     pnt->Print();
@@ -740,11 +743,26 @@ Bool_t AliAlgTrack::IniFit()
       AliDebugF(5,"Failed to rotate to alpha=%f",pnt->GetAlphaSens());
       return kFALSE;
     }
-    if (!AliTrackerBase::PropagateTrackToBxByBz(&trc,pnt->GetXPoint(),fMass,1.,kFALSE)) {
-      AliDebugF(5,"Failed to rotate to X:%f",pnt->GetXPoint());
-      pnt->Print();
-      Print();
-      return kFALSE;
+    
+    double xPoint=pnt->GetXPoint(),dx=xPoint-trc.GetX(),dxa=Abs(dx),step=dxa/kMinNStep;
+    if (step>kMaxDefStep) step = kMaxDefStep;
+    int nstep = dxa/step;
+    step = dxa/nstep;
+    if (dx<0) step = -step;
+    //
+    printf(">> %d steps of %f frop X %f to point @X=%f\n",nstep,step,trc.GetX(),xPoint);
+    pnt->Print();
+    double matInfo[3];
+    for (int ist=nstep;ist--;) {
+      double xToGo = xPoint + step*ist;
+      if (!PropagateGetMatBudget(&trc,xToGo, matInfo)) {
+	//    if (!AliTrackerBase::PropagateTrackToBxByBz(&trc,pnt->GetXPoint(),fMass,1.,kFALSE)) {
+	AliDebugF(5,"Failed to propagate to X:%f",xToGo);
+	pnt->Print();
+	Print();
+	return kFALSE;
+      }
+      printf("At X:%f Step:%f(%d) | Mat: %f %f %f\n",trc.GetX(),step,nstep-ist-1,matInfo[0],matInfo[1],matInfo[2]);
     }
     // to do: material corrections
     //
@@ -789,3 +807,30 @@ void AliAlgTrack::SortPoints()
   }
   //
 }
+
+//______________________________________________
+Bool_t AliAlgTrack::PropagateGetMatBudget(AliExternalTrackParam *track,Double_t xToGo,double *matInfo)
+{
+  // Full propagation with extraction of mat.budget info
+  //
+  const Double_t kEpsilon = 0.00001;
+  Int_t dir = track->GetX()<xToGo ? 1:-1;
+  //
+  Double_t xyz0[3],xyz1[3],param[7];
+  track->GetXYZ(xyz0);   //starting global position
+  Double_t b[3]; 
+  AliTrackerBase::GetBxByBz(xyz0,b); // getting the local Bx, By and Bz
+  if (!track->PropagateToBxByBz(xToGo,b))  return kFALSE;
+  track->GetXYZ(xyz1);
+  AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,param);    
+  Double_t xrho=param[0]*param[4], xx0=param[1];
+  if (dir>0) xrho = -xrho;
+  if (!track->CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
+  if (matInfo) {
+    matInfo[0] = xx0;
+    matInfo[1] = xrho;
+    matInfo[2] = param[4];
+  }
+  return kTRUE;
+}
+

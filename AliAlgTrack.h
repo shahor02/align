@@ -32,6 +32,8 @@ class AliAlgTrack: public AliExternalTrackParam
   virtual void Clear(Option_t *opt="");
   virtual void Print(Option_t *opt="")           const;
   //
+  Bool_t PropagateGetMatBudget(AliExternalTrackParam *track,Double_t xToGo, double *matInfo);
+  //
   Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param + errors
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
