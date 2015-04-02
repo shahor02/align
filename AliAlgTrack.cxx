@@ -337,38 +337,62 @@ Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam &tr, const AliAl
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt, int minNSteps, double maxStep, Bool_t matCor)
 {
   // propagate tracks to the point
-  double xyz[3],bxyz[3];
+  double xyz0[3],xyz1[3],bxyz[3], matPar[7];
+  //
+  double xPoint=pnt->GetXPoint(),dx=xPoint-tr.GetX(),dxa=Abs(dx),step=dxa/minNSteps;
+  if (step>maxStep) step = maxStep;
+  int nstep = dxa/step;
+  step = dxa/nstep;
+  if (dx<0) step = -step;
   //
   if (!tr.Rotate(pnt->GetAlphaSens())) {
     AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
     return kFALSE;
   }
-  tr.GetXYZ(xyz);
   //
-  if (GetFieldON()) {
-    if (pnt->GetUseBzOnly()) {
-      if (!tr.PropagateTo(pnt->GetXPoint(),AliTrackerBase::GetBz(xyz))) {
-	AliDebug(5,Form("Failed to propagate(BZ) to X=%f",pnt->GetXPoint()));
+  Bool_t alongTrackDir = (dx>0&&!pnt->IsInvDir()) || (dx<0&&pnt->IsInvDir()); // do we go along or against track direction
+  Bool_t queryXYZ = matCor||GetFieldON();
+  if (queryXYZ) tr.GetXYZ(xyz0);
+  //
+  for (int ist=nstep;ist--;) { // single propagation step >>
+    double xToGo = xPoint + step*ist;
+    //
+    if (GetFieldON()) {
+      if (pnt->GetUseBzOnly()) {
+	if (!tr.PropagateTo(xToGo,AliTrackerBase::GetBz(xyz0))) {
+	  AliDebug(5,Form("Failed to propagate(BZ) to X=%f",xToGo));
+	  return kFALSE;
+	}
+      }
+      else {
+	AliTrackerBase::GetBxByBz(xyz0,bxyz);
+	if (!tr.PropagateToBxByBz(xToGo,bxyz)) {
+	  AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",xToGo));
+	  return kFALSE;
+	}
+      }
+    }    
+    else { // straigth line propagation
+      if ( !tr.PropagateTo(xToGo,0) ) {
+	AliDebug(5,Form("Failed to propagate(B=0) to X=%f",xToGo));
 	return kFALSE;
       }
     }
-    else {
-      AliTrackerBase::GetBxByBz(xyz,bxyz);
-      if (!tr.PropagateToBxByBz(pnt->GetXPoint(),bxyz)) {
-	AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",pnt->GetXPoint()));
-	return kFALSE;
+    //
+    if (queryXYZ) {
+      tr.GetXYZ(xyz1);
+      if (matCor) {
+	AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,matPar);
+	Double_t xrho=matPar[0]*matPar[4], xx0=matPar[1];
+        if (alongTrackDir) xrho = -xrho; // if we go along track direction, energy correction is negative
+	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
       }
+      for (int l=3;l--;) xyz0[l] = xyz1[l];
     }
-  }    
-  else { // straigth line propagation
-    if ( !tr.PropagateTo(pnt->GetXPoint(),0) ) {
-      AliDebug(5,Form("Failed to propagate(B=0) to X=%f",pnt->GetXPoint()));
-      return kFALSE;
-    }
-  }
+  } // single propagation step <<
   //
   return kTRUE;
 }
@@ -716,7 +740,9 @@ Bool_t AliAlgTrack::IniFit()
     0                  ,                   0,               0, kErrAng*kErrAng,
     0                  ,                   0,               0,               0, kErrRelPtI*kErrRelPtI
   };
-  const Double_t kOverShootX = 5;
+  const int kMaxDefStep = 3.0; 
+  const int kMinNStep = 3;
+  const Double_t kOverShootX = 5;//kMaxDefStep*0.7;
   AliExternalTrackParam trc = *this;
   Bool_t isInverted = kFALSE;
   //
@@ -731,50 +757,19 @@ Bool_t AliAlgTrack::IniFit()
   //
   int np = GetNPoints();
   Bool_t res = 0;
-  //  printf("Start "); trc.Print();
-
-  const int kMaxDefStep = 3.0; 
-  const int kMinNStep = 3;
-
-  for (int ip=0;ip<np;ip++) { // fit from outer point towards the vertex
+  //
+  for (int ip=0;ip<np;ip++) { // fit from outer point towards the beginning of the track (vertex?)
     AliAlgPoint* pnt = GetPoint(ip);
-    //    printf("GoTo%d ",ip);     pnt->Print();
-    if (!trc.Rotate(pnt->GetAlphaSens())) {
-      AliDebugF(5,"Failed to rotate to alpha=%f",pnt->GetAlphaSens());
-      return kFALSE;
-    }
-    
-    double xPoint=pnt->GetXPoint(),dx=xPoint-trc.GetX(),dxa=Abs(dx),step=dxa/kMinNStep;
-    if (step>kMaxDefStep) step = kMaxDefStep;
-    int nstep = dxa/step;
-    step = dxa/nstep;
-    if (dx<0) step = -step;
     //
-    printf(">> %d steps of %f frop X %f to point @X=%f\n",nstep,step,trc.GetX(),xPoint);
-    pnt->Print();
-    double matInfo[3];
-    for (int ist=nstep;ist--;) {
-      double xToGo = xPoint + step*ist;
-      if (!PropagateGetMatBudget(&trc,xToGo, matInfo)) {
-	//    if (!AliTrackerBase::PropagateTrackToBxByBz(&trc,pnt->GetXPoint(),fMass,1.,kFALSE)) {
-	AliDebugF(5,"Failed to propagate to X:%f",xToGo);
-	pnt->Print();
-	Print();
-	return kFALSE;
-      }
-      printf("At X:%f Step:%f(%d) | Mat: %f %f %f\n",trc.GetX(),step,nstep-ist-1,matInfo[0],matInfo[1],matInfo[2]);
-    }
-    // to do: material corrections
-    //
-    //    trc.Print();
+    // on the way to 1st point we dont need material corrections
+    //    if (!PropagateToPoint(trc,pnt,ip>0 ? kMinNStep:1, kMaxDefStep, ip>0)) return kFALSE;
+    if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);
       if (!trc.Update(yz,errYZ)) return kFALSE;
       fChi2 += chi;
-      //      printf("pnt%d chi2: %f [%+e %+e / %e %e %e] ",ip,fChi2,yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]); trc.Print();
-
     }
   }
   //

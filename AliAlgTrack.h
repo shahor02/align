@@ -34,7 +34,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Bool_t PropagateGetMatBudget(AliExternalTrackParam *track,Double_t xToGo, double *matInfo);
   //
-  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param + errors
+  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt, int minNSteps,double maxStep,Bool_t matCor);
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //

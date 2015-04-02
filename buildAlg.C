@@ -30,9 +30,15 @@ void buildAlg()
   esdEv->InitMagneticField();
   int run = esdEv->GetRunNumber();
   AliCDBManager* man = AliCDBManager::Instance();
-  man->SetRaw(1);
-  man->SetRun(run);
-  //
+  if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
+    man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
+    man->SetRun(run);
+    man->SetSnapshotMode("data/OCDB.root");
+  }
+  else {
+    man->SetRaw(1);
+    man->SetRun(run);    
+  }
   AliGeomManager::LoadGeometry("data/geometry.root");
   //
   algSteer = new AliAlgSteer();
@@ -65,11 +71,18 @@ void buildAlg()
   PrintTracks();
   AliESDtrack* tr = esdEv->GetTrack(2);
   algSteer->ProcessTrack(tr);
+  //
+}
 
+void PrintResiduals(AliAlgTrack *trc, const AliExternalTrackParam* ext=0)
+{
+  trc->CalcResiduals(ext ? ext->GetParameter() : trc->GetParameter());
+  for (int ip=trc->GetNPoints();ip--;) {
+    printf("%d %+e %+e\n",ip,trc->GetResidual(0,ip),trc->GetResidual(1,ip));
+  }
 }
 
 //-----------------------------------------------------------------
-
 Int_t LoadESD(const char* path,Bool_t friends)
 {
   flIn = TFile::Open(path);
