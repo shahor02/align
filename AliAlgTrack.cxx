@@ -18,6 +18,7 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fInnerPointID(0)
+  ,fMinX2X02PtAccount(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
   ,fPoints(0)
@@ -231,7 +232,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(const double *params)
   //  
 
   if (IsCosmic()) {
-    AliError(" TODO ");
+    AliFatal(" TODO cosmic");
   }
 
   //
@@ -337,7 +338,7 @@ Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam &tr, const AliAl
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt, int minNSteps, double maxStep, Bool_t matCor)
+Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt, int minNSteps, double maxStep, Bool_t matCor, double *x2X0)
 {
   // propagate tracks to the point
   double xyz0[3],xyz1[3],bxyz[3], matPar[7];
@@ -357,6 +358,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   Bool_t queryXYZ = matCor||GetFieldON();
   if (queryXYZ) tr.GetXYZ(xyz0);
   //
+  double x2X0Tot = 0;
   for (int ist=nstep;ist--;) { // single propagation step >>
     double xToGo = xPoint + step*ist;
     //
@@ -387,6 +389,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
       if (matCor) {
 	AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,matPar);
 	Double_t xrho=matPar[0]*matPar[4], xx0=matPar[1];
+	x2X0Tot += xx0;
         if (alongTrackDir) xrho = -xrho; // if we go along track direction, energy correction is negative
 	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
       }
@@ -394,6 +397,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
     }
   } // single propagation step <<
   //
+  if (x2X0) *x2X0 = x2X0Tot;
   return kTRUE;
 }
 
@@ -730,6 +734,8 @@ Bool_t AliAlgTrack::IniFit()
 {
   // perform initial fit of the track
   // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
+  const int    kMinNStep = 3;
+  const double kMaxDefStep = 3.0; 
   const double kErrSpace=50.;
   const double kErrAng = 0.5;
   const double kErrRelPtI = 0.7;
@@ -740,8 +746,6 @@ Bool_t AliAlgTrack::IniFit()
     0                  ,                   0,               0, kErrAng*kErrAng,
     0                  ,                   0,               0,               0, kErrRelPtI*kErrRelPtI
   };
-  const int kMaxDefStep = 3.0; 
-  const int kMinNStep = 3;
   const Double_t kOverShootX = 5;//kMaxDefStep*0.7;
   AliExternalTrackParam trc = *this;
   Bool_t isInverted = kFALSE;
@@ -773,9 +777,83 @@ Bool_t AliAlgTrack::IniFit()
     }
   }
   //
+  if (IsCosmic()) {
+    AliFatal(" TODO cosmic");
+  }
+  //
   this->AliExternalTrackParam::operator=(trc);
   //
   return kTRUE;
+}
+
+
+//______________________________________________
+Bool_t AliAlgTrack::ProcessMaterials() 
+{
+  // attach material effect info to alignment points
+  const int    kMinNStep = 3;
+  const double kMaxDefStep = 3.0; 
+  const double kErrSpcT = 1e-6.;
+  const double kErrAngT = 1e-6;
+  const double kErrPtIT = 1e-12;
+  const double kErrSpcH = 10.0;
+  const double kErrAngH = 0.5;
+  const double kErrPtIH = 0.5;
+  const double kErrTiny[15] = { // initial tiny error
+    kErrSpcT*kErrSpcT,
+    0                  , kErrSpcT*kErrSpcT,
+    0                  ,                   0, kErrAngT*kErrAngT,
+    0                  ,                   0,               0, kErrAngT*kErrAngT,
+    0                  ,                   0,               0,               0, kErrPtIT*kRelPtIT
+  };
+  const double kErrHuge[15] = { // initial tiny error
+    kErrSpcH*kErrSpcH,
+    0                  , kErrSpcH*kErrSpcH,
+    0                  ,                   0, kErrAngH*kErrAngH,
+    0                  ,                   0,               0, kErrAngH*kErrAngH,
+    0                  ,                   0,               0,               0, kErrPtIH*kRelPtIH
+  };
+  //
+  // 2 copies of the track, one will be propagated accounting for materials, other - w/o
+  AliExternalTrackParam tr1 = *fAlgTrack, tr1;
+  double x2X0 = 0;
+  //
+  // here we move in track direction
+  for (int ip=GetInnerPointID()+1;ip--;) { // point are order against track direction
+    AliAlgPoint* pnt = GetPoint(ip);
+    memcpy((double*)tr1.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
+    tr0 = tr1;
+    //
+    if (!PropagateToPoint(tr1,pnt,kMinNStep, kMaxDefStep, kTRUE ,&x2X0)) return kFALSE; // with material corrections
+    //
+    // is there enough material to consider the point as a scatterer?
+    if (x2X0*Abs(tr1.GetSigned1Pt()) < GetMinX2X02PtAccount()) { // ignore materials
+      pnt.SetContainMaterial(kFALSE);
+      continue;
+    }
+    //
+    if (!PropagateToPoint(tr0,pnt,kMinNStep, kMaxDefStep, kFALSE,0)    ) return kFALSE; // no material corrections
+    double cov1[15];
+    memcpy(cov1,tr1.GetCovariance(),15*sizeof(double));                           // save errors with mat.effect
+    if (pnt->ContainsMeasurement()) {
+      memcpy((double*)tr1.GetCovariance(),kErrHuge,15*sizeof(double));  // assign large errors
+      const double* yz    = pnt->GetYZTracking();
+      const double* errYZ = pnt->GetYZErrTracking();
+      if (!tr1.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
+    }
+    //
+    double *cov0=(double*)tr0.GetCovariance(), par0=(double*)tr0.GetParameter(), *par1=(double*)tr1.GetParameter();
+    double *covP=(double*)pnt.GetMatEffCov(),  parP=(double*)pnt.GetMatEffPar();
+    for (int l=15;l--;) covP[l] = cov1[l] - cov0[l];
+    for (int l=5;;l--;) parP[l] = par1[l] - par0[l];
+    //
+  }
+
+
+  if (IsCosmic()) {
+    AliFatal(" TODO cosmic");
+  }
+  //
 }
 
 //______________________________________________

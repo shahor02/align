@@ -21,10 +21,12 @@ class AliAlgTrack: public AliExternalTrackParam
   virtual ~AliAlgTrack();
   void         DefineDOFs();
   Double_t     GetMass()                         const {return fMass;}
+  Double_t     GetMinX2X02PtAccount()            const {return fMinX2X02PtAccount;}
   Int_t        GetNPoints()                      const {return fPoints.GetEntriesFast();}
   AliAlgPoint* GetPoint(int i)                   const {return (AliAlgPoint*)fPoints[i];}
   void         AddPoint(AliAlgPoint* p)                {fPoints.AddLast(p);}
   void         SetMass(double m)                       {fMass = m;}
+  void         SetMinX2X02PtAccount(double v)          {fMinX2X02PtAccount = v;}
   Int_t        GetNLocPar()                      const {return fNLocPar;}
   Int_t        GetNLocExtPar()                   const {return fNLocExtPar;}
   Int_t        GetInnerPointID()                 const {return fInnerPointID;}
@@ -34,7 +36,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Bool_t PropagateGetMatBudget(AliExternalTrackParam *track,Double_t xToGo, double *matInfo);
   //
-  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt, int minNSteps,double maxStep,Bool_t matCor);
+  Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt, int minNSteps,double maxStep,Bool_t matCor, double* x2x0=0);
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
@@ -86,6 +88,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Int_t     fNLocPar;                    // number of local params
   Int_t     fNLocExtPar;                 // number of local params for the external track param
   Int_t     fInnerPointID;               // ID of inner point in sorted track. For 2-leg cosmics - innermost point of lower leg
+  Double_t  fMinX2X02PtAccount;          // minimum X2X0/pT accumulated between 2 points worth to account
   Double_t  fMass;                       // assumed mass
   Double_t  fChi2;                       // chi2 with current residuals
   TObjArray fPoints;                     // alignment points
