@@ -10,6 +10,7 @@ namespace AliAlgAux {
   const double kAlmostZeroF = 1e-11;
   const double kAlmostOneD = 1.-kAlmostZeroD;
   const double kAlmostOneF = 1.-kAlmostZeroF;
+  const double kTinyDist   = 1.e-7; // ignore distances less that this
   //
   template<typename F> void   BringTo02Pi(F &phi);
   template<typename F> void   BringToPiPM(F &phi);

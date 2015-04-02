@@ -71,6 +71,9 @@ class AliAlgPoint : public TObject
   Double_t   GetMSSigTheta2()              const {return fMSSigTheta2;}
   void       SetMSSigTheta2(double v)            {fMSSigTheta2 = v;}
   //
+  Double_t*  GetMatCorrPar()               const {return (double*)fMatCorrP;}
+  Double_t*  GetMatCorrCov()               const {return (double*)fMatCorrC;}
+  //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
   //
@@ -95,6 +98,9 @@ class AliAlgPoint : public TObject
   Double_t fXTimesRho;                                 // Density*Length seen by the track (including inclination)
   Double_t fErrYZTracking[3];                          // errors in tracking frame
   Double_t fErrDiag[2];                                // diagonalized errors
+  //
+  Double_t fMatCorrP[5];                               // material correction delta (== AliExternalTrackParam::fP)
+  Double_t fMatCorrC[15];                              // material correction covariance (== AliExternalTrackParam::fC)
   //
   Double_t fMSSigTheta2;                               //! sigma^2 of MS
   Double_t fTrParamWS[5];                              //! workspace for tracks params at this point

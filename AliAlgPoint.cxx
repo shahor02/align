@@ -1,4 +1,5 @@
 #include <TMath.h>
+#include <TString.h>
 #include "AliAlgPoint.h"
 #include "AliAlgAux.h"
 
@@ -23,6 +24,8 @@ AliAlgPoint::AliAlgPoint()
     fXYZTracking[i] = 0;
     fErrYZTracking[i] = 0;
   }
+  memset(fMatCorrP,0,5*sizeof(double));
+  memset(fMatCorrC,0,15*sizeof(double));
   //
 }
 
@@ -79,23 +82,35 @@ void AliAlgPoint::Init()
 }
 
 //_____________________________________
-void AliAlgPoint::Print(Option_t* ) const
+void AliAlgPoint::Print(Option_t* opt) const
 {
   // print
-  printf("%cDet%d SID:%4d Alp:%+.3f X:%+9.4f",IsInvDir() ? '*':' ',
+  TString opts = opt;
+  opts.ToLower();
+  printf("%cDet%d SID:%4d Alp:%+.3f X:%+9.4f Meas:%s Mat: ",IsInvDir() ? '*':' ',
 	 //	 AliAlgSteer::GetDetNameByDetID(GetDetID()),
-	 GetDetID(),
-	 GetSID(),GetAlphaSens(),GetXSens());
-  if (ContainsMeasurement()) {
-    printf(" Meas: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e",
+	 GetDetID(),GetSID(),GetAlphaSens(),GetXSens(),ContainsMeasurement() ? "ON":"OFF");
+  if (!ContainsMaterial()) printf("OFF\n");
+  else printf("x2X0: %.4f x*rho: %.4f\n",GetX2X0(),GetXTimesRho());
+  //
+  if (opts.Contains("meas") && ContainsMeasurement()) {
+    printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e\n",
 	   GetXTracking(),GetYTracking(),GetZTracking(),
 	   fErrYZTracking[0],fErrYZTracking[1],fErrYZTracking[2]);
   }
-  if (ContainsMaterial()) {
-    printf(" Mat: X/X0: %.4f | X*rho: %.4f\n",fX2X0,fXTimesRho);
+  //
+  if (opts.Contains("mat") && ContainsMaterial()) {
+    printf("  MatCorr par: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+	   fMatCorrP[0], fMatCorrP[1], fMatCorrP[2], fMatCorrP[3], fMatCorrP[4]);
+    printf("  MatCorr cov: %+.3e\n", fMatCorrC[0]);
+    printf("               %+.3e %+.3e\n", fMatCorrC[1], fMatCorrC[2]);
+    printf("               %+.3e %+.3e %+.3e\n", fMatCorrC[3], fMatCorrC[4], fMatCorrC[5]);
+    printf("               %+.3e %+.3e %+.3e %+.3e\n", 
+	   fMatCorrC[6], fMatCorrC[7], fMatCorrC[8], fMatCorrC[9]);
+    printf("               %+.3e %+.3e %+.3e %+.3e %+.3e\n", 
+	   fMatCorrC[10], fMatCorrC[11], fMatCorrC[12], fMatCorrC[13], fMatCorrC[14]);
   }
   //
-  printf("\n");
 }
 
 //_____________________________________

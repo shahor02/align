@@ -18,7 +18,7 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fInnerPointID(0)
-  ,fMinX2X02PtAccount(0.5e-3/1.0)
+  ,fMinX2X0Pt2Account(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
   ,fPoints(0)
@@ -271,11 +271,13 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
       pnt->SetMSSigTheta2( 0.014*0.014*p2i*(1.+fMass*fMass*p2i)*pnt->GetX2X0() );
       //
       //if (!ApplyMS(probe,params[offs+kMSTheta],params[offs+kMSPhi])) return kFALSE;
-      if (!ApplyMS(probe,params[offs+kMSTheta1],params[offs+kMSTheta2])) return kFALSE;
+      /* 
+	 RS TODO      if (!ApplyMS(probe,params[offs+kMSTheta1],params[offs+kMSTheta2])) return kFALSE;
       if (GetFieldON()) {	
 	if (pnt->GetELossVaried()) {if (!ApplyELoss(probe,params[offs+kELoss])) return kFALSE;}
 	else                       {if (!ApplyELoss(probe,pnt)) return kFALSE;}
       }
+      */
     }
   }
   //
@@ -338,29 +340,34 @@ Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam &tr, const AliAl
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt, int minNSteps, double maxStep, Bool_t matCor, double *x2X0)
+Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoint* pnt, 
+				     int minNSteps, double maxStep, Bool_t matCor, double *matPar)
 {
-  // propagate tracks to the point
-  double xyz0[3],xyz1[3],bxyz[3], matPar[7];
-  //
-  double xPoint=pnt->GetXPoint(),dx=xPoint-tr.GetX(),dxa=Abs(dx),step=dxa/minNSteps;
-  if (step>maxStep) step = maxStep;
-  int nstep = dxa/step;
-  step = dxa/nstep;
-  if (dx<0) step = -step;
-  //
+  // propagate tracks to the point. If matCor is true, then material corrections will be applied.
+  // if matPar pointer is provided, it will be filled by total x2x0 and signed xrho
   if (!tr.Rotate(pnt->GetAlphaSens())) {
     AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
     return kFALSE;
   }
   //
+  double xyz0[3],xyz1[3],bxyz[3],matarr[7];
+  double xPoint=pnt->GetXPoint(),dx=xPoint-tr.GetX(),dxa=Abs(dx),step=dxa/minNSteps;
+  if (matPar) matPar[0]=matPar[1]=0;
+  if (dxa<kTinyDist) return kTRUE;
+  if (step>maxStep) step = maxStep;
+  int nstep = dxa/step;
+  step = dxa/nstep;
+  if (dx<0) step = -step;
+  //
+  //  printf("-->will go from X:%e to X:%e in %d steps of %f\n",tr.GetX(),xPoint,nstep,step);
+
   Bool_t alongTrackDir = (dx>0&&!pnt->IsInvDir()) || (dx<0&&pnt->IsInvDir()); // do we go along or against track direction
   Bool_t queryXYZ = matCor||GetFieldON();
   if (queryXYZ) tr.GetXYZ(xyz0);
   //
-  double x2X0Tot = 0;
+  double x2X0Tot=0,xrhoTot=0;
   for (int ist=nstep;ist--;) { // single propagation step >>
-    double xToGo = xPoint + step*ist;
+    double xToGo = xPoint - step*ist;
     //
     if (GetFieldON()) {
       if (pnt->GetUseBzOnly()) {
@@ -385,19 +392,28 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
     }
     //
     if (queryXYZ) {
+      //      printf("-> At %f (%f)\n", tr.GetX(), xToGo);      
       tr.GetXYZ(xyz1);
       if (matCor) {
-	AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,matPar);
-	Double_t xrho=matPar[0]*matPar[4], xx0=matPar[1];
-	x2X0Tot += xx0;
+	AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,matarr);
+	Double_t xrho=matarr[0]*matarr[4], xx0=matarr[1];
         if (alongTrackDir) xrho = -xrho; // if we go along track direction, energy correction is negative
+	x2X0Tot += xx0;
+	xrhoTot += xrho;
+	//if (xx0>1e-5) {
+	//  printf("    MB: {%.2f %.2f %.2f}->{%.2f %.2f %.2f} [%e %e] -> [%e %e]\n",
+	//	 xyz0[0],xyz0[1],xyz0[2], xyz1[0],xyz1[1],xyz1[2],  xx0,xrho, x2X0Tot,xrhoTot);
+	//}
 	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
       }
       for (int l=3;l--;) xyz0[l] = xyz1[l];
     }
   } // single propagation step <<
   //
-  if (x2X0) *x2X0 = x2X0Tot;
+  if (matPar) {
+    matPar[0] = x2X0Tot;
+    matPar[1] = xrhoTot;
+  }
   return kTRUE;
 }
 
@@ -716,17 +732,19 @@ void AliAlgTrack::Print(Option_t *opt) const
   TString optS = opt;
   optS.ToLower();
   Bool_t res = optS.Contains("r") && GetResidDone();
-  Bool_t der = optS.Contains("d") && GetDerivDone();;
-  for (int ip=0;ip<GetNPoints();ip++) {
-    printf("#%3d ",ip);
-    GetPoint(ip)->Print();  
-    if (res) printf("Residuals  : %+e %+e\n",GetResidual(0,ip),GetResidual(1,ip));
-    if (der) {
-      for (int ipar=0;ipar<fNLocPar;ipar++) {
-	printf("DRes/dp%03d : %+e %+e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+  Bool_t der = optS.Contains("d") && GetDerivDone();
+  if (optS.Contains("p") || res || der) { 
+    for (int ip=0;ip<GetNPoints();ip++) {
+      printf("#%3d ",ip);
+      GetPoint(ip)->Print(opt);  
+      if (res) printf("Residuals  : %+e %+e\n",GetResidual(0,ip),GetResidual(1,ip));
+      if (der) {
+	for (int ipar=0;ipar<fNLocPar;ipar++) {
+	  printf("DRes/dp%03d : %+e %+e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+	}
       }
     }
-  }
+  } // print points
 }
 
 //______________________________________________
@@ -767,6 +785,8 @@ Bool_t AliAlgTrack::IniFit()
     //
     // on the way to 1st point we dont need material corrections
     //    if (!PropagateToPoint(trc,pnt,ip>0 ? kMinNStep:1, kMaxDefStep, ip>0)) return kFALSE;
+
+    //printf(">>FitP%d ",ip); pnt->Print();
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       const double* yz    = pnt->GetYZTracking();
@@ -783,6 +803,8 @@ Bool_t AliAlgTrack::IniFit()
   //
   this->AliExternalTrackParam::operator=(trc);
   //
+  ProcessMaterials();
+  //
   return kTRUE;
 }
 
@@ -793,7 +815,7 @@ Bool_t AliAlgTrack::ProcessMaterials()
   // attach material effect info to alignment points
   const int    kMinNStep = 3;
   const double kMaxDefStep = 3.0; 
-  const double kErrSpcT = 1e-6.;
+  const double kErrSpcT = 1e-6;
   const double kErrAngT = 1e-6;
   const double kErrPtIT = 1e-12;
   const double kErrSpcH = 10.0;
@@ -804,19 +826,19 @@ Bool_t AliAlgTrack::ProcessMaterials()
     0                  , kErrSpcT*kErrSpcT,
     0                  ,                   0, kErrAngT*kErrAngT,
     0                  ,                   0,               0, kErrAngT*kErrAngT,
-    0                  ,                   0,               0,               0, kErrPtIT*kRelPtIT
+    0                  ,                   0,               0,               0, kErrPtIT*kErrPtIT
   };
   const double kErrHuge[15] = { // initial tiny error
     kErrSpcH*kErrSpcH,
     0                  , kErrSpcH*kErrSpcH,
     0                  ,                   0, kErrAngH*kErrAngH,
     0                  ,                   0,               0, kErrAngH*kErrAngH,
-    0                  ,                   0,               0,               0, kErrPtIH*kRelPtIH
+    0                  ,                   0,               0,               0, kErrPtIH*kErrPtIH
   };
   //
   // 2 copies of the track, one will be propagated accounting for materials, other - w/o
-  AliExternalTrackParam tr1 = *fAlgTrack, tr1;
-  double x2X0 = 0;
+  AliExternalTrackParam tr1 = *this, tr0;
+  double x2X0xRho[2] = {0,0};
   //
   // here we move in track direction
   for (int ip=GetInnerPointID()+1;ip--;) { // point are order against track direction
@@ -824,11 +846,12 @@ Bool_t AliAlgTrack::ProcessMaterials()
     memcpy((double*)tr1.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
     tr0 = tr1;
     //
-    if (!PropagateToPoint(tr1,pnt,kMinNStep, kMaxDefStep, kTRUE ,&x2X0)) return kFALSE; // with material corrections
+    //printf(">>MatP%d ",ip); pnt->Print();
+    if (!PropagateToPoint(tr1,pnt,kMinNStep, kMaxDefStep, kTRUE ,x2X0xRho)) return kFALSE; // with material corrections
     //
     // is there enough material to consider the point as a scatterer?
-    if (x2X0*Abs(tr1.GetSigned1Pt()) < GetMinX2X02PtAccount()) { // ignore materials
-      pnt.SetContainMaterial(kFALSE);
+    if (x2X0xRho[0]*Abs(tr1.GetSigned1Pt()) < GetMinX2X0Pt2Account()) { // ignore materials
+      pnt->SetContainsMaterial(kFALSE);
       continue;
     }
     //
@@ -842,18 +865,22 @@ Bool_t AliAlgTrack::ProcessMaterials()
       if (!tr1.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
     }
     //
-    double *cov0=(double*)tr0.GetCovariance(), par0=(double*)tr0.GetParameter(), *par1=(double*)tr1.GetParameter();
-    double *covP=(double*)pnt.GetMatEffCov(),  parP=(double*)pnt.GetMatEffPar();
+    double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)tr1.GetParameter();
+    double *covP=pnt->GetMatCorrCov(),*parP=pnt->GetMatCorrPar();
     for (int l=15;l--;) covP[l] = cov1[l] - cov0[l];
-    for (int l=5;;l--;) parP[l] = par1[l] - par0[l];
+    for (int l=5; l--;) parP[l] = par1[l] - par0[l];
+    pnt->SetContainsMaterial(kTRUE);
+    pnt->SetX2X0(x2X0xRho[0]);
+    pnt->SetXTimesRho(x2X0xRho[1]);
+    //printf("Add mat%d %e %e\n",ip, x2X0xRho[0],x2X0xRho[1]);
     //
   }
-
-
+  //
   if (IsCosmic()) {
     AliFatal(" TODO cosmic");
   }
   //
+  return kTRUE;
 }
 
 //______________________________________________
@@ -880,30 +907,3 @@ void AliAlgTrack::SortPoints()
   }
   //
 }
-
-//______________________________________________
-Bool_t AliAlgTrack::PropagateGetMatBudget(AliExternalTrackParam *track,Double_t xToGo,double *matInfo)
-{
-  // Full propagation with extraction of mat.budget info
-  //
-  const Double_t kEpsilon = 0.00001;
-  Int_t dir = track->GetX()<xToGo ? 1:-1;
-  //
-  Double_t xyz0[3],xyz1[3],param[7];
-  track->GetXYZ(xyz0);   //starting global position
-  Double_t b[3]; 
-  AliTrackerBase::GetBxByBz(xyz0,b); // getting the local Bx, By and Bz
-  if (!track->PropagateToBxByBz(xToGo,b))  return kFALSE;
-  track->GetXYZ(xyz1);
-  AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,param);    
-  Double_t xrho=param[0]*param[4], xx0=param[1];
-  if (dir>0) xrho = -xrho;
-  if (!track->CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
-  if (matInfo) {
-    matInfo[0] = xx0;
-    matInfo[1] = xrho;
-    matInfo[2] = param[4];
-  }
-  return kTRUE;
-}
-
