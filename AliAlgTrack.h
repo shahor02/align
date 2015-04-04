@@ -12,8 +12,13 @@ class AliAlgTrack: public AliExternalTrackParam
   enum {kCosmicBit=BIT(14),kFieldONBit=BIT(15),kResidDoneBit=BIT(16),kDerivDoneBit=BIT(17)};
   enum {kNKinParBOFF=4                       // N params for ExternalTrackParam part w/o field
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
-	,kNMSPar=2                           // N params per MS act       
+	,kNMSPar=4                           // N params per MS act       
 	,kNELosPar=1                         // N params per e.loss act
+	,kParY=0                             // Y parameter
+	,kParZ=1                             // Z parameter
+	,kParSnp=2                           // snp parameter
+	,kParTgl=3                           // tgl parameter
+	,kParq2Pt=4                          // q/pt parameter
   };
   enum {kMSTheta1,kMSTheta2,kELoss,kNMatDOFs};
 
@@ -39,7 +44,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
-  Bool_t CalcResiduals(const double *params);
+  Bool_t CalcResiduals(const double *params, Bool_t useMatCorr=kFALSE);
   Bool_t CalcResidDeriv(const double *params);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
@@ -57,11 +62,13 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   // propagation methods
   //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
+  Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
   //
   //  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms);
+  Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt);
