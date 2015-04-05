@@ -17,7 +17,6 @@ AliAlgPoint::AliAlgPoint()
   ,fSinDiagErr(0)
   ,fX2X0(0)
   ,fXTimesRho(0)
-  ,fMSSigTheta2(0)
 {
   // def c-tor
   for (int i=3;i--;) {
@@ -88,10 +87,9 @@ void AliAlgPoint::Print(Option_t* opt) const
   TString opts = opt;
   opts.ToLower();
   printf("%cDet%d SID:%4d Alp:%+.3f X:%+9.4f Meas:%s Mat: ",IsInvDir() ? '*':' ',
-	 //	 AliAlgSteer::GetDetNameByDetID(GetDetID()),
 	 GetDetID(),GetSID(),GetAlphaSens(),GetXSens(),ContainsMeasurement() ? "ON":"OFF");
   if (!ContainsMaterial()) printf("OFF\n");
-  else printf("x2X0: %.4f x*rho: %.4f\n",GetX2X0(),GetXTimesRho());
+  else printf("x2X0: %.4f x*rho: %.4f | 1st par:%d\n",GetX2X0(),GetXTimesRho(),GetMaxLocVarID());
   //
   if (opts.Contains("meas") && ContainsMeasurement()) {
     printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e\n",
@@ -118,6 +116,7 @@ void AliAlgPoint::Clear(Option_t* )
 {
   // reset the point
   ResetBit(0xfffffff);
+  fMaxLocVarID = -1;
   fDetID = -1;
   fSID   = -1;
 }

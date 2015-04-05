@@ -6,12 +6,15 @@
 #include <TObjArray.h>
 #include <TArrayD.h>
 
+#define DEBUG 4
+
 class AliAlgTrack: public AliExternalTrackParam
 {
  public:
   enum {kCosmicBit=BIT(14),kFieldONBit=BIT(15),kResidDoneBit=BIT(16),kDerivDoneBit=BIT(17)};
   enum {kNKinParBOFF=4                       // N params for ExternalTrackParam part w/o field
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
+	//
 	,kNMSPar=4                           // N params per MS act       
 	,kNELosPar=1                         // N params per e.loss act
 	,kParY=0                             // Y parameter
@@ -19,9 +22,8 @@ class AliAlgTrack: public AliExternalTrackParam
 	,kParSnp=2                           // snp parameter
 	,kParTgl=3                           // tgl parameter
 	,kParq2Pt=4                          // q/pt parameter
+	,kNMatDOFs                           // number of paremeters for material effects
   };
-  enum {kMSTheta1,kMSTheta2,kELoss,kNMatDOFs};
-
   AliAlgTrack();
   virtual ~AliAlgTrack();
   void         DefineDOFs();
@@ -44,8 +46,8 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
-  Bool_t CalcResiduals(const double *params, Bool_t useMatCorr=kFALSE);
-  Bool_t CalcResidDeriv(const double *params);
+  Bool_t CalcResiduals(const double *params=0, Bool_t useMatCorr=kTRUE);
+  Bool_t CalcResidDeriv(double *params=0);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
   void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit);}
@@ -61,17 +63,16 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t ProcessMaterials();
   //
   // propagation methods
-  //  Bool_t ApplyMS(AliExternalTrackParam& trPar, double tms,double pms);
-  Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, Double_t *corrPar, Bool_t eloss);
-  Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
-  Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
+  Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrPar, Bool_t eloss);
+  Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
-  //
-  //  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms);
-  Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, Double_t *corrPar, Bool_t eloss);
-  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2);
-  Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt);
+  //
+  // misc methods, perhaps obsolete
+  Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
+  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2);
+  Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
+  Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE);
   //
   Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
   Double_t *GetDerivative(int dim, int pntID)     const {return &fDerivA[dim][pntID*fNLocPar];}
@@ -83,7 +84,8 @@ class AliAlgTrack: public AliExternalTrackParam
   void ModParam(AliExternalTrackParam& tr, int par, double delta);
   void ModParam(AliExternalTrackParam* trSet, int ntr, int par, double delta);
   //
-  void   RichardsonDeriv(const AliExternalTrackParam* trSet, const double *delta, const AliAlgPoint* pnt, double& derY, double& derZ);
+  void RichardsonDeriv(const AliExternalTrackParam* trSet, const double *delta, 
+		       const AliAlgPoint* pnt, double& derY, double& derZ);
   //
  protected: 
   
@@ -102,8 +104,10 @@ class AliAlgTrack: public AliExternalTrackParam
   TObjArray fPoints;                     // alignment points
   TArrayD   fResid[2];                   // residuals array
   TArrayD   fDeriv[2];                   // derivatives array  
-  Double_t  *fResidA[2];                 // fast access to residuals
-  Double_t  *fDerivA[2];                 // fast access to derivatives
+  TArrayD   fLocPar;                     // local parameters array
+  Double_t  *fResidA[2];                 //! fast access to residuals
+  Double_t  *fDerivA[2];                 //! fast access to derivatives
+  Double_t  *fLocParA;                   //! fast access to local params
   //
   ClassDef(AliAlgTrack,1)
 };

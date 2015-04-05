@@ -135,7 +135,13 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   fAlgTrack->AliExternalTrackParam::operator=(*esdTr);
   fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
   fAlgTrack->SortPoints();
+  //
+  if (!fAlgTrack->IniFit()) return kFALSE;
+  if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
+  //
+  if (!fAlgTrack->CalcResiduals()) return kFALSE;
+  if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
   return kTRUE;
 }

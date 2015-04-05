@@ -68,9 +68,6 @@ class AliAlgPoint : public TObject
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
   void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
   //
-  Double_t   GetMSSigTheta2()              const {return fMSSigTheta2;}
-  void       SetMSSigTheta2(double v)            {fMSSigTheta2 = v;}
-  //
   Double_t*  GetMatCorrPar()               const {return (double*)fMatCorrP;}
   Double_t*  GetMatCorrCov()               const {return (double*)fMatCorrC;}
   //
@@ -102,7 +99,6 @@ class AliAlgPoint : public TObject
   Double_t fMatCorrP[5];                               // material correction delta (== AliExternalTrackParam::fP)
   Double_t fMatCorrC[15];                              // material correction covariance (== AliExternalTrackParam::fC)
   //
-  Double_t fMSSigTheta2;                               //! sigma^2 of MS
   Double_t fTrParamWS[5];                              //! workspace for tracks params at this point
   //
   ClassDef(AliAlgPoint,1)
