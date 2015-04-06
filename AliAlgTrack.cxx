@@ -25,6 +25,7 @@ AliAlgTrack::AliAlgTrack() :
 {
   // def c-tor
   for (int i=0;i<2;i++) fResidA[i] = fDerivA[i] = 0;
+  fNeedInv[0] = fNeedInv[1] = kFALSE;
   //
 }
 
@@ -42,6 +43,8 @@ void AliAlgTrack::Clear(Option_t *)
   fPoints.Clear();
   fChi2 = 0;
   fInnerPointID = -1;
+  fNeedInv[0] = fNeedInv[1] = kFALSE;
+  //
 }
 
 //____________________________________________________________________________
@@ -359,7 +362,8 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   //
   //  printf("-->will go from X:%e to X:%e in %d steps of %f\n",tr.GetX(),xPoint,nstep,step);
 
-  Bool_t alongTrackDir = (dx>0&&!pnt->IsInvDir()) || (dx<0&&pnt->IsInvDir()); // do we go along or against track direction
+  // do we go along or against track direction
+  Bool_t alongTrackDir = (dx>0&&!pnt->IsInvDir()) || (dx<0&&pnt->IsInvDir());
   Bool_t queryXYZ = matCor||GetFieldON();
   if (queryXYZ) tr.GetXYZ(xyz0);
   //
@@ -792,6 +796,45 @@ void AliAlgTrack::Print(Option_t *opt) const
 Bool_t AliAlgTrack::IniFit() 
 {
   // perform initial fit of the track
+  //
+  const int    kMinNStep = 3;
+  const double kMaxDefStep = 3.0; 
+  //
+  AliExternalTrackParam trc = *this;
+  //
+  fChi2 = 0;
+  //
+  // the points are ranged from outer to inner for collision tracks, 
+  // and from outer point of lower leg to outer point of upper leg for the cosmic track 
+  //
+  // the fit will always start from the outgoing track in inward direction
+  if (!FitLeg(trc,0,GetInnerPointID(),fNeedInv[0])) return kFALSE; // collision track or cosmic lower leg
+  //
+  printf("Lower leg: %d %d\n",0,GetInnerPointID()); trc.Print();
+
+  if (!IsCosmic()) {
+    CopyFrom(&trc);
+    return kTRUE;
+  }
+  //
+  AliExternalTrackParam trcU = *this;  
+  if (!FitLeg(trcU,GetNPoints()-1,GetInnerPointID()+1,fNeedInv[1])) return kFALSE; //fit upper leg of cosmic track
+  //
+  // propagate to reference point, which is the inner point of lower leg
+  const AliAlgPoint* refP = GetPoint(GetInnerPointID());
+  if (!PropagateToPoint(trcU,refP,kMinNStep,kMaxDefStep,kTRUE)) return kFALSE;
+  //
+  printf("Upper leg: %d %d\n",GetInnerPointID()+1,GetNPoints()-1); trcU.Print();
+  //
+  // todo: combined fit
+
+  return kTRUE;
+}
+
+//______________________________________________
+Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv) 
+{
+  // perform initial fit of the track
   // the fit will always start from the outgoing track in inward direction (i.e. if cosmics - bottom leg)
   const int    kMinNStep = 3;
   const double kMaxDefStep = 3.0; 
@@ -806,28 +849,43 @@ Bool_t AliAlgTrack::IniFit()
     0                  ,                   0,               0,               0, kErrRelPtI*kErrRelPtI
   };
   const Double_t kOverShootX = 5;//kMaxDefStep*0.7;
-  AliExternalTrackParam trc = *this;
-  Bool_t isInverted = kFALSE;
   //
-  fChi2 = 0;
   // prepare seed at outer point
-  AliAlgPoint* p0 = GetPoint(0);
+  AliAlgPoint* p0 = GetPoint(pFrom);
+  double phi = trc.Phi(),alp=p0->GetAlphaSens();
+  BringTo02Pi(phi);
+  BringTo02Pi(alp);
+  double dphi = DeltaPhiSmall(phi,alp); // abs delta angle
+  if (dphi>Pi()/2.) { // need to invert the track to new frame
+    inv = kTRUE;
+    printf("Fit in %d %d Delta: %.3f -> Inverting for\n",pFrom,pTo,dphi); 
+    p0->Print("meas");
+    printf("BeforeInv "); trc.Print();
+    trc.Invert();
+    printf("After Inv "); trc.Print();
+  }
   if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
   if (!trc.PropagateParamOnlyTo(p0->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) return kFALSE;
   double* cov = (double*)trc.GetCovariance();
   memcpy(cov,kIniErr,15*sizeof(double));
   cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
   //
-  int np = GetNPoints();
+  int np,pinc;
+  if (pTo>pFrom) { // fit in points increasing order: collision track or cosmics lower leg
+    pTo++;
+    np = pTo - pFrom;
+    pinc = 1;
+  }
+  else {          // fit in points decreasing order: cosmics upper leg
+    pTo--;
+    np = pFrom - pTo;
+    pinc = -1;
+  }
   Bool_t res = 0;
   //
-  for (int ip=0;ip<np;ip++) { // fit from outer point towards the beginning of the track (vertex?)
+  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // inward fit from outer point
     AliAlgPoint* pnt = GetPoint(ip);
     //
-    // on the way to 1st point we dont need material corrections
-    //    if (!PropagateToPoint(trc,pnt,ip>0 ? kMinNStep:1, kMaxDefStep, ip>0)) return kFALSE;
-
-    //printf(">>FitP%d ",ip); pnt->Print();
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       const double* yz    = pnt->GetYZTracking();
@@ -838,14 +896,11 @@ Bool_t AliAlgTrack::IniFit()
     }
   }
   //
-  if (IsCosmic()) {
-    AliFatal(" TODO cosmic");
-  }
-  //
-  this->AliExternalTrackParam::operator=(trc);
+  if (inv) trc.Invert();
   //
   return kTRUE;
 }
+
 
 
 //______________________________________________
@@ -946,3 +1001,4 @@ void AliAlgTrack::SortPoints()
   }
   //
 }
+

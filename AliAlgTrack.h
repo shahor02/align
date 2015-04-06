@@ -42,7 +42,7 @@ class AliAlgTrack: public AliExternalTrackParam
   virtual void Print(Option_t *opt="")           const;
   //
   Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt, 
-			  int minNSteps,double maxStep,Bool_t matCor, double* x2x0=0);
+			  int minNSteps,double maxStep,Bool_t matCor, double* matPar=0);
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
@@ -60,9 +60,14 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   void   SortPoints();
   Bool_t IniFit();
+  Bool_t FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv);
   Bool_t ProcessMaterials();
   //
+  void     SetChi2(double c)                           {fChi2 = c;};
+  Double_t GetChi2()                             const {return fChi2;}
+  //
   // propagation methods
+  void   CopyFrom(const AliExternalTrackParam* etp);
   Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
@@ -98,6 +103,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Int_t     fNLocPar;                    // number of local params
   Int_t     fNLocExtPar;                 // number of local params for the external track param
   Int_t     fInnerPointID;               // ID of inner point in sorted track. For 2-leg cosmics - innermost point of lower leg
+  Bool_t    fNeedInv[2];                 // set if one of cosmic legs need inversion
   Double_t  fMinX2X0Pt2Account;          // minimum X2X0/pT accumulated between 2 points worth to account
   Double_t  fMass;                       // assumed mass
   Double_t  fChi2;                       // chi2 with current residuals
@@ -157,5 +163,13 @@ inline void AliAlgTrack::ModParam(AliExternalTrackParam* trSet, int ntr, int par
   // modify track parameter (VECTORIZE THOS)
   for (int itr=ntr;itr--;) ModParam(trSet[itr],par,delta);
 }
+
+//______________________________________________
+inline void AliAlgTrack::CopyFrom(const AliExternalTrackParam* etp)
+{
+  // assign kinematics
+  Set(etp->GetX(),etp->GetAlpha(),etp->GetParameter(),etp->GetCovariance());
+}
+
 
 #endif

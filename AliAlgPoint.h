@@ -71,6 +71,10 @@ class AliAlgPoint : public TObject
   Double_t*  GetMatCorrPar()               const {return (double*)fMatCorrP;}
   Double_t*  GetMatCorrCov()               const {return (double*)fMatCorrC;}
   //
+  void       GetXYZGlo(Double_t r[3])       const;
+  Double_t   GetPhiGlo()                    const;
+  Int_t      GetAliceSector()               const;
+  //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
   //

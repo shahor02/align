@@ -39,7 +39,7 @@ AliAlgSensTOF::~AliAlgSensTOF()
 void AliAlgSensTOF::SetTrackingFrame()
 {
   // define tracking frame of the sensor: just rotation by sector angle
-  fAlp = SectAlpha(fSector);
+  fAlp = Sector2Alpha(fSector);
   fX = 0;
 }
 

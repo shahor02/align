@@ -129,20 +129,48 @@ Int_t AliAlgPoint::Compare(const TObject* b) const
   // 2) for cosmic tracks: upper leg (pnt->IsInvDir()==kTRUE) ranged in increasing X
   //                       lower leg - in decreasing X
   AliAlgPoint* pnt = (AliAlgPoint*)b;
-  double x = GetXSens()+GetXTracking();
-  double xp = pnt->GetXSens()+pnt->GetXTracking();
+  double x = GetXPoint();
+  double xp = pnt->GetXPoint();
   if (!IsInvDir()) { // track propagates from low to large X via this point
     if (!pnt->IsInvDir()) { // via this one also
       return x>xp ? -1:1;   
     }
-    else return 1; // range points of lower leg 1st
+    else return -1; // range points of lower leg 1st
   }
   else { // this point is from upper cosmic leg: track propagates from large to low X
     if (pnt->IsInvDir()) { // this one also
       return x>xp ? 1:-1;
     }
-    else return x>xp ? 1:-1; // other point is from lower leg
+    else return 1; // other point is from lower leg
   }
   //
 }
 
+//__________________________________________________________________
+void AliAlgPoint::GetXYZGlo(Double_t r[3]) const
+{
+  // position in lab frame
+  double cs=TMath::Cos(fAlphaSens);
+  double sn=TMath::Sin(fAlphaSens);
+  double x=GetXPoint(); 
+  r[0] = x*cs - GetYTracking()*sn; 
+  r[1] = x*sn + GetYTracking()*cs;
+  r[2] = GetZTracking();
+  //
+}
+
+//__________________________________________________________________
+Double_t AliAlgPoint::GetPhiGlo() const
+{
+  // phi angle (-pi:pi) in global frame
+  double xyz[3];
+  GetXYZGlo(xyz);
+  return ATan2(xyz[1],xyz[0]);
+}
+
+//__________________________________________________________________
+Int_t AliAlgPoint::GetAliceSector() const
+{
+  // get global sector ID corresponding to this point phi
+  return Phi2Sector(GetPhiGlo());  
+}

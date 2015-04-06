@@ -34,6 +34,8 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
   : TNamed(name,title)
   ,fVolIDMin(-1)
   ,fVolIDMax(-1)
+  ,fNSensors(0)
+  ,fSID2VolID(0)
   //
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
@@ -56,16 +58,15 @@ AliAlgDet::~AliAlgDet()
 
 
 //____________________________________________
-Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
+Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, Bool_t inv)
 {
-  // extract the points corresponding to this detector, recalibrate/realign them to the
-  // level of the "starting point" for the alignment/calibration session
-  const AliESDfriendTrack* trF(0);
-  const AliTrackPointArray* trP(0);
+  // Extract the points corresponding to this detector, recalibrate/realign them to the
+  // level of the "starting point" for the alignment/calibration session.
+  // If inv==true, the track propagates in direction of decreasing tracking X 
+  // (i.e. upper leg of cosmic track)
   //
-  ResetPool();
-  //
-  if (!(trF=esdTr->GetFriendTrack()) || !(trP=trF->GetTrackPointArray())) return 0;
+  const AliESDfriendTrack* trF(esdTr->GetFriendTrack());
+  const AliTrackPointArray* trP(trF->GetTrackPointArray());
   //
   int np(trP->GetNPoints());
   int npSel(0);
@@ -74,6 +75,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack)
     if (!SensorOfDetector(trP->GetVolumeID()[ip])) continue;
     if (!(apnt=TrackPoint2AlgPoint(ip, trP))) continue;
     algTrack->AddPoint(apnt);
+    if (inv) apnt->SetInvDir();
     npSel++;
   }
   //

@@ -23,10 +23,11 @@ void ConnectFriends();
 
 AliAlgSteer * algSteer = 0;
 
-void buildAlg()
+//void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+  void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
-  LoadEvent(4);
+  LoadEvent(evID);
   esdEv->InitMagneticField();
   int run = esdEv->GetRunNumber();
   AliCDBManager* man = AliCDBManager::Instance();
@@ -63,14 +64,18 @@ void buildAlg()
   //  its->Init();
   algSteer->Init();
   //
-  //  AliAlgDet* its = algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
-  //  AliAlgDet* trd = algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
-  //  its->Print();
-  //  trd->Print();
   //
   PrintTracks();
-  AliESDtrack* tr = esdEv->GetTrack(2);
-  algSteer->ProcessTrack(tr);
+  //
+  algSteer->SetESDEvent(esdEv);
+  if (!cosm) {
+    AliESDtrack* tr = esdEv->GetTrack(trID);
+    algSteer->ProcessTrack(tr);
+  }
+  else {
+    AliESDCosmicTrack* trC = esdEv->GetCosmicTrack(trID);
+    algSteer->ProcessTrack(trC);
+  }
   //
 }
 
@@ -111,6 +116,7 @@ Int_t LoadEvent(Int_t iev)
 void PrintTracks()
 {
   for (int i=0;i<esdEv->GetNumberOfTracks();i++) PrintTrack(i);
+  printf("NCosm: %d\n",esdEv->GetNumberOfCosmicTracks());
 }
 
 void PrintTrack(Int_t i)

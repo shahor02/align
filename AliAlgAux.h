@@ -7,23 +7,30 @@ using namespace TMath;
 
 namespace AliAlgAux {
   const double kAlmostZeroD = 1e-15;
-  const double kAlmostZeroF = 1e-11;
+  const float  kAlmostZeroF = 1e-11;
   const double kAlmostOneD = 1.-kAlmostZeroD;
-  const double kAlmostOneF = 1.-kAlmostZeroF;
+  const float  kAlmostOneF = 1.-kAlmostZeroF;
   const double kTinyDist   = 1.e-7; // ignore distances less that this
+  //
+  Double_t Sector2Alpha(int sect);
+  Int_t    Phi2Sector(double alpha);
+  Double_t SectorDAlpha()                               {return TMath::Pi()/9;}
   //
   template<typename F> void   BringTo02Pi(F &phi);
   template<typename F> void   BringToPiPM(F &phi);
-  void   PrintBits(ULong64_t patt, Int_t maxBits);
+  template<typename F> Bool_t OKforPhiMin(F phiMin,F phi);
+  template<typename F> Bool_t OKforPhiMax(F phiMax,F phi);
+  template<typename F> F      MeanPhiSmall(F phi0, F phi1);
+  template<typename F> F      DeltaPhiSmall(F phi0, F phi1);
+  template<typename F> Bool_t SmallerAbs(F d, F tolD)    {return Abs(d)<tolD;}
+  template<typename F> Bool_t Smaller(F d, F tolD)       {return d<tolD;}
+  //
   Int_t  NumberOfBitsSet(UInt_t x);
-  Bool_t SmallerAbs(double d, double tolD)    {return Abs(d)<tolD;}
-  Bool_t SmallerAbs(float  f, double tolF)    {return Abs(f)<tolF;}
-  Bool_t Smaller(double d, double tolD)       {return d<tolD;}
-  Bool_t Smaller(float  f, double tolF)       {return f<tolF;}
   Bool_t IsZeroAbs(double d)                  {return SmallerAbs(d,kAlmostZeroD);}
   Bool_t IsZeroAbs(float  f)                  {return SmallerAbs(f,kAlmostZeroF);}
   Bool_t IsZeroPos(double d)                  {return Smaller(d,kAlmostZeroD);}
   Bool_t IsZeroPos(float  f)                  {return Smaller(f,kAlmostZeroF);}
+  void   PrintBits(ULong64_t patt, Int_t maxBits);
 }
 
 //_________________________________________________________________________________
@@ -39,6 +46,44 @@ inline void AliAlgAux::BringToPiPM(F &phi) {
   // bring phi to -pi:pi range
   if (phi>TMath::Pi()) phi-=TwoPi();
 }
+//_________________________________________________________________________________
+template<typename F>
+inline Bool_t AliAlgAux::OKforPhiMin(F phiMin,F phi) {
+  // check if phi is above the phiMin, phi's must be in 0-2pi range
+  F dphi = phi-phiMin;
+  return ((dphi>0 && dphi<Pi()) || dphi<-Pi()) ? kTRUE:kFALSE;
+}
+
+//_________________________________________________________________________________
+template<typename F>
+inline Bool_t AliAlgAux::OKforPhiMax(F phiMax,F phi) {
+  // check if phi is below the phiMax, phi's must be in 0-2pi range
+  F dphi = phi-phiMax;
+  return ((dphi<0 && dphi>-Pi()) || dphi>Pi()) ? kTRUE:kFALSE;
+}
+
+//_________________________________________________________________________________
+template<typename F>
+inline F AliAlgAux::MeanPhiSmall(F phi0, F phi1) {
+  // return mean phi, assume phis in 0:2pi
+  F phi;
+  if (!OKforPhiMin(phi0,phi1)) {phi=phi0; phi0=phi1; phi1=phi;}
+  if (phi0>phi1) phi = (phi1 - (TwoPi()-phi0))/2; // wrap
+  else           phi = (phi0+phi1)/2;
+  BringTo02Pi(phi);
+  return phi;
+}
+
+//_________________________________________________________________________________
+template<typename F>
+inline F AliAlgAux::DeltaPhiSmall(F phi0, F phi1) {
+  // return delta phi, assume phis in 0:2pi
+  F del;
+  if (!OKforPhiMin(phi0,phi1)) {del=phi0; phi0=phi1; phi1=del;}
+  del = phi1 - phi0;
+  if (del<0) del += TwoPi();
+  return del;
+}
 
 //_________________________________________________________________________________
 inline Int_t AliAlgAux::NumberOfBitsSet(UInt_t x) {
@@ -47,5 +92,20 @@ inline Int_t AliAlgAux::NumberOfBitsSet(UInt_t x) {
   x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
   return (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
+
+//_________________________________________________________________________________
+inline Double_t AliAlgAux::Sector2Alpha(int sect) {
+  // get barrel sector alpha in -pi:pi format
+  if (sect>8)sect-=18; return (sect+0.5)*SectorDAlpha();
+} 
+
+//_________________________________________________________________________________
+inline Int_t AliAlgAux::Phi2Sector(double phi) {
+  // get barrel sector from phi in -pi:pi format
+  int sect = Nint( (phi*TMath::RadToDeg()-10)/20. );
+  if (sect<0) sect+=18; 
+  return sect;
+} 
+
 
 #endif

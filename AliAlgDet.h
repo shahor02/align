@@ -43,12 +43,12 @@ class AliAlgDet : public TNamed
   virtual void DefineMatrices();
   virtual void SetTrackingFrames();
   virtual void Print(const Option_t *opt="")    const;
-  virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack);
+  virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
   virtual Bool_t PresentInTrack(const AliESDtrack* trc) const = 0;
   //
   virtual AliAlgPoint* GetPointFromPool();
-  void    ResetPool();
+  virtual void ResetPool();
   //
   void    SetInitDone()                               {SetBit(kInitDone);}
   Bool_t  GetInitDone()                         const {return TestBit(kInitDone);}
