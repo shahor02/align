@@ -11,6 +11,7 @@
 class AliAlgTrack: public AliExternalTrackParam
 {
  public:
+
   enum {kCosmicBit=BIT(14),kFieldONBit=BIT(15),kResidDoneBit=BIT(16),kDerivDoneBit=BIT(17)};
   enum {kNKinParBOFF=4                       // N params for ExternalTrackParam part w/o field
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
@@ -62,6 +63,8 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t IniFit();
   Bool_t FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv);
   Bool_t ProcessMaterials();
+  Bool_t ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo);
+  Bool_t CombineTracks(AliExternalTrackParam& trcL, const AliExternalTrackParam& trcU);
   //
   void     SetChi2(double c)                           {fChi2 = c;};
   Double_t GetChi2()                             const {return fChi2;}

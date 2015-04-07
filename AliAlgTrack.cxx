@@ -2,6 +2,9 @@
 #include "AliTrackerBase.h"
 #include "AliLog.h"
 #include "AliAlgAux.h"
+#include "TMatrixD.h"
+#include "TVectorD.h"
+
 
 using namespace AliAlgAux;
 using namespace TMath;
@@ -11,7 +14,6 @@ using namespace TMath;
 const Int_t kRichardsonOrd = 1;              // Order of Richardson extrapolation for derivative (min=1)
 const Int_t kRichardsonN = kRichardsonOrd+1; // N of 2-point symmetric derivatives needed for requested order
 const Int_t kNRDClones = kRichardsonN*2     ;// number of variations for derivative of requested order
-
 
 //____________________________________________________________________________
 AliAlgTrack::AliAlgTrack() :
@@ -811,23 +813,78 @@ Bool_t AliAlgTrack::IniFit()
   if (!FitLeg(trc,0,GetInnerPointID(),fNeedInv[0])) return kFALSE; // collision track or cosmic lower leg
   //
   printf("Lower leg: %d %d\n",0,GetInnerPointID()); trc.Print();
+  //
+  if (IsCosmic()) {
+    AliExternalTrackParam trcU = trc;
+    if (!FitLeg(trcU,GetNPoints()-1,GetInnerPointID()+1,fNeedInv[1])) return kFALSE; //fit upper leg of cosmic track
+    //
+    // propagate to reference point, which is the inner point of lower leg
+    const AliAlgPoint* refP = GetPoint(GetInnerPointID());
+    if (!PropagateToPoint(trcU,refP,kMinNStep,kMaxDefStep,kTRUE)) return kFALSE;
+    //
+    printf("Upper leg: %d %d\n",GetInnerPointID()+1,GetNPoints()-1); trcU.Print();
+    //
+    if (!CombineTracks(trc,trcU)) return kFALSE;
+    printf("Combined\n"); 
+    trc.Print();    
+  }
+  CopyFrom(&trc);
+  //
+  return kTRUE;
+}
 
-  if (!IsCosmic()) {
-    CopyFrom(&trc);
-    return kTRUE;
+//______________________________________________
+Bool_t AliAlgTrack::CombineTracks(AliExternalTrackParam& trcL, const AliExternalTrackParam& trcU)
+{
+  // Assign to trcL the combined tracks (Kalman update of trcL by trcU)
+  // The trcL and trcU MUST be defined at same X,Alpha
+  //
+  // Update equations: tracks described by vectors vL and vU and coviriances CL and CU resp.
+  // then the gain matrix K = CL*(CL+CU)^-1
+  // Updated vector and its covariance:
+  // CL' = CL - K*CL
+  // vL' = vL + K(vU-vL)
+  //
+  if (Abs(trcL.GetX()-trcU.GetX())>kTinyDist || Abs(trcL.GetAlpha()-trcU.GetAlpha())>kTinyDist) {
+    AliError("Tracks must be defined at same reference X and Alpha");
+    trcL.Print();
+    trcU.Print();
+    return kFALSE;
   }
   //
-  AliExternalTrackParam trcU = *this;  
-  if (!FitLeg(trcU,GetNPoints()-1,GetInnerPointID()+1,fNeedInv[1])) return kFALSE; //fit upper leg of cosmic track
+  const double* covU=trcU.GetCovariance(),*parU=trcU.GetParameter();
+  double* covL=(double*)trcL.GetCovariance(),*parL=(double*)trcL.GetParameter();
   //
-  // propagate to reference point, which is the inner point of lower leg
-  const AliAlgPoint* refP = GetPoint(GetInnerPointID());
-  if (!PropagateToPoint(trcU,refP,kMinNStep,kMaxDefStep,kTRUE)) return kFALSE;
+  int mtSize = GetFieldON() ? kNKinParBON : kNKinParBOFF;
+  TMatrixD matCL(mtSize,mtSize),matCLplCU(mtSize,mtSize);
+  TVectorD vl(mtSize),vUmnvL(mtSize);
   //
-  printf("Upper leg: %d %d\n",GetInnerPointID()+1,GetNPoints()-1); trcU.Print();
   //
-  // todo: combined fit
-
+  for (int i=mtSize;i--;) {
+    vUmnvL[i] = parU[i] - parL[i];     // y = residual of 2 tracks
+    vl[i]  = parL[i];
+    for (int j=i+1;j--;) {
+      int indIJ = ((i*(i+1))>>1)+j; // position of IJ cov element in the AliExternalTrackParam covariance array
+      matCL(i,j) = matCL(j,i) = covL[indIJ];
+      matCLplCU(i,j) = matCLplCU(j,i) = covL[indIJ] + covU[indIJ];
+    }
+  }
+  matCLplCU.Invert();                      // S^-1 = (Cl + Cu)^-1
+  if (!matCLplCU.IsValid()) { 
+#if DEBUG>3
+    AliError("Failed to invert summed cov.matrix of cosmic track");
+    matCLplCU.Print();
+#endif    
+    return kFALSE; // inversion failed
+  }
+  TMatrixD matK(matCL,TMatrixD::kMult,matCLplCU); // gain K = Cl*(Cl+Cu)^-1
+  TMatrixD matKdotCL(matK,TMatrixD::kMult,matCL); // K*Cl
+  TVectorD vlUp = matK*vUmnvL;                   // K*(vl - vu)
+  for (int i=mtSize;i--;) {
+    parL[i] += vlUp[i];     // updated param: vL' = vL + K(vU-vL)
+    for (int j=i+1;j--;) covL[((i*(i+1))>>1)+j] -= matKdotCL(i,j); // updated covariance: Cl' = Cl - K*Cl
+  } 
+  //
   return kTRUE;
 }
 
@@ -858,11 +915,11 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   double dphi = DeltaPhiSmall(phi,alp); // abs delta angle
   if (dphi>Pi()/2.) { // need to invert the track to new frame
     inv = kTRUE;
-    printf("Fit in %d %d Delta: %.3f -> Inverting for\n",pFrom,pTo,dphi); 
-    p0->Print("meas");
-    printf("BeforeInv "); trc.Print();
+    //    printf("Fit in %d %d Delta: %.3f -> Inverting for\n",pFrom,pTo,dphi); 
+    //    p0->Print("meas");
+    //    printf("BeforeInv "); trc.Print();
     trc.Invert();
-    printf("After Inv "); trc.Print();
+    //    printf("After Inv "); trc.Print();
   }
   if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
   if (!trc.PropagateParamOnlyTo(p0->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) return kFALSE;
@@ -896,13 +953,44 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
     }
   }
   //
-  if (inv) trc.Invert();
+  if (inv) {
+    //    printf("Before inverting back "); trc.Print();
+    trc.Invert();
+  }
   //
   return kTRUE;
 }
 
+//______________________________________________
+Bool_t AliAlgTrack::ProcessMaterials() 
+{
+  // attach material effect info to alignment points
+  AliExternalTrackParam trc = *this;
 
+  // collision track of cosmic lower leg: move along track direction from last (middle for cosmic lower leg) 
+  // point (inner) to 1st one (outer)
+  if (fNeedInv[0]) trc.Invert(); // track needs to be inverted ? (should be for upper leg)
+  if (!ProcessMaterials(trc, GetInnerPointID(),0)) {
+#if DEBUG>3
+    AliError("Failed to process materials for leg along the track");
+#endif    
+    return kFALSE;
+  }
+  if (IsCosmic()) {
+    // cosmic upper leg: move againg the track direction from middle point (inner) to last one (outer)
+    trc = *this;
+    if (fNeedInv[1]) trc.Invert(); // track needs to be inverted ? 
+    if (!ProcessMaterials(trc, GetInnerPointID()+1,GetNPoints()-1)) {
+#if DEBUG>3
+      AliError("Failed to process materials for leg against the track");
+#endif    
+      return kFALSE;
+    }
+  }
+  
+}
 
+/*
 //______________________________________________
 Bool_t AliAlgTrack::ProcessMaterials() 
 {
@@ -972,6 +1060,101 @@ Bool_t AliAlgTrack::ProcessMaterials()
   //
   if (IsCosmic()) {
     AliFatal(" TODO cosmic");
+  }
+  //
+  return kTRUE;
+}
+*/
+
+//______________________________________________
+Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo) 
+{
+  // attach material effect info to alignment points
+  const int    kMinNStep = 3;
+  const double kMaxDefStep = 3.0; 
+  const double kErrSpcT = 1e-6;
+  const double kErrAngT = 1e-6;
+  const double kErrPtIT = 1e-12;
+  const double kErrSpcH = 10.0;
+  const double kErrAngH = 0.5;
+  const double kErrPtIH = 0.5;
+  const double kErrTiny[15] = { // initial tiny error
+    kErrSpcT*kErrSpcT,
+    0                  , kErrSpcT*kErrSpcT,
+    0                  ,                   0, kErrAngT*kErrAngT,
+    0                  ,                   0,               0, kErrAngT*kErrAngT,
+    0                  ,                   0,               0,               0, kErrPtIT*kErrPtIT
+  };
+  const double kErrHuge[15] = { // initial tiny error
+    kErrSpcH*kErrSpcH,
+    0                  , kErrSpcH*kErrSpcH,
+    0                  ,                   0, kErrAngH*kErrAngH,
+    0                  ,                   0,               0, kErrAngH*kErrAngH,
+    0                  ,                   0,               0,               0, kErrPtIH*kErrPtIH
+  };
+  //
+  // 2 copies of the track, one will be propagated accounting for materials, other - w/o
+  AliExternalTrackParam tr0;
+  double x2X0xRho[2] = {0,0};
+  //
+  int np,pinc;
+  if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
+    pTo++;
+    np = pTo - pFrom;
+    pinc = 1;
+  }
+  else {           // fit in points increasing order: collision track or cosmics lower leg
+    pTo--;
+    np = pFrom - pTo;
+    pinc = -1;
+  }
+  //
+  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // point are ordered against track direction
+    AliAlgPoint* pnt = GetPoint(ip);
+    memcpy((double*)trc.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
+    tr0 = trc;
+    //
+    if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE ,x2X0xRho)) {  // with material corrections
+#if DEBUG>3
+      AliErrorF("Failed to take track to point %d (dir: %d -> %d) with mat.corr.",ip,pFrom,pTo);
+      trc.Print();
+      pnt->Print("meas");
+#endif      
+      return kFALSE;
+    }
+    //
+    // is there enough material to consider the point as a scatterer?
+    if (x2X0xRho[0]*Abs(trc.GetSigned1Pt()) < GetMinX2X0Pt2Account()) { // ignore materials
+      pnt->SetContainsMaterial(kFALSE);
+      continue;
+    }
+    //
+    if (!PropagateToPoint(tr0,pnt,kMinNStep, kMaxDefStep, kFALSE,0)) { // no material corrections
+#if DEBUG>3
+      AliErrorF("Failed to take track to point %d (dir: %d -> %d) w/o mat.corr.",ip,pFrom,pTo);
+      tr0.Print();
+      pnt->Print("meas");
+#endif      
+      return kFALSE; 
+    }
+    double cov1[15];
+    memcpy(cov1,trc.GetCovariance(),15*sizeof(double));                           // save errors with mat.effect
+    if (pnt->ContainsMeasurement()) {
+      memcpy((double*)trc.GetCovariance(),kErrHuge,15*sizeof(double));  // assign large errors
+      const double* yz    = pnt->GetYZTracking();
+      const double* errYZ = pnt->GetYZErrTracking();
+      if (!trc.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
+    }
+    //
+    double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)trc.GetParameter();
+    double *covP=pnt->GetMatCorrCov(),*parP=pnt->GetMatCorrPar();
+    for (int l=15;l--;) covP[l] = cov1[l] - cov0[l];
+    for (int l=5; l--;) parP[l] = par1[l] - par0[l];
+    pnt->SetContainsMaterial(kTRUE);
+    pnt->SetX2X0(x2X0xRho[0]);
+    pnt->SetXTimesRho(x2X0xRho[1]);
+    //printf("Add mat%d %e %e\n",ip, x2X0xRho[0],x2X0xRho[1]);
+    //
   }
   //
   return kTRUE;

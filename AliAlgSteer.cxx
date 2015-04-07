@@ -243,9 +243,10 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   // 
   if (!fAlgTrack->IniFit()) return kFALSE;
   //
-  /*
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
+
+  /*
   //
   if (!fAlgTrack->CalcResiduals()) return kFALSE;
   if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
