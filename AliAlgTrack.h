@@ -47,7 +47,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t PropagateParamToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt); // param only
   Bool_t PropagateParamToPoint(AliExternalTrackParam* trSet, int nTr, const AliAlgPoint* pnt); // params only
   //
-  Bool_t CalcResiduals(const double *params=0, Bool_t useMatCorr=kTRUE);
+  Bool_t CalcResiduals(const double *params=0);
   Bool_t CalcResidDeriv(double *params=0);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
@@ -61,9 +61,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   void   SortPoints();
   Bool_t IniFit();
-  Bool_t FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv);
   Bool_t ProcessMaterials();
-  Bool_t ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo);
   Bool_t CombineTracks(AliExternalTrackParam& trcL, const AliExternalTrackParam& trcU);
   //
   void     SetChi2(double c)                           {fChi2 = c;};
@@ -96,10 +94,15 @@ class AliAlgTrack: public AliExternalTrackParam
 		       const AliAlgPoint* pnt, double& derY, double& derZ);
   //
  protected: 
-  
+  //
+  Bool_t CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pTo);
+  Bool_t CalcResiduals(const double *params,Bool_t invert,int pFrom,int pTo);
+  Bool_t FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv);
+  Bool_t ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo);
+  //
   static Double_t RichardsonExtrap(double *val, int ord=1);
   static Double_t RichardsonExtrap(const double *val, int ord=1);
-
+  //
  protected:
 
   //

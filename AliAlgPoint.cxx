@@ -8,7 +8,8 @@ using namespace TMath;
 
 //_____________________________________
 AliAlgPoint::AliAlgPoint()
-  :fMaxLocVarID(0)
+  :fMinLocVarID(0)
+  ,fMaxLocVarID(0)
   ,fDetID(-1)
   ,fSID(-1)
   ,fAlphaSens(0)
@@ -89,7 +90,7 @@ void AliAlgPoint::Print(Option_t* opt) const
   printf("%cDet%d SID:%4d Alp:%+.3f X:%+9.4f Meas:%s Mat: ",IsInvDir() ? '*':' ',
 	 GetDetID(),GetSID(),GetAlphaSens(),GetXSens(),ContainsMeasurement() ? "ON":"OFF");
   if (!ContainsMaterial()) printf("OFF\n");
-  else printf("x2X0: %.4f x*rho: %.4f | 1st par:%d\n",GetX2X0(),GetXTimesRho(),GetMaxLocVarID());
+  else printf("x2X0: %.4f x*rho: %.4f | pars:[%3d:%3d)\n",GetX2X0(),GetXTimesRho(),GetMinLocVarID(),GetMaxLocVarID());
   //
   if (opts.Contains("meas") && ContainsMeasurement()) {
     printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e\n",
@@ -107,6 +108,12 @@ void AliAlgPoint::Print(Option_t* opt) const
 	   fMatCorrC[6], fMatCorrC[7], fMatCorrC[8], fMatCorrC[9]);
     printf("               %+.3e %+.3e %+.3e %+.3e %+.3e\n", 
 	   fMatCorrC[10], fMatCorrC[11], fMatCorrC[12], fMatCorrC[13], fMatCorrC[14]);
+  }
+  //
+  if (opts.Contains("ws")) { // printf track state at this point stored during residuals calculation
+    printf("Local Track: "); 
+    for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWS[i]); 
+    printf("\n");
   }
   //
 }

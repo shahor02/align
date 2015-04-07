@@ -33,6 +33,7 @@ class AliAlgPoint : public TObject
   //
   Int_t      GetDetID()              const {return fDetID;}
   Int_t      GetSID()                const {return fSID;}
+  Int_t      GetMinLocVarID()        const {return fMinLocVarID;}
   Int_t      GetMaxLocVarID()        const {return fMaxLocVarID;}
   Bool_t     ContainsMaterial()      const {return TestBit(kMaterialBit);}
   Bool_t     ContainsMeasurement()   const {return TestBit(kMeasurementBit);}
@@ -48,6 +49,7 @@ class AliAlgPoint : public TObject
   void       SetDetID(Int_t id)                       {fDetID = (Char_t)id;}
   void       SetSID(Int_t id)                         {fSID = (Short_t)id;}
   //
+  void       SetMinLocVarID(Int_t id)                 {fMinLocVarID = id;}
   void       SetMaxLocVarID(Int_t id)                 {fMaxLocVarID = id;}
   void       SetELossVaried(Bool_t v=kTRUE)           {SetBit(kVaryELossBit,v);}
   void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
@@ -84,7 +86,10 @@ class AliAlgPoint : public TObject
   //
  protected:
   //
-  Int_t    fMaxLocVarID;                               // The residuals/derivatives depend on params<fMaxLocVarID.
+  Int_t    fMinLocVarID;                               // The residuals/derivatives depend on fNLocExtPar params 
+                                                       // and point params>=fMinLocVarID.
+  Int_t    fMaxLocVarID;                               // The residuals/derivatives depend on fNLocExtPar params 
+                                                       // and point params<fMaxLocVarID.
                                                        // If the point contains materials, fMaxLocVarID also marks
                                                        // the parameters associated with this point
   Char_t   fDetID;                                     // DetectorID

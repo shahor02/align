@@ -20,6 +20,7 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fInnerPointID(0)
+  //  ,fMinX2X0Pt2Account(0.5e-5/1.0)
   ,fMinX2X0Pt2Account(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
@@ -64,11 +65,21 @@ void AliAlgTrack::DefineDOFs()
   // but for the 2-leg cosmic track the innermost points are in the middle (1st lower leg, then upper one)
   //
   // start along track direction, i.e. last point in the ordered array
-  for (int ip=np;ip--;) {
+  int minPar = fNLocPar;
+  for (int ip=GetInnerPointID()+1;ip--;) { // collision track or cosmic lower leg
     AliAlgPoint* pnt = GetPoint(ip);
-    if (pnt->ContainsMaterial()) {
+    pnt->SetMinLocVarID(minPar);
+    if (pnt->ContainsMaterial()) fNLocPar += (pnt->GetELossVaried()&&GetFieldON()) ? kNMSPar+kNELosPar:kNMSPar;
+    pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
+  }
+  //
+  if (IsCosmic()) {
+    minPar = fNLocPar;
+    for (int ip=GetInnerPointID()+1;ip<np;ip++) { // collision track or cosmic lower leg
+      AliAlgPoint* pnt = GetPoint(ip);
+      pnt->SetMinLocVarID(minPar);
+      if (pnt->ContainsMaterial()) fNLocPar += (pnt->GetELossVaried()&&GetFieldON()) ? kNMSPar+kNELosPar:kNMSPar;
       pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
-      fNLocPar += pnt->GetELossVaried() ? kNMSPar+kNELosPar:kNMSPar;
     }
   }
   //
@@ -99,29 +110,58 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
 {
   // Propagate for given local params and calculate residuals and their derivatives derivatives.
   // The 1st 4 or 5 elements of params vector should be the reference externalTrackParam
-  // Then, if useMatCorr==true, parameters of material corrections for each point
+  // Then parameters of material corrections for each point
   // marked as having materials should come (4 or 5 dependending if ELoss is varied or fixed)
+  //
+  // If params are not provided, use internal params array
+  //
+  if (!params) params = fLocParA;
+  //
+  if (!GetResidDone()) CalcResiduals(params);
+  //
+  int np = GetNPoints();
+  //
+  // collision track or cosmic lower leg
+  if (!CalcResidDeriv(params,fNeedInv[0],GetInnerPointID(),0)) return kFALSE;
+  //
+  if (IsCosmic()) { // cosmic upper leg
+    if (!CalcResidDeriv(params,fNeedInv[1],GetInnerPointID()+1,np-1)) return kFALSE;
+  } 
+  //
+  SetDerivDone();
+  return kTRUE;
+}
+
+//______________________________________________________
+Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pTo)
+{
+  // Calculate derivatives of residuals vs params for points pFrom to pT. For cosmic upper leg 
+  // track parameter may require inversion
   //
   // The derivatives are calculated using Richardson extrapolation 
   // (like http://root.cern.ch/root/html/ROOT__Math__RichardsonDerivator.html)
   //
-  static AliExternalTrackParam probD[kNRDClones];     // use this to vary supplied param for derivative calculation
-  static double varDelta[kRichardsonN];
+  AliExternalTrackParam probD[kNRDClones];     // use this to vary supplied param for derivative calculation
+  double varDelta[kRichardsonN];
   //
   const double kDelta[kNKinParBON]  = {0.02,0.02, 0.001,0.001, 0.01}; // variations for ExtTrackParam 
   const double kDeltaMat[kNMatDOFs] = {0.02,0.02, 0.001,0.001, 0.01}; // variations for ETP delta at points with material
   //
-  if (!params) params = fLocParA;
-  if (!GetResidDone()) CalcResiduals(params,kTRUE);
-  //
-  int np = GetNPoints();
-  double *currPar=0;
-  //
+  int np,pinc;
+  if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
+    pTo++;
+    np = pTo - pFrom;
+    pinc = 1;
+  }
+  else {           // fit in points increasing order: collision track or cosmics lower leg
+    pTo--;
+    np = pFrom - pTo;
+    pinc = -1;
+  }
   // 1) derivative wrt AliExternalTrackParam parameters
   for (int ipar=fNLocExtPar;ipar--;) {
-    currPar = params;
-    SetParams(probD,kNRDClones, GetX(),GetAlpha(),currPar);
-    currPar += fNLocExtPar;  // shift to material parameters
+    SetParams(probD,kNRDClones, GetX(),GetAlpha(),params);
+    if (invert) for (int ic=kNRDClones;ic--;) probD[ic].Invert();
     double del = kDelta[ipar];
     if (ipar==kParq2Pt) { // for 1/pt variation use fractional increment
       del *= Abs(Get1P());
@@ -134,15 +174,15 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
       del *= 0.5;
     }
     // propagate varied tracks to each point
-    for (int ip=np;ip--;) {
+    for (int ip=pFrom;ip!=pTo;ip+=pinc) { // points are ordered against track direction
       AliAlgPoint* pnt = GetPoint(ip);
       if ( !PropagateParamToPoint(probD, kNRDClones, pnt) ) return kFALSE;
       // account for materials
       if (pnt->ContainsMaterial()) { // apply material corrections
-	Bool_t eLossFree = pnt->GetELossVaried();
-	if (!ApplyMatCorr(probD, kNRDClones, currPar, eLossFree)) return kFALSE;
+	Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
+	int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
+	if (!ApplyMatCorr(probD, kNRDClones, &params[pnt->GetMaxLocVarID()-nParFree], eLossFree)) return kFALSE;
 	if (!eLossFree && !ApplyELoss(probD, kNRDClones,pnt)) return kFALSE; // apply precalculated eloss
-	currPar += (eLossFree&&GetFieldON()) ? kNMSPar+kNELosPar : kNMSPar; // shift param to next point corrections
       }    
       //
       if (pnt->ContainsMeasurement()) {  
@@ -154,15 +194,16 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
   //
   // 2) now vary material effect related parameters: MS and eventually ELoss
   //
-  for (int ip=np;ip--;) { // loop over all points of the track
+  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // points are ordered against track direction
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
-    int offs = pnt->GetMaxLocVarID(); // the parameters for this point start with this offset
-    currPar = (double*)&params[offs];
-    //
     Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
-    for (int ipar=0;ipar<kNMatDOFs;ipar++) { // loop over DOFs related to MS and ELoss are point ip
+    int nParFree = eLossFree ? kNMatDOFs : kNMatDOFs-kNELosPar;
+    int offs = pnt->GetMaxLocVarID() - nParFree; // the parameters for this point start with this offset
+    double *currPar = (double*)&params[offs];
+    //
+    for (int ipar=0;ipar<nParFree;ipar++) { // loop over DOFs related to MS and ELoss are point ip
       double del = kDeltaMat[ipar];
       if (ipar==kParq2Pt) {
 	if (eLossFree) { // for eloss variation variation use fractional increment
@@ -174,6 +215,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
       //
       // we will vary the tracks starting from the original parameters propagated to given point and stored there
       SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWS());
+      // no need for eventual track inversion here: if needed, this is already done in ParamWS
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
@@ -195,14 +237,16 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
 	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives for ip
       }
       //
-      for (int jp=ip;jp--;) { // loop over points whose residuals can be affected by the material effects on point ip
+      // loop over points whose residuals can be affected by the material effects on point ip
+      for (int jp=ip+pinc;jp!=pTo;jp+=pinc) {
 	AliAlgPoint* pntJ = GetPoint(jp);
 	if ( !PropagateParamToPoint(probD, kNRDClones, pntJ) ) return kFALSE;
 	//
 	if (pntJ->ContainsMaterial()) { // apply MS and ELoss
-	  int offsJ = pntJ->GetMaxLocVarID();
-	  double *currParJ = &params[offsJ];
 	  Bool_t eLossFreeJ = pntJ->GetELossVaried()&&GetFieldON();
+	  int nParFreeJ = eLossFreeJ ? kNMatDOFs : kNMatDOFs-kNELosPar;
+	  int offsJ = pntJ->GetMaxLocVarID() - nParFreeJ;
+	  double *currParJ = &params[offsJ];	  
 	  if (!ApplyMatCorr(probD,kNRDClones,&params[offsJ],eLossFreeJ)) return kFALSE;
 	  if (!eLossFreeJ && !ApplyELoss(probD, kNRDClones,pntJ)) return kFALSE; // apply precalculated eloss
 	}
@@ -215,46 +259,68 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
     } // << loop over DOFs related to MS and ELoss are point ip
   }  // << loop over all points of the track
   //  
-
-  if (IsCosmic()) {
-    AliFatal(" TODO cosmic");
-  }
-
-  //
-  SetDerivDone();
   return kTRUE;
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::CalcResiduals(const double *params, Bool_t useMatCorr)
+Bool_t AliAlgTrack::CalcResiduals(const double *params)
 {
   // Propagate for given local params and calculate residuals
   // The 1st 4 or 5 elements of params vector should be the reference externalTrackParam
-  // Then, if useMatCorr==true, parameters of material corrections for each point
+  // Then parameters of material corrections for each point
   // marked as having materials should come (4 or 5 dependending if ELoss is varied or fixed)
-  static AliExternalTrackParam probe;
   //
-  if (!params) params = fLocParA; 
-  SetParams(probe,GetX(),GetAlpha(),params);
-  // after reference kinematics parameters the MatCorr params may come
-  params += fNLocExtPar;
+  // If params are not provided, use internal params array
   //
+  if (!params) params = fLocParA;
   int np = GetNPoints();
   fChi2 = 0;
-  for (int ip=np;ip--;) { // we go in direction of motion, i.e. from last to 1st AliAlgPoint
+  //
+  // collision track or cosmic lower leg
+  if (!CalcResiduals(params,fNeedInv[0],GetInnerPointID(),0)) return kFALSE;
+  //
+  if (IsCosmic()) { // cosmic upper leg
+    if (!CalcResiduals(params,fNeedInv[1],GetInnerPointID()+1,np-1)) return kFALSE;
+  }
+  //
+  SetResidDone();
+  return kTRUE;
+}
+
+//______________________________________________________
+Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,int pTo)
+{
+  // calculate residuals for the single leg from points pFrom to pT
+  //
+  AliExternalTrackParam probe;
+  SetParams(probe,GetX(),GetAlpha(),params);
+  if (invert) probe.Invert();
+  int np,pinc;
+  if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
+    pTo++;
+    np = pTo - pFrom;
+    pinc = 1;
+  }
+  else {           // fit in points increasing order: collision track or cosmics lower leg
+    pTo--;
+    np = pFrom - pTo;
+    pinc = -1;
+  }
+  //
+  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // points are ordered against track direction
     AliAlgPoint* pnt = GetPoint(ip);
     if (!PropagateParamToPoint(probe, pnt)) return kFALSE;
     //
     // account for materials
-    if (pnt->ContainsMaterial() && useMatCorr) { // apply material corrections
-      Bool_t eLossFree = pnt->GetELossVaried();
-      if (!ApplyMatCorr(probe, params, eLossFree)) return kFALSE;
+    if (pnt->ContainsMaterial()) { // apply material corrections
+      Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
+      int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
+      if (!ApplyMatCorr(probe, &params[pnt->GetMaxLocVarID()-nParFree], eLossFree)) return kFALSE;
       if (!eLossFree && !ApplyELoss(probe,pnt)) return kFALSE; // apply precalculated eloss
-      if (eLossFree&&GetFieldON()) params += kNMSPar + kNELosPar; // shift param to next point corrections
-      else                         params += kNMSPar;
     }
     //
-    pnt->SetTrParamWS(probe.GetParameter());    // store the current track kinematics at the point (RS: do we need it here?)
+    // store the current track kinematics at the point
+    pnt->SetTrParamWS(probe.GetParameter());
     if (pnt->ContainsMeasurement()) { // need to calculate residuals in the frame where errors are orthogonal
       pnt->GetResidualsDiag(probe.GetParameter(),fResidA[0][ip],fResidA[1][ip]);
       fChi2 += fResidA[0][ip]*fResidA[0][ip]/pnt->GetErrDiag(0);
@@ -262,13 +328,6 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params, Bool_t useMatCorr)
     }
     //
   }
-  //
-  if (IsCosmic()) {
-    AliError("TODO cosmics");
-    
-  }
-  //
-  SetResidDone();
   return kTRUE;
 }
 
@@ -987,7 +1046,7 @@ Bool_t AliAlgTrack::ProcessMaterials()
       return kFALSE;
     }
   }
-  
+  return kTRUE;
 }
 
 /*
@@ -1109,7 +1168,7 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     pinc = -1;
   }
   //
-  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // point are ordered against track direction
+  for (int ip=pFrom;ip!=pTo;ip+=pinc) { // points are ordered against track direction
     AliAlgPoint* pnt = GetPoint(ip);
     memcpy((double*)trc.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
     tr0 = trc;
