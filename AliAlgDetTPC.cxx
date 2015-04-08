@@ -37,7 +37,7 @@ void AliAlgDetTPC::DefineVolumes()
   const int kNSect = 18, kAC=2, kIOROC=2;
   const char* kSide[kAC] = {"A","C"};
   const char* kROC[kIOROC] = {"Inner","Outer"};
-  AliAlgSensTPC *chamb=0;
+  //  AliAlgSensTPC *chamb=0;
   //
   AliAlgVol* volTPC = new AliAlgVol("ALIC_1/TPC_M_1");
   AddVolume( volTPC ); 

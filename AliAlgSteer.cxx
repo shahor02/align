@@ -42,8 +42,8 @@ AliAlgSteer::AliAlgSteer()
   :fNDet(0)
   ,fRunNumber(-1)
   ,fAlgTrack(0)
-  ,fESDEvent(0)
   ,fRefPoint()
+  ,fESDEvent()
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -187,8 +187,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   //
   int nPnt = 0;
   const AliESDtrack*        trCosmE[kNCosmLegs]  = {0};
-  const AliESDfriendTrack*  trCosmF[kNCosmLegs] = {0};
-  const AliTrackPointArray* trCosmP[kNCosmLegs] = {0};
+  //  const AliESDfriendTrack*  trCosmF[kNCosmLegs] = {0};
+  //  const AliTrackPointArray* trCosmP[kNCosmLegs] = {0};
   //
   for (int leg=kNCosmLegs;leg--;) {
     const AliESDtrack* esdTr = 
@@ -200,8 +200,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
     if (!trPoints || (nPnt+=trPoints->GetNPoints())<1) return kFALSE;
     //
     trCosmE[leg] = esdTr;
-    trCosmF[leg] = trF;
-    trCosmP[leg] = trPoints;
+    //    trCosmF[leg] = trF;
+    //    trCosmP[leg] = trPoints;
   }
   //
   if (!AcceptTrack(trCosmE)) return kFALSE;

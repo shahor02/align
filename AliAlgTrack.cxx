@@ -147,15 +147,13 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
   const double kDelta[kNKinParBON]  = {0.02,0.02, 0.001,0.001, 0.01}; // variations for ExtTrackParam 
   const double kDeltaMat[kNMatDOFs] = {0.02,0.02, 0.001,0.001, 0.01}; // variations for ETP delta at points with material
   //
-  int np,pinc;
+  int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
     pTo++;
-    np = pTo - pFrom;
     pinc = 1;
   }
   else {           // fit in points increasing order: collision track or cosmics lower leg
     pTo--;
-    np = pFrom - pTo;
     pinc = -1;
   }
   // 1) derivative wrt AliExternalTrackParam parameters
@@ -179,9 +177,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       if ( !PropagateParamToPoint(probD, kNRDClones, pnt) ) return kFALSE;
       // account for materials
       if (pnt->ContainsMaterial()) { // apply material corrections
-	Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
+	Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
 	int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
-	if (!ApplyMatCorr(probD, kNRDClones, &params[pnt->GetMaxLocVarID()-nParFree], eLossFree)) return kFALSE;
+	double* currPar = &params[pnt->GetMaxLocVarID()-nParFree];
+	if (!ApplyMatCorr(probD, kNRDClones, currPar, eLossFree)) return kFALSE;
 	if (!eLossFree && !ApplyELoss(probD, kNRDClones,pnt)) return kFALSE; // apply precalculated eloss
       }    
       //
@@ -198,10 +197,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
-    Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
+    Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
     int nParFree = eLossFree ? kNMatDOFs : kNMatDOFs-kNELosPar;
     int offs = pnt->GetMaxLocVarID() - nParFree; // the parameters for this point start with this offset
-    double *currPar = (double*)&params[offs];
+    double *currPar = &params[offs];
     //
     for (int ipar=0;ipar<nParFree;ipar++) { // loop over DOFs related to MS and ELoss are point ip
       double del = kDeltaMat[ipar];
@@ -247,7 +246,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 	  int nParFreeJ = eLossFreeJ ? kNMatDOFs : kNMatDOFs-kNELosPar;
 	  int offsJ = pntJ->GetMaxLocVarID() - nParFreeJ;
 	  double *currParJ = &params[offsJ];	  
-	  if (!ApplyMatCorr(probD,kNRDClones,&params[offsJ],eLossFreeJ)) return kFALSE;
+	  if (!ApplyMatCorr(probD,kNRDClones,currParJ,eLossFreeJ)) return kFALSE;
 	  if (!eLossFreeJ && !ApplyELoss(probD, kNRDClones,pntJ)) return kFALSE; // apply precalculated eloss
 	}
 	if (pntJ->ContainsMeasurement()) {  
@@ -295,15 +294,13 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,i
   AliExternalTrackParam probe;
   SetParams(probe,GetX(),GetAlpha(),params);
   if (invert) probe.Invert();
-  int np,pinc;
+  int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
     pTo++;
-    np = pTo - pFrom;
     pinc = 1;
   }
   else {           // fit in points increasing order: collision track or cosmics lower leg
     pTo--;
-    np = pFrom - pTo;
     pinc = -1;
   }
   //
@@ -315,7 +312,8 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,i
     if (pnt->ContainsMaterial()) { // apply material corrections
       Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
       int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
-      if (!ApplyMatCorr(probe, &params[pnt->GetMaxLocVarID()-nParFree], eLossFree)) return kFALSE;
+      const double* currPar = &params[pnt->GetMaxLocVarID()-nParFree];
+      if (!ApplyMatCorr(probe, currPar, eLossFree)) return kFALSE;
       if (!eLossFree && !ApplyELoss(probe,pnt)) return kFALSE; // apply precalculated eloss
     }
     //
@@ -986,18 +984,15 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   memcpy(cov,kIniErr,15*sizeof(double));
   cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
   //
-  int np,pinc;
+  int pinc;
   if (pTo>pFrom) { // fit in points increasing order: collision track or cosmics lower leg
     pTo++;
-    np = pTo - pFrom;
     pinc = 1;
   }
   else {          // fit in points decreasing order: cosmics upper leg
     pTo--;
-    np = pFrom - pTo;
     pinc = -1;
   }
-  Bool_t res = 0;
   //
   for (int ip=pFrom;ip!=pTo;ip+=pinc) { // inward fit from outer point
     AliAlgPoint* pnt = GetPoint(ip);
@@ -1156,15 +1151,13 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
   AliExternalTrackParam tr0;
   double x2X0xRho[2] = {0,0};
   //
-  int np,pinc;
+  int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
     pTo++;
-    np = pTo - pFrom;
     pinc = 1;
   }
   else {           // fit in points increasing order: collision track or cosmics lower leg
     pTo--;
-    np = pFrom - pTo;
     pinc = -1;
   }
   //

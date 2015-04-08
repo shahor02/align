@@ -51,7 +51,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t CalcResidDeriv(double *params=0);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
-  void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit);}
+  void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit,v);}
   Bool_t GetFieldON()                            const {return TestBit(kFieldONBit);}
   void   SetFieldON(Bool_t v=kTRUE)                    {SetBit(kFieldONBit,v);}
   Bool_t GetResidDone()                          const {return TestBit(kResidDoneBit);}
