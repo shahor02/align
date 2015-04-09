@@ -1,2 +1,1 @@
-add combined fit for cosmics in AliAlgTrack::IniFit() 
-
+add diagonalization of material effect matrix : TMatrixDSymEigen
