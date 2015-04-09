@@ -177,10 +177,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       if ( !PropagateParamToPoint(probD, kNRDClones, pnt) ) return kFALSE;
       // account for materials
       if (pnt->ContainsMaterial()) { // apply material corrections
-	Bool_t eLossFree = pnt->GetELossVaried();
-	double* currPar = &params[pnt->GetMaxLocVarID()-pnt->GetNMatPar()];
-	if (!ApplyMatCorr(probD, kNRDClones, currPar, eLossFree)) return kFALSE;
-	if (!eLossFree && !ApplyELoss(probD, kNRDClones, pnt)) return kFALSE; // apply precalculated eloss
+	if (!ApplyMatCorr(probD, kNRDClones, params, pnt)) return kFALSE;
       }    
       //
       if (pnt->ContainsMeasurement()) {  
@@ -196,19 +193,15 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
-    Bool_t eLossFree = pnt->GetELossVaried();
-    int nParFree = pnt->GetNMatPar();
-    int offs = pnt->GetMaxLocVarID() - nParFree; // the parameters for this point start with this offset
-    double *currPar = &params[offs];
+    int nParFreeI = pnt->GetNMatPar();
+    int offsI  = pnt->GetMaxLocVarID() - nParFreeI; // the parameters for this point start with this offset
+    int offsIP = offs+ip;
     //
-    for (int ipar=0;ipar<nParFree;ipar++) { // loop over DOFs related to MS and ELoss are point ip
+    for (int ipar=0;ipar<nParFreeI;ipar++) { // loop over DOFs related to MS and ELoss are point ip
       double del = kDeltaMat[ipar];
-      if (ipar==kParq2Pt) {
-	if (eLossFree) { // for eloss variation variation use fractional increment
+      if (ipar==kParQ2Pt) { // for eloss variation variation use fractional increment
 	  del *= Abs(Get1P());
 	  if (del<1e-4) del = 1e-4;
-	}
-	else continue;
       }
       //
       // we will vary the tracks starting from the original parameters propagated to given point and stored there
@@ -217,22 +210,22 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       //
       for (int icl=0;icl<kRichardsonN;icl++) { // calculate kRichardsonN variations with del, del/2, del/4...
 	varDelta[icl] = del;
-	double parOrig = currPar[ipar];
-	currPar[ipar] += del;
+	double parOrig = params[offsIP];
+	params[offsIP] += del;
 	//
 	// apply varied material effects : incremented by delta
-	if (!ApplyMatCorr(probD[(icl<<1)+0], currPar, eLossFree)) return kFALSE;
+	if (!ApplyMatCorr(probD[(icl<<1)+0], params, pnt)) return kFALSE;
 	//
 	// apply varied material effects : decremented by delta
-	currPar[ipar] = parOrig - del;
-	if (!ApplyMatCorr(probD[(icl<<1)+1], currPar, eLossFree)) return kFALSE;
+	params[offsIP] = parOrig - del;
+	if (!ApplyMatCorr(probD[(icl<<1)+1], params, pnt)) return kFALSE;
 	//
-	currPar[ipar] = parOrig;
+	params[offsIP] = parOrig;
 	del *= 0.5;
       }     
       if (pnt->ContainsMeasurement()) {   // calculate derivatives at the scattering point itself
-	int offsDer = ip*fNLocPar + offs + ipar;
-	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives for ip
+	int offsDerIP = ip*fNLocPar + offsIP;
+	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDerIP], fDerivA[1][offsDerIP]); // calculate derivatives for ip
       }
       //
       // loop over points whose residuals can be affected by the material effects on point ip
@@ -240,17 +233,15 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 	AliAlgPoint* pntJ = GetPoint(jp);
 	if ( !PropagateParamToPoint(probD, kNRDClones, pntJ) ) return kFALSE;
 	//
-	if (pntJ->ContainsMaterial()) { // apply MS and ELoss
-	  Bool_t eLossFreeJ = pntJ->GetELossVaried()&&GetFieldON();
-	  int nParFreeJ = eLossFreeJ ? kNMatDOFs : kNMatDOFs-kNELosPar;
+	if (pntJ->ContainsMaterial()) { // apply material corrections
+	  int nParFreeJ = pntJ->GetNMatPar();
 	  int offsJ = pntJ->GetMaxLocVarID() - nParFreeJ;
-	  double *currParJ = &params[offsJ];	  
-	  if (!ApplyMatCorr(probD,kNRDClones,currParJ,eLossFreeJ)) return kFALSE;
-	  if (!eLossFreeJ && !ApplyELoss(probD, kNRDClones,pntJ)) return kFALSE; // apply precalculated eloss
+	  if (!ApplyMatCorr(probD,kNRDClones,params[offsJ],pntJ)) return kFALSE;
 	}
+	//
 	if (pntJ->ContainsMeasurement()) {  
-	  int offsDer = jp*fNLocPar + offs + ipar;
-	  RichardsonDeriv(probD, varDelta, pntJ, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
+	  int offsDerJ = jp*fNLocPar + offsIP;
+	  RichardsonDeriv(probD, varDelta, pntJ, fDerivA[0][offsDerJ], fDerivA[1][offsDerJ]); // calculate derivatives
 	}
 	//
       } // << loop over points whose residuals can be affected by the material effects on point ip
