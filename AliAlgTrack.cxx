@@ -2,9 +2,9 @@
 #include "AliTrackerBase.h"
 #include "AliLog.h"
 #include "AliAlgAux.h"
-#include "TMatrixD.h"
-#include "TVectorD.h"
-
+#include <TMatrixD.h>
+#include <TVectorD.h>
+#include <TMatrixDSymEigen.h>
 
 using namespace AliAlgAux;
 using namespace TMath;
@@ -181,7 +181,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 	int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
 	double* currPar = &params[pnt->GetMaxLocVarID()-nParFree];
 	if (!ApplyMatCorr(probD, kNRDClones, currPar, eLossFree)) return kFALSE;
-	if (!eLossFree && !ApplyELoss(probD, kNRDClones,pnt)) return kFALSE; // apply precalculated eloss
+	if (!eLossFree && !ApplyELoss(probD, kNRDClones, pnt)) return kFALSE; // apply precalculated eloss
       }    
       //
       if (pnt->ContainsMeasurement()) {  
@@ -1044,82 +1044,6 @@ Bool_t AliAlgTrack::ProcessMaterials()
   return kTRUE;
 }
 
-/*
-//______________________________________________
-Bool_t AliAlgTrack::ProcessMaterials() 
-{
-  // attach material effect info to alignment points
-  const int    kMinNStep = 3;
-  const double kMaxDefStep = 3.0; 
-  const double kErrSpcT = 1e-6;
-  const double kErrAngT = 1e-6;
-  const double kErrPtIT = 1e-12;
-  const double kErrSpcH = 10.0;
-  const double kErrAngH = 0.5;
-  const double kErrPtIH = 0.5;
-  const double kErrTiny[15] = { // initial tiny error
-    kErrSpcT*kErrSpcT,
-    0                  , kErrSpcT*kErrSpcT,
-    0                  ,                   0, kErrAngT*kErrAngT,
-    0                  ,                   0,               0, kErrAngT*kErrAngT,
-    0                  ,                   0,               0,               0, kErrPtIT*kErrPtIT
-  };
-  const double kErrHuge[15] = { // initial tiny error
-    kErrSpcH*kErrSpcH,
-    0                  , kErrSpcH*kErrSpcH,
-    0                  ,                   0, kErrAngH*kErrAngH,
-    0                  ,                   0,               0, kErrAngH*kErrAngH,
-    0                  ,                   0,               0,               0, kErrPtIH*kErrPtIH
-  };
-  //
-  // 2 copies of the track, one will be propagated accounting for materials, other - w/o
-  AliExternalTrackParam tr1 = *this, tr0;
-  double x2X0xRho[2] = {0,0};
-  //
-  // here we move in track direction
-  for (int ip=GetInnerPointID()+1;ip--;) { // point are order against track direction
-    AliAlgPoint* pnt = GetPoint(ip);
-    memcpy((double*)tr1.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
-    tr0 = tr1;
-    //
-    //printf(">>MatP%d ",ip); pnt->Print();
-    if (!PropagateToPoint(tr1,pnt,kMinNStep, kMaxDefStep, kTRUE ,x2X0xRho)) return kFALSE; // with material corrections
-    //
-    // is there enough material to consider the point as a scatterer?
-    if (x2X0xRho[0]*Abs(tr1.GetSigned1Pt()) < GetMinX2X0Pt2Account()) { // ignore materials
-      pnt->SetContainsMaterial(kFALSE);
-      continue;
-    }
-    //
-    if (!PropagateToPoint(tr0,pnt,kMinNStep, kMaxDefStep, kFALSE,0)    ) return kFALSE; // no material corrections
-    double cov1[15];
-    memcpy(cov1,tr1.GetCovariance(),15*sizeof(double));                           // save errors with mat.effect
-    if (pnt->ContainsMeasurement()) {
-      memcpy((double*)tr1.GetCovariance(),kErrHuge,15*sizeof(double));  // assign large errors
-      const double* yz    = pnt->GetYZTracking();
-      const double* errYZ = pnt->GetYZErrTracking();
-      if (!tr1.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
-    }
-    //
-    double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)tr1.GetParameter();
-    double *covP=pnt->GetMatCorrCov(),*parP=pnt->GetMatCorrPar();
-    for (int l=15;l--;) covP[l] = cov1[l] - cov0[l];
-    for (int l=5; l--;) parP[l] = par1[l] - par0[l];
-    pnt->SetContainsMaterial(kTRUE);
-    pnt->SetX2X0(x2X0xRho[0]);
-    pnt->SetXTimesRho(x2X0xRho[1]);
-    //printf("Add mat%d %e %e\n",ip, x2X0xRho[0],x2X0xRho[1]);
-    //
-  }
-  //
-  if (IsCosmic()) {
-    AliFatal(" TODO cosmic");
-  }
-  //
-  return kTRUE;
-}
-*/
-
 //______________________________________________
 Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo) 
 {
@@ -1198,10 +1122,34 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
       if (!trc.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
     }
     //
+    // the difference between the params,covariance of tracks with and  w/o material accounting gives
+    // paramets and covariance of material correction
     double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)trc.GetParameter();
+    for (int l=15;l--;) cov1[l] -= cov0[l];
+    for (int l=5; l--;) par1[l] -= par0[l];
+    // 
+    // MP2 handles only scalar residuals hence correlated vector of material corrections need to be diagonalized
+    Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
+    int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
+    TMatrixDSym matCov(nParFree);
+    for (int i=nParFree;i--;) for (int j=i+1;i--;) matCov(i,j)=matCov(j,i) = cov1[j+((i*(i+1))>>1)];
+    //
+    TMatrixDSymEigen matDiag(matCov);  // find eigenvectors
+    const TMatrixD& matEVec = matDiag.GetEigenVectors();
+    if (!matEVec.IsValid()) {
+#if DEBUG>3
+      AliError("Failed to diagonalize covariance of material correction");
+      matCov.Print();
+      return kFALSE;
+#endif      
+    }
+    // store diagonalized errors
     double *covP=pnt->GetMatCorrCov(),*parP=pnt->GetMatCorrPar();
-    for (int l=15;l--;) covP[l] = cov1[l] - cov0[l];
-    for (int l=5; l--;) parP[l] = par1[l] - par0[l];
+    const TVectorD& matEVal = matDiag.GetEigenValues();
+    for (int i=nParFree;i--;) parP[i] = matEVal(i);
+    if (!eLossFree) parP[4] = par1[4]; // deterministic eloss effect will be applied
+    //
+
     pnt->SetContainsMaterial(kTRUE);
     pnt->SetX2X0(x2X0xRho[0]);
     pnt->SetXTimesRho(x2X0xRho[1]);

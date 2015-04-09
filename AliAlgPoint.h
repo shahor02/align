@@ -101,14 +101,14 @@ class AliAlgPoint : public TObject
   Double_t fSinDiagErr;                                // Sin of Phi of rotation in YZ plane which diagonalize errors
   //
   Double_t fX2X0;                                      // X2X0 seen by the track (including inclination)
-  Double_t fXTimesRho;                                 // Density*Length seen by the track (including inclination)
+  Double_t fXTimesRho;                                 // signed Density*Length seen by the track (including inclination)
   Double_t fErrYZTracking[3];                          // errors in tracking frame
   Double_t fErrDiag[2];                                // diagonalized errors
   //
   Double_t fMatCorrP[5];                               // material correction delta (== AliExternalTrackParam::fP)
   Double_t fMatCorrC[15];                              // material correction covariance (== AliExternalTrackParam::fC)
   //
-  Double_t fTrParamWS[5];                              //! workspace for tracks params at this point
+  Double_t fTrParamWS[5];                              // workspace for tracks params at this point
   //
   ClassDef(AliAlgPoint,1)
 };
