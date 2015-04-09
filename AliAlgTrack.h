@@ -15,15 +15,11 @@ class AliAlgTrack: public AliExternalTrackParam
   enum {kCosmicBit=BIT(14),kFieldONBit=BIT(15),kResidDoneBit=BIT(16),kDerivDoneBit=BIT(17)};
   enum {kNKinParBOFF=4                       // N params for ExternalTrackParam part w/o field
 	,kNKinParBON=5                       // N params for ExternalTrackParam part with field
-	//
-	,kNMSPar=4                           // N params per MS act       
-	,kNELosPar=1                         // N params per e.loss act
-	,kParY=0                             // Y parameter
-	,kParZ=1                             // Z parameter
-	,kParSnp=2                           // snp parameter
-	,kParTgl=3                           // tgl parameter
-	,kParq2Pt=4                          // q/pt parameter
-	,kNMatDOFs                           // number of paremeters for material effects
+	,kParY = 0,                          // track parameters
+	,kParZ,
+	,kParSnp,
+	,kParTgl,
+	,kParQ2Pt
   };
   AliAlgTrack();
   virtual ~AliAlgTrack();
@@ -69,7 +65,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   // propagation methods
   void   CopyFrom(const AliExternalTrackParam* etp);
-  Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrPar, Bool_t eloss);
+  Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrDiag, const AliAlgPoint* pnt);
   Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Double_t *corrPar, Bool_t eloss);
   Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
   Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt);

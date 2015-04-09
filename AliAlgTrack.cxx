@@ -69,7 +69,7 @@ void AliAlgTrack::DefineDOFs()
   for (int ip=GetInnerPointID()+1;ip--;) { // collision track or cosmic lower leg
     AliAlgPoint* pnt = GetPoint(ip);
     pnt->SetMinLocVarID(minPar);
-    if (pnt->ContainsMaterial()) fNLocPar += (pnt->GetELossVaried()&&GetFieldON()) ? kNMSPar+kNELosPar:kNMSPar;
+    if (pnt->ContainsMaterial()) fNLocPar += pnt->GetNMatPar();
     pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
   }
   //
@@ -78,7 +78,7 @@ void AliAlgTrack::DefineDOFs()
     for (int ip=GetInnerPointID()+1;ip<np;ip++) { // collision track or cosmic lower leg
       AliAlgPoint* pnt = GetPoint(ip);
       pnt->SetMinLocVarID(minPar);
-      if (pnt->ContainsMaterial()) fNLocPar += (pnt->GetELossVaried()&&GetFieldON()) ? kNMSPar+kNELosPar:kNMSPar;
+      if (pnt->ContainsMaterial()) fNLocPar += pnt->GetNMatPar();
       pnt->SetMaxLocVarID(fNLocPar); // flag up to which parameted ID this points depends on
     }
   }
@@ -177,9 +177,8 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       if ( !PropagateParamToPoint(probD, kNRDClones, pnt) ) return kFALSE;
       // account for materials
       if (pnt->ContainsMaterial()) { // apply material corrections
-	Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
-	int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
-	double* currPar = &params[pnt->GetMaxLocVarID()-nParFree];
+	Bool_t eLossFree = pnt->GetELossVaried();
+	double* currPar = &params[pnt->GetMaxLocVarID()-pnt->GetNMatPar()];
 	if (!ApplyMatCorr(probD, kNRDClones, currPar, eLossFree)) return kFALSE;
 	if (!eLossFree && !ApplyELoss(probD, kNRDClones, pnt)) return kFALSE; // apply precalculated eloss
       }    
@@ -197,8 +196,8 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
     AliAlgPoint* pnt = GetPoint(ip);
     if (!pnt->ContainsMaterial()) continue;
     //
-    Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
-    int nParFree = eLossFree ? kNMatDOFs : kNMatDOFs-kNELosPar;
+    Bool_t eLossFree = pnt->GetELossVaried();
+    int nParFree = pnt->GetNMatPar();
     int offs = pnt->GetMaxLocVarID() - nParFree; // the parameters for this point start with this offset
     double *currPar = &params[offs];
     //
@@ -310,11 +309,7 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,i
     //
     // account for materials
     if (pnt->ContainsMaterial()) { // apply material corrections
-      Bool_t eLossFree = pnt->GetELossVaried() && GetFieldON();
-      int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
-      const double* currPar = &params[pnt->GetMaxLocVarID()-nParFree];
-      if (!ApplyMatCorr(probe, currPar, eLossFree)) return kFALSE;
-      if (!eLossFree && !ApplyELoss(probe,pnt)) return kFALSE; // apply precalculated eloss
+      if (!ApplyMatCorr(probe, params, pnt)) return kFALSE;
     }
     //
     // store the current track kinematics at the point
@@ -524,19 +519,26 @@ Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double tms,double pms)
 */
 
 //______________________________________________________
-Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrPar, Bool_t eloss)
+Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrPar, const AliAlgPoint* pnt)
 {
   // Modify track param (e.g. AliExternalTrackParam) in the tracking frame 
   // by delta accounting for material effects
-  //
+  // Note: corrPar contain delta to track parameters rotated by the matrix DIAGONALIZING ITS 
+  // COVARIANCE MATRIX
   const double kMaxSnp = 0.95;
+  // transform parameters from the frame diagonalizing the errors to track frame
+  int nCorrPar = pnt->GetNMatPar();
+  const double *corrDiag = &corrPar[pnt->GetMaxLocVarID()-nCorrPar]; // material corrections for this point start here
+  double corr[5] = {0};
+  pnt->UnDiagMatCorr(corrDiag, corr);
+  //
   double* par = (double*)trPar.GetParameter();
-  double snpNew = par[kParSnp]+corrPar[kParSnp];
+  double snpNew = par[kParSnp]+corr[kParSnp];
   if (Abs(snpNew)>kMaxSnp) {    
 #if DEBUG>3
       AliErrorF("Snp is too large: %f",snpNew);
       printf("DeltaPar: "); 
-      for (int i=0;i<kNMSPar+(eloss?kNELosPar:0);i++) printf("%+.3e ",corrPar[i]); printf("\n");
+      for (int i=0;i<nCorrPar;i++) printf("%+.3e(%+.3e) ",corr[i],corrDiag[i]); printf("\n");
       trPar.Print();
 #endif
     return kFALSE;
@@ -545,7 +547,7 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *c
   par[kParZ]   += corrPar[kParZ];
   par[kParSnp]  = snpNew;
   par[kParTgl] += corrPar[kParTgl];
-  if (eloss&&GetFieldON()) par[kParq2Pt] += corrPar[kParq2Pt];
+  par[kParq2Pt] += pnt->GetELossVaried() ?  corr[kParQ2Pt] : pnt->GetMatCorrPar()[kParQ2Pt];
   return kTRUE;
 }
 
@@ -1074,6 +1076,7 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
   // 2 copies of the track, one will be propagated accounting for materials, other - w/o
   AliExternalTrackParam tr0;
   double x2X0xRho[2] = {0,0};
+  double dpar[5]={0},dcov[15]={0};
   //
   int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
@@ -1125,14 +1128,14 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     // the difference between the params,covariance of tracks with and  w/o material accounting gives
     // paramets and covariance of material correction
     double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)trc.GetParameter();
-    for (int l=15;l--;) cov1[l] -= cov0[l];
-    for (int l=5; l--;) par1[l] -= par0[l];
+    for (int l=15;l--;) dcov[l] = cov1[l] - cov0[l];
+    for (int l=5; l--;) dpar[l] = par1[l] - par0[l];
     // 
     // MP2 handles only scalar residuals hence correlated vector of material corrections need to be diagonalized
     Bool_t eLossFree = pnt->GetELossVaried()&&GetFieldON();
     int nParFree = eLossFree ? kNMSPar + kNELosPar : kNMSPar;
     TMatrixDSym matCov(nParFree);
-    for (int i=nParFree;i--;) for (int j=i+1;i--;) matCov(i,j)=matCov(j,i) = cov1[j+((i*(i+1))>>1)];
+    for (int i=nParFree;i--;) for (int j=i+1;j--;) matCov(i,j)=matCov(j,i) = dcov[j+((i*(i+1))>>1)];
     //
     TMatrixDSymEigen matDiag(matCov);  // find eigenvectors
     const TMatrixD& matEVec = matDiag.GetEigenVectors();
@@ -1143,13 +1146,10 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
       return kFALSE;
 #endif      
     }
-    // store diagonalized errors
-    double *covP=pnt->GetMatCorrCov(),*parP=pnt->GetMatCorrPar();
-    const TVectorD& matEVal = matDiag.GetEigenValues();
-    for (int i=nParFree;i--;) parP[i] = matEVal(i);
-    if (!eLossFree) parP[4] = par1[4]; // deterministic eloss effect will be applied
+    pnt->SetMatCovDiagonalizationMatrix(matEVec); // store diagonalization matrix
+    pnt->SetMatCovDiag(matDiag.GetEigenValues()); // store E.Values: diagonalized cov.matrix
+    pnt->SetMatCorrPar(dpar);                     // store initial estimate of mat corrections
     //
-
     pnt->SetContainsMaterial(kTRUE);
     pnt->SetX2X0(x2X0xRho[0]);
     pnt->SetXTimesRho(x2X0xRho[1]);

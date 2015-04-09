@@ -24,8 +24,11 @@ AliAlgPoint::AliAlgPoint()
     fXYZTracking[i] = 0;
     fErrYZTracking[i] = 0;
   }
-  memset(fMatCorrP,0,5*sizeof(double));
-  memset(fMatCorrC,0,15*sizeof(double));
+  memset(fMatCorrPar,0,5*sizeof(float));
+  memset(fMatCorrCov,0,5*sizeof(float));
+  memset(fMatDiag,0,5*5*sizeof(float));
+  //
+  memset(fTrParamWS,0,5*sizeof(double));
   //
 }
 
@@ -99,15 +102,10 @@ void AliAlgPoint::Print(Option_t* opt) const
   }
   //
   if (opts.Contains("mat") && ContainsMaterial()) {
-    printf("  MatCorr par: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
-	   fMatCorrP[0], fMatCorrP[1], fMatCorrP[2], fMatCorrP[3], fMatCorrP[4]);
-    printf("  MatCorr cov: %+.3e\n", fMatCorrC[0]);
-    printf("               %+.3e %+.3e\n", fMatCorrC[1], fMatCorrC[2]);
-    printf("               %+.3e %+.3e %+.3e\n", fMatCorrC[3], fMatCorrC[4], fMatCorrC[5]);
-    printf("               %+.3e %+.3e %+.3e %+.3e\n", 
-	   fMatCorrC[6], fMatCorrC[7], fMatCorrC[8], fMatCorrC[9]);
-    printf("               %+.3e %+.3e %+.3e %+.3e %+.3e\n", 
-	   fMatCorrC[10], fMatCorrC[11], fMatCorrC[12], fMatCorrC[13], fMatCorrC[14]);
+    printf("  MatCorr Par: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+	   fMatCorrPar[0], fMatCorrPar[1], fMatCorrPar[2], fMatCorrPar[3], fMatCorrPar[4]);
+    printf("  MatCorr cov: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+	   fMatCorrCov[0], fMatCorrCov[1], fMatCorrCov[2], fMatCorrCov[3], fMatCorrCov[4]);
   }
   //
   if (opts.Contains("ws")) { // printf track state at this point stored during residuals calculation
@@ -180,4 +178,36 @@ Int_t AliAlgPoint::GetAliceSector() const
 {
   // get global sector ID corresponding to this point phi
   return Phi2Sector(GetPhiGlo());  
+}
+
+//__________________________________________________________________
+void AliAlgPoint::SetMatCovDiagonalizationMatrix(const TMatrixD& d)
+{
+  // save non-sym matrix for material corrections cov.matrix diagonalization
+  // (actually, the eigenvectors are stored)
+  int sz = d.GetNrows();
+  for (int i=sz;i--;) for (int j=sz;j--;) fMatDiag[i][j] = d(i,j);
+}
+
+//__________________________________________________________________
+void AliAlgPoint::SetMatCovDiag(const TVectorD& v)
+{
+  // save material correction diagonalized matrix 
+  // (actually, the eigenvalues are stored w/o reordering them to correspond to the 
+  // AliExternalTrackParam variables)
+  for (int i=v.GetNrows();i--;) fMatCorrCov[i] = v(i);
+}
+
+//__________________________________________________________________
+void AliAlgPoint::UnDiagMatCorr(const double* diag, double* nodiag)
+{
+  // transform material corrections from the frame diagonalizing the errors to point frame
+  // nodiag = fMatDiag * diag
+  int np = GetNMatPar();
+  for (int ip=np;ip--;) {
+    double v = 0;
+    for (int jp=np;jp--;) v += fMatDiag[ip][jp]*diag[jp];
+    nodiag[ip] = v;
+  }
+  //
 }

@@ -2,6 +2,8 @@
 #define ALIALGPOINT_H
 
 #include <TObject.h>
+#include <TMatrixD.h>
+#include <TVectorD.h>
 
 class AliExternalTrackParam;
 
@@ -15,31 +17,32 @@ class AliAlgPoint : public TObject
 	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
 	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
   };
-  
+  enum {kNMSPar=4,kNELosPar=1};
   AliAlgPoint();
   virtual   ~AliAlgPoint() {}
   //
   void       Init();
   //
-  Double_t   GetAlphaSens()          const {return fAlphaSens;}
-  Double_t   GetXSens()              const {return fXSens;}
-  Double_t   GetXPoint()             const {return fXSens + GetXTracking();}
-  Double_t   GetXTracking()          const {return fXYZTracking[0];}
-  Double_t   GetYTracking()          const {return fXYZTracking[1];}
-  Double_t   GetZTracking()          const {return fXYZTracking[2];}
-  const Double_t* GetYZTracking()    const {return &fXYZTracking[1];}
-  const Double_t* GetXYZTracking()   const {return fXYZTracking;}
-  const Double_t* GetYZErrTracking() const {return fErrYZTracking;}
+  Double_t   GetAlphaSens()           const {return fAlphaSens;}
+  Double_t   GetXSens()               const {return fXSens;}
+  Double_t   GetXPoint()              const {return fXSens + GetXTracking();}
+  Double_t   GetXTracking()           const {return fXYZTracking[0];}
+  Double_t   GetYTracking()           const {return fXYZTracking[1];}
+  Double_t   GetZTracking()           const {return fXYZTracking[2];}
+  const Double_t* GetYZTracking()     const {return &fXYZTracking[1];}
+  const Double_t* GetXYZTracking()    const {return fXYZTracking;}
+  const Double_t* GetYZErrTracking()  const {return fErrYZTracking;}
   //
-  Int_t      GetDetID()              const {return fDetID;}
-  Int_t      GetSID()                const {return fSID;}
-  Int_t      GetMinLocVarID()        const {return fMinLocVarID;}
-  Int_t      GetMaxLocVarID()        const {return fMaxLocVarID;}
-  Bool_t     ContainsMaterial()      const {return TestBit(kMaterialBit);}
-  Bool_t     ContainsMeasurement()   const {return TestBit(kMeasurementBit);}
-  Bool_t     GetELossVaried()        const {return TestBit(kVaryELossBit);}
-  Bool_t     GetUseBzOnly()          const {return TestBit(kUseBzOnly);}
-  Bool_t     IsInvDir()              const {return TestBit(kInvDir);}
+  Int_t      GetDetID()               const {return fDetID;}
+  Int_t      GetSID()                 const {return fSID;}
+  Int_t      GetMinLocVarID()         const {return fMinLocVarID;}
+  Int_t      GetMaxLocVarID()         const {return fMaxLocVarID;}
+  Int_t      GetNMatPar()             const;
+  Bool_t     ContainsMaterial()       const {return TestBit(kMaterialBit);}
+  Bool_t     ContainsMeasurement()    const {return TestBit(kMeasurementBit);}
+  Bool_t     GetELossVaried()         const {return TestBit(kVaryELossBit);}
+  Bool_t     GetUseBzOnly()           const {return TestBit(kUseBzOnly);}
+  Bool_t     IsInvDir()               const {return TestBit(kInvDir);}
   //
   Double_t   GetXTimesRho()          const {return fXTimesRho;}
   Double_t   GetX2X0()               const {return fX2X0;}
@@ -70,8 +73,12 @@ class AliAlgPoint : public TObject
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
   void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
   //
-  Double_t*  GetMatCorrPar()               const {return (double*)fMatCorrP;}
-  Double_t*  GetMatCorrCov()               const {return (double*)fMatCorrC;}
+  void       SetMatCovDiagonalizationMatrix(const TMatrixD& d);
+  void       SetMatCovDiag(const TVectorD& v);
+  //
+  void       SetMatCorrPar(Double_t *p)           {for (int i=5;i--;) fMatCorrPar[i] = p[i];}
+  Float_t*   GetMatCorrPar()                const {return (float*)fMatCorrPar;}
+  Float_t*   GetMatCorrCov()                const {return (float*)fMatCorrCov;}
   //
   void       GetXYZGlo(Double_t r[3])       const;
   Double_t   GetPhiGlo()                    const;
@@ -86,29 +93,30 @@ class AliAlgPoint : public TObject
   //
  protected:
   //
-  Int_t    fMinLocVarID;                               // The residuals/derivatives depend on fNLocExtPar params 
+  Int_t      fMinLocVarID;                             // The residuals/derivatives depend on fNLocExtPar params 
                                                        // and point params>=fMinLocVarID.
-  Int_t    fMaxLocVarID;                               // The residuals/derivatives depend on fNLocExtPar params 
+  Int_t      fMaxLocVarID;                             // The residuals/derivatives depend on fNLocExtPar params 
                                                        // and point params<fMaxLocVarID.
                                                        // If the point contains materials, fMaxLocVarID also marks
                                                        // the parameters associated with this point
-  Char_t   fDetID;                                     // DetectorID
-  Short_t  fSID;                                       // sensor ID in the detector
-  Double_t fAlphaSens;                                 // Alpha of tracking frame
-  Double_t fXSens;                                     // X of tracking frame
-  Double_t fXYZTracking[3];                            // X,Y,Z in tracking frame
-  Double_t fCosDiagErr;                                // Cos of Phi of rotation in YZ plane which diagonalize errors
-  Double_t fSinDiagErr;                                // Sin of Phi of rotation in YZ plane which diagonalize errors
+  Char_t     fDetID;                                   // DetectorID
+  Short_t    fSID;                                     // sensor ID in the detector
+  Float_t    fAlphaSens;                               // Alpha of tracking frame
+  Float_t    fXSens;                                   // X of tracking frame
+  Float_t    fCosDiagErr;                              // Cos of Phi of rotation in YZ plane which diagonalize errors
+  Float_t    fSinDiagErr;                              // Sin of Phi of rotation in YZ plane which diagonalize errors
+  Float_t    fErrDiag[2];                              // diagonalized errors
+  Double_t   fXYZTracking[3];                          // X,Y,Z in tracking frame
+  Double_t   fErrYZTracking[3];                        // errors in tracking frame
   //
-  Double_t fX2X0;                                      // X2X0 seen by the track (including inclination)
-  Double_t fXTimesRho;                                 // signed Density*Length seen by the track (including inclination)
-  Double_t fErrYZTracking[3];                          // errors in tracking frame
-  Double_t fErrDiag[2];                                // diagonalized errors
+  Float_t    fX2X0;                                    // X2X0 seen by the track (including inclination)
+  Float_t    fXTimesRho;                               // signed Density*Length seen by the track (including inclination)
   //
-  Double_t fMatCorrP[5];                               // material correction delta (== AliExternalTrackParam::fP)
-  Double_t fMatCorrC[15];                              // material correction covariance (== AliExternalTrackParam::fC)
+  Float_t    fMatCorrPar[5];                           // material correction delta (diagonalized)
+  Float_t    fMatCorrCov[5];                           // material correction delta covariance (diagonalized)
+  Float_t    fMatDiag[5][5];                           //  matrix for  diagonalization of material effects errors
   //
-  Double_t fTrParamWS[5];                              // workspace for tracks params at this point
+  Double_t   fTrParamWS[5];                            // workspace for tracks params at this point
   //
   ClassDef(AliAlgPoint,1)
 };
@@ -125,6 +133,12 @@ inline void AliAlgPoint::SetYZErrTracking(double sy2,double syz,double sz2)
 {
   // assign tracking coordinates
   fErrYZTracking[0]=sy2; fErrYZTracking[1]=syz; fErrYZTracking[2]=sz2;
+}
+
+inline Int_t AliAlgPoint::GetNMatPar() const 
+{
+  // get number of free params for material descriptoin
+  return GetContainsMaterial() ? (GetELossVaried() ? kNMSPar+kNELossPar:kNMSPar) : 0;
 }
 
 #endif
