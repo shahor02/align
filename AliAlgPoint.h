@@ -17,7 +17,7 @@ class AliAlgPoint : public TObject
 	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
 	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
   };
-  enum {kNMSPar=4,kNELosPar=1};
+  enum {kNMSPar=4,kNELossPar=1,kNMatDOFs=kNMSPar+kNELossPar};
   AliAlgPoint();
   virtual   ~AliAlgPoint() {}
   //
@@ -75,6 +75,8 @@ class AliAlgPoint : public TObject
   //
   void       SetMatCovDiagonalizationMatrix(const TMatrixD& d);
   void       SetMatCovDiag(const TVectorD& v);
+  void       UnDiagMatCorr(const double* diag, double* nodiag) const;
+  void       DiagMatCorr(const double* nodiag, double* diag) const;
   //
   void       SetMatCorrPar(Double_t *p)           {for (int i=5;i--;) fMatCorrPar[i] = p[i];}
   Float_t*   GetMatCorrPar()                const {return (float*)fMatCorrPar;}
@@ -87,7 +89,7 @@ class AliAlgPoint : public TObject
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
   //
-  protected:
+ protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;
   //
@@ -112,11 +114,11 @@ class AliAlgPoint : public TObject
   Float_t    fX2X0;                                    // X2X0 seen by the track (including inclination)
   Float_t    fXTimesRho;                               // signed Density*Length seen by the track (including inclination)
   //
-  Float_t    fMatCorrPar[5];                           // material correction delta (diagonalized)
-  Float_t    fMatCorrCov[5];                           // material correction delta covariance (diagonalized)
-  Float_t    fMatDiag[5][5];                           //  matrix for  diagonalization of material effects errors
+  Float_t    fMatCorrPar[kNMatDOFs];                   // material correction delta (diagonalized)
+  Float_t    fMatCorrCov[kNMatDOFs];                   // material correction delta covariance (diagonalized)
+  Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
   //
-  Double_t   fTrParamWS[5];                            // workspace for tracks params at this point
+  Double_t   fTrParamWS[kNMatDOFs];                    // workspace for tracks params at this point
   //
   ClassDef(AliAlgPoint,1)
 };
@@ -138,7 +140,7 @@ inline void AliAlgPoint::SetYZErrTracking(double sy2,double syz,double sz2)
 inline Int_t AliAlgPoint::GetNMatPar() const 
 {
   // get number of free params for material descriptoin
-  return GetContainsMaterial() ? (GetELossVaried() ? kNMSPar+kNELossPar:kNMSPar) : 0;
+  return ContainsMaterial() ? (GetELossVaried() ? kNMSPar+kNELossPar:kNMSPar) : 0;
 }
 
 #endif

@@ -108,6 +108,15 @@ void AliAlgPoint::Print(Option_t* opt) const
 	   fMatCorrCov[0], fMatCorrCov[1], fMatCorrCov[2], fMatCorrCov[3], fMatCorrCov[4]);
   }
   //
+  if (opts.Contains("diag") && ContainsMaterial()) {
+    printf("  Matrix for Mat.corr.errors diagonalization:\n");
+    int npar = GetNMatPar();
+    for (int i=0;i<npar;i++) {
+      for (int j=0;j<npar;j++) printf("%+.4e ",fMatDiag[i][j]); 
+      printf("\n");
+    }
+  }
+  //
   if (opts.Contains("ws")) { // printf track state at this point stored during residuals calculation
     printf("Local Track: "); 
     for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWS[i]); 
@@ -199,7 +208,7 @@ void AliAlgPoint::SetMatCovDiag(const TVectorD& v)
 }
 
 //__________________________________________________________________
-void AliAlgPoint::UnDiagMatCorr(const double* diag, double* nodiag)
+void AliAlgPoint::UnDiagMatCorr(const double* diag, double* nodiag) const
 {
   // transform material corrections from the frame diagonalizing the errors to point frame
   // nodiag = fMatDiag * diag
@@ -208,6 +217,21 @@ void AliAlgPoint::UnDiagMatCorr(const double* diag, double* nodiag)
     double v = 0;
     for (int jp=np;jp--;) v += fMatDiag[ip][jp]*diag[jp];
     nodiag[ip] = v;
+  }
+  //
+}
+
+//__________________________________________________________________
+void AliAlgPoint::DiagMatCorr(const double* nodiag, double* diag) const
+{
+  // transform material corrections from the AliExternalTrackParam frame to
+  // the frame diagonalizing the errors
+  // diag = fMatDiag^T * nodiag
+  int np = GetNMatPar();
+  for (int ip=np;ip--;) {
+    double v = 0;
+    for (int jp=np;jp--;) v += fMatDiag[jp][ip]*nodiag[jp];
+    diag[ip] = v;
   }
   //
 }
