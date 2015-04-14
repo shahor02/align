@@ -24,7 +24,7 @@ AliAlgPoint::AliAlgPoint()
     fXYZTracking[i] = 0;
     fErrYZTracking[i] = 0;
   }
-  memset(fMatCorrPar,0,5*sizeof(float));
+  memset(fMatCorrExp,0,5*sizeof(float));
   memset(fMatCorrCov,0,5*sizeof(float));
   memset(fMatDiag,0,5*5*sizeof(float));
   //
@@ -102,8 +102,8 @@ void AliAlgPoint::Print(Option_t* opt) const
   }
   //
   if (opts.Contains("mat") && ContainsMaterial()) {
-    printf("  MatCorr Par: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
-	   fMatCorrPar[0], fMatCorrPar[1], fMatCorrPar[2], fMatCorrPar[3], fMatCorrPar[4]);
+    printf("  MatCorr Exp: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+	   fMatCorrExp[0], fMatCorrExp[1], fMatCorrExp[2], fMatCorrExp[3], fMatCorrExp[4]);
     printf("  MatCorr cov: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
 	   fMatCorrCov[0], fMatCorrCov[1], fMatCorrCov[2], fMatCorrCov[3], fMatCorrCov[4]);
   }

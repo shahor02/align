@@ -296,3 +296,52 @@ void AliAlgSteer::ResetDetectors()
     det->ResetPool();   // reset used alignment points
   }
 }
+
+//____________________________________________
+void AliAlgSteer::BuildMatrix(TMatrixDSym &mat, TVectorD &vec)
+{
+  int npnt = fAlgTrack->GetNPoints();
+  int nlocpar = fAlgTrack->GetNLocPar();
+  int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
+  //
+  vec.ResizeTo(nlocpar);
+  mat.ResizeTo(nlocpar,nlocpar);
+
+  for (int ip=npnt;ip--;) {
+    AliAlgPoint* pnt = fAlgTrack->GetPoint(ip);
+    //
+    if (pnt->ContainsMeasurement()) {
+      for (int idim=2;idim--;) { // each point has 2 position residuals
+	double  sigma = pnt->GetErrDiag(idim);              // residual error
+	double  resid = fAlgTrack->GetResidual(idim,ip);    // residual
+	double* deriv = fAlgTrack->GetDerivative(idim,ip);  // array of Dresidual/Dparams
+	//
+	double sg2inv = 1./(sigma*sigma);
+	for (int parI=nlocpar;parI--;) { 
+	  vec[parI] += deriv[parI]*resid*sg2inv;
+	  for (int parJ=nlocpar;parJ--;) {
+	    mat(parI,parJ) += deriv[parI]*deriv[parJ]*sg2inv;	  
+	  }
+	}
+      } // loop over 2 orthogonal measurements at the point 
+    } // derivarives at measured points
+    //
+    // if the point contains material, consider its expected kinks, eloss 
+    // as measurements
+    if (pnt->ContainsMaterial()) {
+      // at least 4 parameters: 2 spatial + 2 angular kinks with 0 expectaction
+      int npm = pnt->GetNMatPar();
+      const float* expMatCorr = pnt->GetMatCorrExp(); // expected correction (diagonalized)
+      const float* expMatCov  = pnt->GetMatCorrCov(); // its error
+      int offs  = pnt->GetMaxLocVarID() - npm;
+      for (int ipar=npm;ipar--;) {
+	int parI = offs + ipar;
+	vec[parI] += expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
+	mat(parI,parI) += 1./expMatCov[ipar]; // this measurement is orthogonal to all others
+      }
+    } // material effect descripotion params
+    //
+  } // loop over track points
+  //
+}
+

@@ -601,7 +601,7 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Do
   const double *corrDiagP = &corrDiag[pnt->GetMaxLocVarID()-nCorrPar]; // material corrections for this point start here
   double corr[kNKinParBON] = {0};
   pnt->UnDiagMatCorr(corrDiagP, corr);
-  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrPar()[kParQ2Pt]; // fixed eloss
+  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrExp()[kParQ2Pt]; // fixed eloss
   //  printf("apply corr UD %+.3e %+.3e %+.3e %+.3e\n",corr[0],corr[1],corr[2],corr[3]);
   //  printf("      corr  D %+.3e %+.3e %+.3e %+.3e\n",corrDiagP[0],corrDiagP[1],corrDiagP[2],corrDiagP[3]);  
   //  printf("at point :"); pnt->Print();
@@ -672,7 +672,7 @@ Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* 
   // apply eloss effect to q/pt term
   if (!GetFieldON()) return kTRUE;
   double &p4 = ((double*)trPar.GetParameter())[kParQ2Pt];
-  p4 += pnt->GetMatCorrPar()[kParQ2Pt];
+  p4 += pnt->GetMatCorrExp()[kParQ2Pt];
   return kTRUE;
 }
 
@@ -1165,20 +1165,12 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
 #endif      
       return kFALSE; 
     }
-    double cov1[15];
-    memcpy(cov1,trc.GetCovariance(),15*sizeof(double));                           // save errors with mat.effect
-    if (pnt->ContainsMeasurement()) {
-      memcpy((double*)trc.GetCovariance(),kErrHuge,15*sizeof(double));  // assign large errors
-      const double* yz    = pnt->GetYZTracking();
-      const double* errYZ = pnt->GetYZErrTracking();
-      if (!trc.Update(yz,errYZ)) return kFALSE;                         // adjust to measurement      
-    }
-    //
     // the difference between the params,covariance of tracks with and  w/o material accounting gives
     // paramets and covariance of material correction
-    double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter(),*par1=(double*)trc.GetParameter();
+    double *cov0=(double*)tr0.GetCovariance(),*par0=(double*)tr0.GetParameter();
+    double *cov1=(double*)trc.GetCovariance(),*par1=(double*)trc.GetParameter();
     for (int l=15;l--;) dcov[l] = cov1[l] - cov0[l];
-    for (int l=5; l--;) dpar[l] = par1[l] - par0[l];
+    dpar[kParQ2Pt] = par1[kParQ2Pt] - par0[kParQ2Pt]; // only e-loss expectation is non-0
     // 
     // MP2 handles only scalar residuals hence correlated vector of material corrections need to be diagonalized
     Bool_t eLossFree = pnt->GetELossVaried();
@@ -1197,12 +1189,17 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     }
     pnt->SetMatCovDiagonalizationMatrix(matEVec); // store diagonalization matrix
     pnt->SetMatCovDiag(matDiag.GetEigenValues()); // store E.Values: diagonalized cov.matrix
-    pnt->SetMatCorrPar(dpar);                     // store initial estimate of mat corrections
-    //
+    if (!eLossFree) pnt->SetMatCovDiagElem(kParQ2Pt, dcov[14]); 
     pnt->SetContainsMaterial(kTRUE);
-    pnt->SetX2X0(x2X0xRho[0]);
-    pnt->SetXTimesRho(x2X0xRho[1]);
     //printf("Add mat%d %e %e\n",ip, x2X0xRho[0],x2X0xRho[1]);
+    pnt->SetX2X0(x2X0xRho[0]);
+    pnt->SetXTimesRho(x2X0xRho[1]);    
+    //
+    // store expectation of material corrections: before diagonalization only eloss is non-0
+    double dparD[5];
+    pnt->DiagMatCorr(dpar,dparD);
+    if (!eLossFree) dparD[kParQ2Pt] = dpar[kParQ2Pt];
+    pnt->SetMatCorrExp(dparD);
     //
   }
   //

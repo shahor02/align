@@ -5,6 +5,9 @@
 #include "AliAlgTrack.h"
 #include "AliAlgPoint.h"
 
+#include <TMatrixDSym.h>
+#include <TVectorD.h>
+
 class AliESDEvent;
 class AliESDtrack;
 class AliESDCosmicTrack;
@@ -54,6 +57,8 @@ class AliAlgSteer : public TObject
   virtual void Print(const Option_t *opt="")              const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)                    {return (Char_t*)fgkDetectorName[id];}
+  //
+  void BuildMatrix(TMatrixDSym &mat, TVectorD &vec);
   //
  protected:
   AliAlgSteer(const AliAlgSteer&);

@@ -75,11 +75,12 @@ class AliAlgPoint : public TObject
   //
   void       SetMatCovDiagonalizationMatrix(const TMatrixD& d);
   void       SetMatCovDiag(const TVectorD& v);
+  void       SetMatCovDiagElem(int i, double err2) {fMatCorrCov[i] = err2;}
   void       UnDiagMatCorr(const double* diag, double* nodiag) const;
   void       DiagMatCorr(const double* nodiag, double* diag) const;
   //
-  void       SetMatCorrPar(Double_t *p)           {for (int i=5;i--;) fMatCorrPar[i] = p[i];}
-  Float_t*   GetMatCorrPar()                const {return (float*)fMatCorrPar;}
+  void       SetMatCorrExp(Double_t *p)           {for (int i=5;i--;) fMatCorrExp[i] = p[i];}
+  Float_t*   GetMatCorrExp()                const {return (float*)fMatCorrExp;}
   Float_t*   GetMatCorrCov()                const {return (float*)fMatCorrCov;}
   //
   void       GetXYZGlo(Double_t r[3])       const;
@@ -114,7 +115,7 @@ class AliAlgPoint : public TObject
   Float_t    fX2X0;                                    // X2X0 seen by the track (including inclination)
   Float_t    fXTimesRho;                               // signed Density*Length seen by the track (including inclination)
   //
-  Float_t    fMatCorrPar[kNMatDOFs];                   // material correction delta (diagonalized)
+  Float_t    fMatCorrExp[kNMatDOFs];                   // material correction expectation (diagonalized)
   Float_t    fMatCorrCov[kNMatDOFs];                   // material correction delta covariance (diagonalized)
   Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
   //
