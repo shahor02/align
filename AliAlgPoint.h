@@ -78,6 +78,8 @@ class AliAlgPoint : public TObject
   void       SetMatCovDiagElem(int i, double err2) {fMatCorrCov[i] = err2;}
   void       UnDiagMatCorr(const double* diag, double* nodiag) const;
   void       DiagMatCorr(const double* nodiag, double* diag) const;
+  void       UnDiagMatCorr(const float* diag, float* nodiag) const;
+  void       DiagMatCorr(const float* nodiag, float* diag) const;
   //
   void       SetMatCorrExp(Double_t *p)           {for (int i=5;i--;) fMatCorrExp[i] = p[i];}
   Float_t*   GetMatCorrExp()                const {return (float*)fMatCorrExp;}

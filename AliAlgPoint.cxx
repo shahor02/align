@@ -102,10 +102,31 @@ void AliAlgPoint::Print(Option_t* opt) const
   }
   //
   if (opts.Contains("mat") && ContainsMaterial()) {
-    printf("  MatCorr Exp: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+    printf("  MatCorr Exp (diag): %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
 	   fMatCorrExp[0], fMatCorrExp[1], fMatCorrExp[2], fMatCorrExp[3], fMatCorrExp[4]);
-    printf("  MatCorr cov: %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
+    printf("  MatCorr Cov (diag): %+.4e %+.4e %+.4e %+.4e %+.4e\n", 
 	   fMatCorrCov[0], fMatCorrCov[1], fMatCorrCov[2], fMatCorrCov[3], fMatCorrCov[4]);
+    //
+    if (opts.Contains("umat")) {
+      float covUndiag[15];
+      memset(covUndiag,0,15*sizeof(float));
+      int np = GetNMatPar();
+      for (int i=0;i<np;i++) {
+	for (int j=0;j<=i;j++) {
+	  double val = 0;
+	  for (int k=np;k--;) val += fMatDiag[i][k]*fMatDiag[j][k]*fMatCorrCov[k];
+	  int ij = (i*(i+1)/2)+j;	  
+	  covUndiag[ij] = val;
+	}
+      }
+      if (np<kNMatDOFs) covUndiag[14] = fMatCorrCov[4]; // eloss was fixed
+      printf("  MatCorr Cov in normal form:\n");
+      printf("  %+e\n",covUndiag[0]);
+      printf("  %+e %+e\n",covUndiag[1],covUndiag[2]);
+      printf("  %+e %+e %+e\n",covUndiag[3],covUndiag[4],covUndiag[5]);
+      printf("  %+e %+e %+e %+e\n",covUndiag[6],covUndiag[7],covUndiag[8],covUndiag[9]);
+      printf("  %+e %+e %+e %+e +%e\n",covUndiag[10],covUndiag[11],covUndiag[12],covUndiag[13],covUndiag[14]);
+    }
   }
   //
   if (opts.Contains("diag") && ContainsMaterial()) {
@@ -222,6 +243,20 @@ void AliAlgPoint::UnDiagMatCorr(const double* diag, double* nodiag) const
 }
 
 //__________________________________________________________________
+void AliAlgPoint::UnDiagMatCorr(const float* diag, float* nodiag) const
+{
+  // transform material corrections from the frame diagonalizing the errors to point frame
+  // nodiag = fMatDiag * diag
+  int np = GetNMatPar();
+  for (int ip=np;ip--;) {
+    double v = 0;
+    for (int jp=np;jp--;) v += double(fMatDiag[ip][jp])*diag[jp];
+    nodiag[ip] = v;
+  }
+  //
+}
+
+//__________________________________________________________________
 void AliAlgPoint::DiagMatCorr(const double* nodiag, double* diag) const
 {
   // transform material corrections from the AliExternalTrackParam frame to
@@ -231,6 +266,21 @@ void AliAlgPoint::DiagMatCorr(const double* nodiag, double* diag) const
   for (int ip=np;ip--;) {
     double v = 0;
     for (int jp=np;jp--;) v += fMatDiag[jp][ip]*nodiag[jp];
+    diag[ip] = v;
+  }
+  //
+}
+
+//__________________________________________________________________
+void AliAlgPoint::DiagMatCorr(const float* nodiag, float* diag) const
+{
+  // transform material corrections from the AliExternalTrackParam frame to
+  // the frame diagonalizing the errors
+  // diag = fMatDiag^T * nodiag
+  int np = GetNMatPar();
+  for (int ip=np;ip--;) {
+    double v = 0;
+    for (int jp=np;jp--;) v += double(fMatDiag[jp][ip])*nodiag[jp];
     diag[ip] = v;
   }
   //

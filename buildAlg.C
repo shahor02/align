@@ -45,9 +45,9 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
-  algSteer->AddDetector(AliAlgSteer::kTPC);
-  algSteer->AddDetector(AliAlgSteer::kTRD);
-  algSteer->AddDetector(AliAlgSteer::kTOF);
+  //  algSteer->AddDetector(AliAlgSteer::kTPC);
+  //  algSteer->AddDetector(AliAlgSteer::kTRD);
+  //  algSteer->AddDetector(AliAlgSteer::kTOF);
   //
   TString detalg = "GRP";
   for (int id=0;id<AliAlgSteer::kNDetectors;id++) {

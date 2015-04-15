@@ -80,8 +80,8 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
   Double_t *GetDerivative(int dim, int pntID)     const {return &fDerivA[dim][pntID*fNLocPar];}
   //
-  void SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par);
-  void SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par);
+  void SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par,Bool_t add);
+  void SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par,Bool_t add);
   void SetParam(AliExternalTrackParam& tr, int par, double val);
   void SetParam(AliExternalTrackParam* trSet, int ntr, int par, double val);
   void ModParam(AliExternalTrackParam& tr, int par, double delta);
@@ -122,21 +122,29 @@ class AliAlgTrack: public AliExternalTrackParam
 };
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par)
+inline void AliAlgTrack::SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par,Bool_t add)
 {
   // set track params
   tr.SetParamOnly(x,alp,par);
-  if (!GetFieldON()) ((double*)tr.GetParameter())[4] = 0.; // only 4 params are valid
+  double *parTr = (double*) tr.GetParameter();
+  if (add) { // par is correction to reference params
+    for (int i=kNKinParBON;i--;) parTr[i] += GetParameter()[i];
+  }
+  if (!GetFieldON()) parTr[4] = 0.; // only 4 params are valid
   //
 }
 
 //____________________________________________________________________________________________
-inline void AliAlgTrack::SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par)
+inline void AliAlgTrack::SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par,Bool_t add)
 {
   // set parames for multiple tracks (VECTORIZE THIS)
-  for (int itr=ntr;itr--;) {
-    SetParams(trSet[itr],x,alp,par);
+  if (!add) { // full parameter supplied
+    for (int itr=ntr;itr--;) SetParams(trSet[itr],x,alp,par,kFALSE);
+    return;
   }
+  double partr[kNKinParBON]={0}; // par is a correction to reference parameter
+  for (int i=fNLocExtPar;i--;) partr[i] = GetParameter()[i] + par[i];
+  for (int itr=ntr;itr--;) SetParams(trSet[itr],x,alp,partr,kFALSE);
 }
 
 //____________________________________________________________________________________________

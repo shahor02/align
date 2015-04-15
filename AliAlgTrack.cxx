@@ -20,8 +20,8 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fInnerPointID(0)
-  //  ,fMinX2X0Pt2Account(0.5e-5/1.0)
-  ,fMinX2X0Pt2Account(0.5e-3/1.0)
+  ,fMinX2X0Pt2Account(5/1.0)
+  //  ,fMinX2X0Pt2Account(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
   ,fPoints(0)
@@ -102,7 +102,8 @@ void AliAlgTrack::DefineDOFs()
     fDerivA[i] = fDeriv[i].GetArray();
   }
   //
-  memcpy(fLocParA,GetParameter(),fNLocExtPar*sizeof(Double_t));
+  //  memcpy(fLocParA,GetParameter(),fNLocExtPar*sizeof(Double_t));
+  memset(fLocParA,0,fNLocExtPar*sizeof(Double_t));
 }
 
 //______________________________________________________
@@ -159,7 +160,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
   //
   double delta[kNKinParBON]; // variations of curvature term are relative
   for (int i=kNKinParBOFF;i--;) delta[i] = kDelta[i];
-  if (GetFieldON()) delta[kParQ2Pt] = kDelta[kParQ2Pt]*Abs(params[kParQ2Pt]);
+  if (GetFieldON()) delta[kParQ2Pt] = kDelta[kParQ2Pt]*Abs(GetParameter()[kParQ2Pt]);
   //
   int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
@@ -172,7 +173,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
   }
   // 1) derivative wrt AliExternalTrackParam parameters
   for (int ipar=fNLocExtPar;ipar--;) {
-    SetParams(probD,kNRDClones, GetX(),GetAlpha(),params);
+    SetParams(probD,kNRDClones, GetX(),GetAlpha(),params,kTRUE);
     if (invert) for (int ic=kNRDClones;ic--;) probD[ic].Invert();
     double del = delta[ipar];
     //
@@ -221,7 +222,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       // We will vary the tracks starting from the original parameters propagated to given point 
       // and stored there (before applying material corrections for this point)
       // 
-      SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWS());
+      SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWS(),kFALSE);
       // no need for eventual track inversion here: if needed, this is already done in ParamWS
       //
       int offsIP = offsI+ipar;                 // parameter entry in the params array
@@ -305,7 +306,8 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
 Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,int pTo)
 {
   // Calculate residuals for the single leg from points pFrom to pT
-  // The 1st 4 or 5 elements of params vector should be the reference AliExternalTrackParam 
+  // The 1st 4 or 5 elements of params vector should be corrections to 
+  // the reference AliExternalTrackParam 
   // Then parameters of material corrections for each point
   // marked as having materials should come (4 or 5 dependending if ELoss is varied or fixed).
   // They correspond to kink parameters
@@ -314,7 +316,7 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,i
   // increment will be done locally in the ApplyMatCorr routine.
   //
   AliExternalTrackParam probe;
-  SetParams(probe,GetX(),GetAlpha(),params);
+  SetParams(probe,GetX(),GetAlpha(),params,kTRUE);
   if (invert) probe.Invert();
   int pinc;
   if (pTo>pFrom) { // fit in points decreasing order: cosmics upper leg
@@ -1178,6 +1180,8 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     TMatrixDSym matCov(nParFree);
     for (int i=nParFree;i--;) for (int j=i+1;j--;) matCov(i,j)=matCov(j,i) = dcov[j+((i*(i+1))>>1)];
     //
+    printf("PNT MAT %d\n",ip);
+    matCov.Print();
     TMatrixDSymEigen matDiag(matCov);  // find eigenvectors
     const TMatrixD& matEVec = matDiag.GetEigenVectors();
     if (!matEVec.IsValid()) {
