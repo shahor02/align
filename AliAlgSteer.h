@@ -8,6 +8,8 @@
 #include <TMatrixDSym.h>
 #include <TVectorD.h>
 
+#include "AliSymMatrix.h"
+
 class AliESDEvent;
 class AliESDtrack;
 class AliESDCosmicTrack;
@@ -58,7 +60,7 @@ class AliAlgSteer : public TObject
   //
   static Char_t* GetDetNameByDetID(Int_t id)                    {return (Char_t*)fgkDetectorName[id];}
   //
-  void BuildMatrix(TMatrixDSym &mat, TVectorD &vec);
+  AliSymMatrix* BuildMatrix(TVectorD &vec);
   //
  protected:
   AliAlgSteer(const AliAlgSteer&);

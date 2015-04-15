@@ -298,15 +298,16 @@ void AliAlgSteer::ResetDetectors()
 }
 
 //____________________________________________
-void AliAlgSteer::BuildMatrix(TMatrixDSym &mat, TVectorD &vec)
+AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
 {
   int npnt = fAlgTrack->GetNPoints();
   int nlocpar = fAlgTrack->GetNLocPar();
   int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
   //
   vec.ResizeTo(nlocpar);
-  mat.ResizeTo(nlocpar,nlocpar);
-
+  AliSymMatrix* matp = new AliSymMatrix(nlocpar);
+  AliSymMatrix& mat = *matp;
+  //
   for (int ip=npnt;ip--;) {
     AliAlgPoint* pnt = fAlgTrack->GetPoint(ip);
     //
@@ -319,7 +320,8 @@ void AliAlgSteer::BuildMatrix(TMatrixDSym &mat, TVectorD &vec)
 	double sg2inv = 1./(sigma*sigma);
 	for (int parI=nlocpar;parI--;) { 
 	  vec[parI] += deriv[parI]*resid*sg2inv;
-	  for (int parJ=nlocpar;parJ--;) {
+	  //	  for (int parJ=nlocpar;parJ--;) {
+	  for (int parJ=parI+1;parJ--;) {
 	    mat(parI,parJ) += deriv[parI]*deriv[parJ]*sg2inv;	  
 	  }
 	}
@@ -334,14 +336,16 @@ void AliAlgSteer::BuildMatrix(TMatrixDSym &mat, TVectorD &vec)
       const float* expMatCorr = pnt->GetMatCorrExp(); // expected correction (diagonalized)
       const float* expMatCov  = pnt->GetMatCorrCov(); // its error
       int offs  = pnt->GetMaxLocVarID() - npm;
-      for (int ipar=npm;ipar--;) {
+      for (int ipar=0;ipar<npm;ipar++) {
 	int parI = offs + ipar;
 	vec[parI] += expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
 	mat(parI,parI) += 1./expMatCov[ipar]; // this measurement is orthogonal to all others
+	printf("Pnt:%3d MatVar:%d DOF %3d | ExpVal: %+e Cov: %+e\n",ip,ipar,parI, expMatCorr[ipar], expMatCov[ipar]);
       }
     } // material effect descripotion params
     //
   } // loop over track points
   //
+  return matp;
 }
 
