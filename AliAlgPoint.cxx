@@ -99,6 +99,7 @@ void AliAlgPoint::Print(Option_t* opt) const
     printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e\n",
 	   GetXTracking(),GetYTracking(),GetZTracking(),
 	   fErrYZTracking[0],fErrYZTracking[1],fErrYZTracking[2]);
+    printf("  DiagErr: %+e %+e\n", fErrDiag[0], fErrDiag[1]);
   }
   //
   if (opts.Contains("mat") && ContainsMaterial()) {

@@ -20,8 +20,8 @@ AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
   ,fInnerPointID(0)
-  ,fMinX2X0Pt2Account(5/1.0)
-  //  ,fMinX2X0Pt2Account(0.5e-3/1.0)
+  //  ,fMinX2X0Pt2Account(5/1.0)
+  ,fMinX2X0Pt2Account(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
   ,fPoints(0)
@@ -1180,8 +1180,8 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     TMatrixDSym matCov(nParFree);
     for (int i=nParFree;i--;) for (int j=i+1;j--;) matCov(i,j)=matCov(j,i) = dcov[j+((i*(i+1))>>1)];
     //
-    printf("PNT MAT %d\n",ip);
-    matCov.Print();
+    //    printf("PNT MAT %d\n",ip);
+    //    matCov.Print();
     TMatrixDSymEigen matDiag(matCov);  // find eigenvectors
     const TMatrixD& matEVec = matDiag.GetEigenVectors();
     if (!matEVec.IsValid()) {

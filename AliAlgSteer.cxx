@@ -305,6 +305,7 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
   int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
   //
   vec.ResizeTo(nlocpar);
+  memset(vec.GetMatrixArray(),0,nlocpar*sizeof(double));
   AliSymMatrix* matp = new AliSymMatrix(nlocpar);
   AliSymMatrix& mat = *matp;
   //
@@ -312,14 +313,16 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
     AliAlgPoint* pnt = fAlgTrack->GetPoint(ip);
     //
     if (pnt->ContainsMeasurement()) {
+      //      pnt->Print("meas");
       for (int idim=2;idim--;) { // each point has 2 position residuals
-	double  sigma = pnt->GetErrDiag(idim);              // residual error
-	double  resid = fAlgTrack->GetResidual(idim,ip);    // residual
-	double* deriv = fAlgTrack->GetDerivative(idim,ip);  // array of Dresidual/Dparams
+	double  sigma2 = pnt->GetErrDiag(idim);              // residual error
+	double  resid  = fAlgTrack->GetResidual(idim,ip);    // residual
+	double* deriv  = fAlgTrack->GetDerivative(idim,ip);  // array of Dresidual/Dparams
 	//
-	double sg2inv = 1./(sigma*sigma);
+	double sg2inv = 1./sigma2;
 	for (int parI=nlocpar;parI--;) { 
-	  vec[parI] += deriv[parI]*resid*sg2inv;
+	  vec[parI] -= deriv[parI]*resid*sg2inv;
+	  //  printf("%d %d %d %+e %+e %+e -> %+e\n",ip,idim,parI,sg2inv,deriv[parI],resid,vec[parI]);
 	  //	  for (int parJ=nlocpar;parJ--;) {
 	  for (int parJ=parI+1;parJ--;) {
 	    mat(parI,parJ) += deriv[parI]*deriv[parJ]*sg2inv;	  
