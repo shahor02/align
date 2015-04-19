@@ -2,6 +2,7 @@
 #include <TString.h>
 #include "AliAlgPoint.h"
 #include "AliAlgAux.h"
+#include "AliExternalTrackParam.h"
 
 using namespace AliAlgAux;
 using namespace TMath;
@@ -72,11 +73,16 @@ void AliAlgPoint::Init()
       fCosDiagErr = Cos(phi);
       fSinDiagErr = Sin(phi);
       //
-      double det = dfd*dfd + fErrYZTracking[1]*fErrYZTracking[1];
-      det = det>0 ? Sqrt(det) : 0;
-      double smd = 0.5*(fErrYZTracking[0] + fErrYZTracking[2]);
-      fErrDiag[0] = smd + det;
-      fErrDiag[1] = smd - det;
+      //      double det = dfd*dfd + fErrYZTracking[1]*fErrYZTracking[1];
+      //      det = det>0 ? Sqrt(det) : 0;
+      //      double smd = 0.5*(fErrYZTracking[0] + fErrYZTracking[2]);
+      //      fErrDiag[0] = smd + det;
+      //      fErrDiag[1] = smd - det;
+      double xterm = 2*fCosDiagErr*fSinDiagErr*fErrYZTracking[1];
+      double cc = fCosDiagErr*fCosDiagErr;
+      double ss = fSinDiagErr*fSinDiagErr;
+      fErrDiag[0] = fErrYZTracking[0]*cc + fErrYZTracking[2]*ss - xterm;
+      fErrDiag[1] = fErrYZTracking[0]*ss + fErrYZTracking[2]*cc + xterm;
     }
   }
   //
@@ -140,7 +146,7 @@ void AliAlgPoint::Print(Option_t* opt) const
   }
   //
   if (opts.Contains("ws")) { // printf track state at this point stored during residuals calculation
-    printf("Local Track: "); 
+    printf("  Local Track: "); 
     for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWS[i]); 
     printf("\n");
   }
@@ -285,4 +291,18 @@ void AliAlgPoint::DiagMatCorr(const float* nodiag, float* diag) const
     diag[ip] = v;
   }
   //
+}
+
+//__________________________________________________________________
+void AliAlgPoint::GetTrWS(AliExternalTrackParam& etp) const
+{
+  // assign WS parameters to supplied track
+  double covDum[15]={
+    1.e-4,
+    0    ,1.e-4,
+    0    ,    0,1.e-4,
+    0    ,    0,    0,1.e-4,
+    0    ,    0,    0,    0,1e-4
+  };
+  etp.Set(GetXPoint(),GetAlphaSens(),fTrParamWS,covDum);
 }

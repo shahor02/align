@@ -71,6 +71,7 @@ class AliAlgPoint : public TObject
   Double_t   GetErrDiag(int i)             const {return fErrDiag[i];}
   //
   Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
+  void       GetTrWS(AliExternalTrackParam& etp) const;
   void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
   //
   void       SetMatCovDiagonalizationMatrix(const TMatrixD& d);

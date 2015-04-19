@@ -14,6 +14,8 @@ class AliAlgDetITS : public AliAlgDet
   //
   Bool_t PresentInTrack(const AliESDtrack* trc) const;
 
+  void   SetAddErrorLr(int ilr, double sigY, double sigZ);
+
  protected:
 
   ClassDef(AliAlgDetITS,1);

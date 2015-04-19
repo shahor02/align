@@ -69,14 +69,6 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Double_t *corrDiaf,const AliAlgPoint* pnt);
   Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrpar);
   //
-  // misc methods, perhaps obsolete
-  Bool_t ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt);
-  Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt);
-  Bool_t ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2);
-  Bool_t ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2);
-  Bool_t ApplyELoss(AliExternalTrackParam& trPar, double dE);
-  Bool_t ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE);
-  //
   Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
   Double_t *GetDerivative(int dim, int pntID)     const {return &fDerivA[dim][pntID*fNLocPar];}
   //
@@ -90,6 +82,8 @@ class AliAlgTrack: public AliExternalTrackParam
   void RichardsonDeriv(const AliExternalTrackParam* trSet, const double *delta, 
 		       const AliAlgPoint* pnt, double& derY, double& derZ);
   //
+  const Double_t* GetLocPars()                    const {return fLocParA;}
+  void            SetLocPars(const double* pars); 
  protected: 
   //
   Bool_t CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pTo);

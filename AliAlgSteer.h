@@ -61,6 +61,7 @@ class AliAlgSteer : public TObject
   static Char_t* GetDetNameByDetID(Int_t id)                    {return (Char_t*)fgkDetectorName[id];}
   //
   AliSymMatrix* BuildMatrix(TVectorD &vec);
+  Bool_t        TestLocalSolution();
   //
  protected:
   AliAlgSteer(const AliAlgSteer&);

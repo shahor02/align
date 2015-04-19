@@ -32,6 +32,7 @@ AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid)
 {
   // def c-tor
   SetVolID(vid);
+  fAddError[0] = fAddError[1] = 0;
 }
 
 //_________________________________________________________
@@ -211,8 +212,10 @@ void AliAlgSens::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f\n",
-	 CountParents(), GetSymName(), GetVolID(), GetInternalID(),fX, fAlp);
+  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f | Err: %.4e %.4e\n",
+	 CountParents(), GetSymName(), GetVolID(), GetInternalID(),fX, fAlp, 
+	 fAddError[0],fAddError[1]);
+  //
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
     GetMatrixL2GOrig().Print();

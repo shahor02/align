@@ -558,7 +558,8 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *c
   const double *corrDiag = &corrPar[pnt->GetMaxLocVarID()-nCorrPar]; // material corrections for this point start here
   double corr[5] = {0};
   pnt->UnDiagMatCorr(corrDiag, corr);
-  //  printf("apply corr UD %+.3e %+.3e %+.3e %+.3e\n",corr[0],corr[1],corr[2],corr[3]);
+  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrExp()[kParQ2Pt]; // fixed eloss expected effect
+  //  printf("apply corr UD %+.3e %+.3e %+.3e %+.3e %+.3e\n",corr[0],corr[1],corr[2],corr[3],corr[4]);
   //  printf("      corr  D %+.3e %+.3e %+.3e %+.3e\n",corrDiag[0],corrDiag[1],corrDiag[2],corrDiag[3]);  
   //  printf("at point :"); pnt->Print();
   return ApplyMatCorr(trPar,corr);
@@ -603,7 +604,7 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Do
   const double *corrDiagP = &corrDiag[pnt->GetMaxLocVarID()-nCorrPar]; // material corrections for this point start here
   double corr[kNKinParBON] = {0};
   pnt->UnDiagMatCorr(corrDiagP, corr);
-  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrExp()[kParQ2Pt]; // fixed eloss
+  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrExp()[kParQ2Pt]; // fixed eloss expected effect
   //  printf("apply corr UD %+.3e %+.3e %+.3e %+.3e\n",corr[0],corr[1],corr[2],corr[3]);
   //  printf("      corr  D %+.3e %+.3e %+.3e %+.3e\n",corrDiagP[0],corrDiagP[1],corrDiagP[2],corrDiagP[3]);  
   //  printf("at point :"); pnt->Print();
@@ -618,217 +619,6 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Do
   }
   return kTRUE;
 }
-
-//______________________________________________________
-Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam& trPar, double ms1,double ms2)
-{
-  //------------------------------------------------------------------------------
-  // Modify track par (e.g. AliExternalTrackParam) in the tracking frame 
-  // (dip angle lam, az. angle phi) 
-  // by multiple scattering defined by scattering angles in 2 orthogonal directions in
-  // the track collinear frame (ms1 and ms2 resp).
-  // The updated direction vector in the tracking frame becomes
-  //
-  //  | Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] |   | Cos[tms]         |
-  //  | Cos[lam]*Sin[phi] Sin[lam]*Sin[phi]  Cos[phi] | x | Cos[pms]*Sin[tms]|
-  //  | Sin[lam]	       -Cos[lam]	0     |   | Sin[pms]*Sin[tms]|
-  //
-  //------------------------------------------------------------------------------
-  //
-  // convert 2 orthogonal scattering angles to point in cyl. cooordinates
-  double snt2 = ms1*ms1 + ms2*ms2;
-  if (snt2>kAlmostOneD) return kFALSE;
-  if (IsZeroPos(snt2)) return kTRUE; // no scattering
-  double snTms = Sqrt(snt2);
-  double csTms = Sqrt(1.-snt2);
-  double phiMS = ATan2(ms2,ms1);
-  double snPms = Sin(phiMS), csPms = Cos(phiMS);  
-  //
-  double *par = (double*) trPar.GetParameter();
-  //
-  double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
-  double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
-  //
-  double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
-  double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
-  double &r20 = snLam      ,&r21 = csLam;
-  //
-  double &v0 = csTms, v1 = snTms*csPms, v2 = snTms*snPms;
-  //
-  double px = r00*v0 + r01*v1 - r02*v2;
-  double py = r10*v0 + r11*v1 + r12*v2;
-  double pz = r20*v0 - r21*v1;
-  //
-  double pt = Sqrt(px*px + py*py);
-  par[2] = py/pt;
-  par[3] = pz/pt;
-  par[4]*= csLam/pt;
-  //
-  return kTRUE;
-}
-
-
-//______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, const AliAlgPoint* pnt)
-{
-  // apply eloss effect to q/pt term
-  if (!GetFieldON()) return kTRUE;
-  double &p4 = ((double*)trPar.GetParameter())[kParQ2Pt];
-  p4 += pnt->GetMatCorrExp()[kParQ2Pt];
-  return kTRUE;
-}
-
-//______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam& trPar, double dE)
-{
-  // apply eloss according to externally supplied dE
-  double &p4 = ((double*)trPar.GetParameter())[4];
-  double p = trPar.GetP();
-  double p2 = p*p;
-  Double_t e = Sqrt(p2 + fMass*fMass);
-  if ( Abs(dE) > 0.3*e ) return kFALSE; //30% energy loss is too much!
-  if ( (1.+ dE/p2*(dE + 2*e)) < 0. ) return kFALSE;
-  double cP4 = 1./Sqrt(1.+ dE/p2*(dE + 2*e));  //A precise formula by Ruben !
-  if (Abs(p4*cP4)>100.) return kFALSE; //Do not track below 10 MeV/c
-  p4 *= cP4;
-  return kTRUE;
-}
-
-/*
-//______________________________________________________
-Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double tms,double pms)
-{
-  //------------------------------------------------------------------------------
-  // Modify params for SET of tracks (e.g. AliExternalTrackParam) in the tracking frame 
-  // (dip angle lam, az. angle phi) 
-  // by multiple scattering defined by polar and azumuthal scattering angles in 
-  // the track collinear frame (tms and pms resp).
-  // The updated direction vector in the tracking frame becomes
-  //
-  //  | Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] |   | Cos[tms]         |
-  //  | Cos[lam]*Sin[phi] Sin[lam]*Sin[phi]  Cos[phi] | x | Cos[pms]*Sin[tms]|
-  //  | Sin[lam]	       -Cos[lam]	0     |   | Sin[pms]*Sin[tms]|
-  //
-  //------------------------------------------------------------------------------
-  //
-  // VECTORIZE THIS
-  //
-  if (Abs(tms)<1e-7) return kTRUE;
-  //
-  double snTms = Sin(tms), csTms = Cos(tms);
-  double snPms = Sin(pms), csPms = Cos(pms);  
-  //
-  for (int itr=ntr;itr--;) { // at the moment just loop
-    double *par = (double*) trSet[itr].GetParameter();
-    //
-    double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
-    double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
-    //
-    double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
-    double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
-    double &r20 = snLam      ,&r21 = csLam;
-    //
-    double &v0 = csTms, v1 = snTms*csPms, v2 = snTms*snPms;
-    //
-    double px = r00*v0 + r01*v1 - r02*v2;
-    double py = r10*v0 + r11*v1 + r12*v2;
-    double pz = r20*v0 - r21*v1;
-    //
-    double pt = Sqrt(px*px + py*py);
-    par[2] = py/pt;
-    par[3] = pz/pt;
-    par[4]*= csLam/pt;
-  }
-  //
-  return kTRUE;
-}
-*/
-
-
-//______________________________________________________
-Bool_t AliAlgTrack::ApplyMS(AliExternalTrackParam* trSet, int ntr, double ms1,double ms2)
-{
-  //------------------------------------------------------------------------------
-  // Modify params for SET of tracks (e.g. AliExternalTrackParam) in the tracking frame 
-  // (dip angle lam, az. angle phi) 
-  // by multiple scattering defined by polar and azumuthal scattering angles in 
-  // the track collinear frame (tms and pms resp).
-  // The updated direction vector in the tracking frame becomes
-  //
-  //  | Cos[lam]*Cos[phi] Cos[phi]*Sin[lam] -Sin[phi] |   | Cos[tms]         |
-  //  | Cos[lam]*Sin[phi] Sin[lam]*Sin[phi]  Cos[phi] | x | Cos[pms]*Sin[tms]|
-  //  | Sin[lam]	       -Cos[lam]	0     |   | Sin[pms]*Sin[tms]|
-  //
-  //------------------------------------------------------------------------------
-  //
-  // VECTORIZE THIS
-  //
-  double snt2 = ms1*ms1 + ms2*ms2;
-  if (snt2>kAlmostOneD) return kFALSE;
-  if (IsZeroPos(snt2)) return kTRUE; // no scattering
-  double snTms = Sqrt(snt2);
-  double csTms = Sqrt(1.-snt2);
-  double phiMS = ATan2(ms2,ms1);
-  double snPms = Sin(phiMS), csPms = Cos(phiMS);  
-  //
-  for (int itr=ntr;itr--;) { // at the moment just loop
-    double *par = (double*) trSet[itr].GetParameter();
-    //
-    double snPhi = par[2],  csPhi = Sqrt((1.-snPhi)*(1.+snPhi));
-    double csLam = 1./Sqrt(1.+par[3]*par[3]), snLam = csLam*par[3];
-    //
-    double  r00 = csLam*csPhi, r01 = snLam*csPhi, &r02 = snPhi;
-    double  r10 = csLam*snPhi, r11 = snLam*snPhi, &r12 = csPhi;
-    double &r20 = snLam      ,&r21 = csLam;
-    //
-    double &v0 = csTms, v1 = snTms*csPms, v2 = snTms*snPms;
-    //
-    double px = r00*v0 + r01*v1 - r02*v2;
-    double py = r10*v0 + r11*v1 + r12*v2;
-    double pz = r20*v0 - r21*v1;
-    //
-    double pt = Sqrt(px*px + py*py);
-    par[2] = py/pt;
-    par[3] = pz/pt;
-    par[4]*= csLam/pt;
-  }
-  //
-  return kTRUE;
-}
-
-//______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam* trSet, int ntr, const AliAlgPoint* pnt)
-{
-  // apply eloss according to x*rho of the point to SET of tracks
-  //
-  // VECTORIZE THIS
-  //
-  // at the moment just loop
-  for (int itr=ntr;itr--;) {
-    if (!ApplyELoss(trSet[itr],pnt)) {
-#if DEBUG>3
-      AliErrorF("Failed on clone %d",itr);
-#endif
-      return kFALSE;
-    }
-  }
-  return kTRUE;
-  //
-}
-
-//______________________________________________
-Bool_t AliAlgTrack::ApplyELoss(AliExternalTrackParam* trSet, int ntr, double dE)
-{
-  // apply eloss according to externally supplied dE to SET of tracks
-  //
-  // VECTORIZE THIS
-  //
-  // at the moment just loop
-  for (int itr=ntr;itr--;) if (!ApplyELoss(trSet[itr],dE)) return kFALSE;
-  return kTRUE;
-  //
-}
-
 
 //______________________________________________
 Double_t AliAlgTrack::RichardsonExtrap(double *val, int ord)
@@ -890,14 +680,39 @@ void AliAlgTrack::Print(Option_t *opt) const
   optS.ToLower();
   Bool_t res = optS.Contains("r") && GetResidDone();
   Bool_t der = optS.Contains("d") && GetDerivDone();
+  Bool_t par = optS.Contains("lc"); // local param corrections
+  Bool_t paru = optS.Contains("lcu"); // local param corrections in track param frame
+  //
+  if (par) printf("Ref.track corr: "); for (int i=0;i<fNLocExtPar;i++) printf("%+.3e ",fLocParA[i]); printf("\n");
+  //
   if (optS.Contains("p") || res || der) { 
     for (int ip=0;ip<GetNPoints();ip++) {
       printf("#%3d ",ip);
-      GetPoint(ip)->Print(opt);  
-      if (res) printf("Residuals  : %+.3e %+.3e\n",GetResidual(0,ip),GetResidual(1,ip));
-      if (der) {
+      AliAlgPoint* pnt = GetPoint(ip);
+      pnt->Print(opt);  
+      //
+      if (res && pnt->ContainsMeasurement()) {
+	printf("  Residuals  : %+.3e %+.3e -> Pulls: %+7.2f %+7.2f\n",
+	       GetResidual(0,ip),GetResidual(1,ip), 
+	       GetResidual(0,ip)/sqrt(pnt->GetErrDiag(0)),GetResidual(1,ip)/sqrt(pnt->GetErrDiag(1)));
+      }
+      if (der && pnt->ContainsMeasurement()) {
 	for (int ipar=0;ipar<fNLocPar;ipar++) {
-	  printf("Dres/dp%03d : %+.3e %+.3e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+	  printf("  Dres/dp%03d : %+.3e %+.3e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+	}
+      }
+      //
+      if (par && pnt->ContainsMaterial()) { // material corrections
+	int nCorrPar = pnt->GetNMatPar();
+	const double *corrDiag = &fLocParA[pnt->GetMaxLocVarID()-nCorrPar];
+	printf("  Corr.Diag:  "); 
+	for (int i=0;i<nCorrPar;i++) printf("%+.3e ",corrDiag[i]); printf("\n");
+	if (paru) { // print also mat.corrections in track frame
+	  double corr[5] = {0};
+	  pnt->UnDiagMatCorr(corrDiag, corr);
+	  if (!pnt->GetELossVaried()) corr[kParQ2Pt] = pnt->GetMatCorrExp()[kParQ2Pt]; // fixed eloss expected effect
+	  printf("  Corr.Track: "); 
+	  for (int i=0;i<kNKinParBON;i++) printf("%+.3e ",corr[i]); printf("\n");
 	}
       }
     }
@@ -1233,5 +1048,12 @@ void AliAlgTrack::SortPoints()
     }
   }
   //
+}
+
+//______________________________________________
+void AliAlgTrack::SetLocPars(const double* pars)
+{
+  // store loc par corrections
+  memcpy(fLocParA,pars,fNLocPar*sizeof(double));
 }
 

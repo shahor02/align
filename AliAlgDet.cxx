@@ -27,6 +27,7 @@ AliAlgDet::AliAlgDet()
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
+  fAddError[0] = fAddError[1] = 0;
 }
 
 //____________________________________________
@@ -45,6 +46,7 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this  
+  fAddError[0] = fAddError[1] = 0;
 }
 
 //____________________________________________
@@ -121,7 +123,8 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   hcov.MultiplyLeft(&matT2L.Inverse());
   //
   Double_t *hcovscl = hcov.GetRotationMatrix();
-  pnt->SetYZErrTracking(hcovscl[4],hcovscl[5],hcovscl[8]);
+  const double *sysE = sens->GetAddError(); // additional syst error
+  pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
   pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
   pnt->SetAlphaSens(sens->GetAlpTracking());
   pnt->SetXSens(sens->GetXTracking());
@@ -270,11 +273,12 @@ void AliAlgDet::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Detector:%5s %d volumes %d sensors {VolID: %d-%d}\n",
-	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),GetVolIDMax());
+  printf("Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
+	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),GetVolIDMax(), fAddError[0],fAddError[1]);
   if (opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }
+
 //____________________________________________
 void AliAlgDet::SetDetID(UInt_t tp)
 {
@@ -284,3 +288,13 @@ void AliAlgDet::SetDetID(UInt_t tp)
   SetUniqueID(tp);
 }
 
+//____________________________________________
+void AliAlgDet::SetAddError(double sigy, double sigz)
+{
+  // add syst error to all sensors
+  AliInfoF("Adding sys.error %.4e %.4e to all sensors",sigy,sigz);
+  fAddError[0] = sigy;
+  fAddError[1] = sigz;
+  for (int isn=GetNSensors();isn--;) GetSensor(isn)->SetAddError(sigy,sigz);
+  //
+}

@@ -41,6 +41,9 @@ class AliAlgSens : public AliAlgVol
   void GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const;
   void DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const;
   //
+  void            SetAddError(double y, double z)            {fAddError[0]=y;fAddError[1]=z;}
+  const Double_t* GetAddError()                        const {return fAddError;} 
+  //
   virtual void   PrepareMatrixT2L();
   //
   virtual void   SetTrackingFrame();
@@ -50,12 +53,13 @@ class AliAlgSens : public AliAlgVol
  protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;
-
+  //
  protected:
   //
   Int_t    fIntID;                    // internal id within the detector
   Double_t fX;                        // tracking frame X offset
   Double_t fAlp;                      // tracking frame alpa
+  Double_t fAddError[2];              // additional error increment for measurement
   TGeoHMatrix fMatT2L;                // tracking to local matrix
   //
   ClassDef(AliAlgSens,1)

@@ -106,3 +106,15 @@ Bool_t AliAlgDetITS::PresentInTrack(const AliESDtrack* trc) const
   // test if detector had seed this track
   return trc->IsOn(AliESDtrack::kITSin);
 }
+
+//____________________________________________
+void AliAlgDetITS::SetAddErrorLr(int ilr, double sigY, double sigZ)
+{
+  // set syst. errors for specific layer
+  for (int isn=GetNSensors();isn--;) {
+    AliAlgSensITS* sens = (AliAlgSensITS*)GetSensor(isn);
+    int vid = sens->GetVolID();
+    int lrs = AliGeomManager::VolUIDToLayer(vid);
+    if (lrs-AliGeomManager::kSPD1 == ilr) sens->SetAddError(sigY,sigZ);
+  }
+}

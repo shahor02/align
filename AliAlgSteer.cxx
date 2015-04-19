@@ -298,8 +298,49 @@ void AliAlgSteer::ResetDetectors()
 }
 
 //____________________________________________
+Bool_t AliAlgSteer::TestLocalSolution()
+{
+  // test track local solution
+  TVectorD rhs;
+  AliSymMatrix* mat = BuildMatrix(rhs);
+  if (!mat) return kFALSE;
+  TVectorD vsl(rhs);
+  if (!mat->SolveChol(rhs,vsl,kTRUE)) {
+   delete mat;
+   return kFALSE;
+  }
+  //
+  // print solution vector
+  int nlocpar = fAlgTrack->GetNLocPar();
+  int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
+  printf("ETP Update: ");
+  for (int i=0;i<nlocparETP;i++) printf("%+.2e(%+.2e) ",vsl[i],Sqrt((*mat)(i,i))); printf("\n");
+  //
+  if (nlocpar>nlocparETP) printf("Mat.Corr. update:\n");
+  for (int ip=fAlgTrack->GetNPoints();ip--;) {
+    AliAlgPoint* pnt = fAlgTrack->GetPoint(ip);
+    int npm = pnt->GetNMatPar();
+    const float* expMatCov  = pnt->GetMatCorrCov(); // its error
+    int offs  = pnt->GetMaxLocVarID() - npm;
+    for (int ipar=0;ipar<npm;ipar++) {
+      int parI = offs + ipar;
+      double err = Sqrt(expMatCov[ipar]);
+      printf("Pnt:%3d MatVar:%d DOF %3d | %+.3e(%+.3e) -> sig:%+.3e -> pull: %+.2e\n",
+	     ip,ipar,parI,vsl[parI],Sqrt((*mat)(parI,parI)), err,vsl[parI]/err);
+    }
+  }
+  //
+  fAlgTrack->CalcResiduals(vsl.GetMatrixArray());
+  fAlgTrack->SetLocPars(vsl.GetMatrixArray());
+  delete mat;
+  //
+  return kTRUE;
+}
+
+//____________________________________________
 AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
 {
+  // build matrix/vector for local track
   int npnt = fAlgTrack->GetNPoints();
   int nlocpar = fAlgTrack->GetNLocPar();
   int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
@@ -343,7 +384,7 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
 	int parI = offs + ipar;
 	vec[parI] += expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
 	mat(parI,parI) += 1./expMatCov[ipar]; // this measurement is orthogonal to all others
-	printf("Pnt:%3d MatVar:%d DOF %3d | ExpVal: %+e Cov: %+e\n",ip,ipar,parI, expMatCorr[ipar], expMatCov[ipar]);
+	//printf("Pnt:%3d MatVar:%d DOF %3d | ExpVal: %+e Cov: %+e\n",ip,ipar,parI, expMatCorr[ipar], expMatCov[ipar]);
       }
     } // material effect descripotion params
     //
