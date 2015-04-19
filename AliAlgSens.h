@@ -15,6 +15,8 @@ class TObjArray;
 class AliAlgSens : public AliAlgVol
 {
  public:
+  enum {kSkipBit=BIT(14)};
+
   AliAlgSens(const char* name=0, Int_t vid=0, Int_t iid=0);
   virtual ~AliAlgSens();
   //
@@ -50,6 +52,8 @@ class AliAlgSens : public AliAlgVol
   virtual Bool_t IsSensor()                       const {return kTRUE;}
   virtual void   Print(const Option_t *opt="")    const;
   //
+  void           SetSkip(Bool_t v=kTRUE)                {SetBit(kSkipBit,v);}
+  Bool_t         GetSkip()                        const {return TestBit(kSkipBit);}
  protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;

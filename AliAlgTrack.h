@@ -61,7 +61,10 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t CombineTracks(AliExternalTrackParam& trcL, const AliExternalTrackParam& trcU);
   //
   void     SetChi2(double c)                           {fChi2 = c;};
+  void     SetChi2CosmUp(double c)                     {fChi2CosmUp = c;};
   Double_t GetChi2()                             const {return fChi2;}
+  Double_t GetChi2CosmUp()                       const {return fChi2CosmUp;}
+  Double_t GetChi2CosmLow()                      const {return fChi2-fChi2CosmUp;}
   //
   // propagation methods
   void   CopyFrom(const AliExternalTrackParam* etp);
@@ -104,6 +107,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t  fMinX2X0Pt2Account;          // minimum X2X0/pT accumulated between 2 points worth to account
   Double_t  fMass;                       // assumed mass
   Double_t  fChi2;                       // chi2 with current residuals
+  Double_t  fChi2CosmUp;                 // chi2 for cosmic upper leg
   TObjArray fPoints;                     // alignment points
   TArrayD   fResid[2];                   // residuals array
   TArrayD   fDeriv[2];                   // derivatives array  

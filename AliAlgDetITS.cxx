@@ -115,6 +115,18 @@ void AliAlgDetITS::SetAddErrorLr(int ilr, double sigY, double sigZ)
     AliAlgSensITS* sens = (AliAlgSensITS*)GetSensor(isn);
     int vid = sens->GetVolID();
     int lrs = AliGeomManager::VolUIDToLayer(vid);
-    if (lrs-AliGeomManager::kSPD1 == ilr) sens->SetAddError(sigY,sigZ);
+    if ( (lrs-AliGeomManager::kSPD1) == ilr) sens->SetAddError(sigY,sigZ);
+  }
+}
+
+//____________________________________________
+void AliAlgDetITS::SetSkipLr(int ilr)
+{
+  // exclude sensor of the layer from alignment
+  for (int isn=GetNSensors();isn--;) {
+    AliAlgSensITS* sens = (AliAlgSensITS*)GetSensor(isn);
+    int vid = sens->GetVolID();
+    int lrs = AliGeomManager::VolUIDToLayer(vid);
+    if ( (lrs-AliGeomManager::kSPD1) == ilr) sens->SetSkip();
   }
 }

@@ -23,8 +23,8 @@ void ConnectFriends();
 
 AliAlgSteer * algSteer = 0;
 
-void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-//void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+//void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
 
 //void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
@@ -47,9 +47,9 @@ void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
-  //  algSteer->AddDetector(AliAlgSteer::kTPC);
-  //  algSteer->AddDetector(AliAlgSteer::kTRD);
-  //  algSteer->AddDetector(AliAlgSteer::kTOF);
+  //    algSteer->AddDetector(AliAlgSteer::kTPC);
+  //    algSteer->AddDetector(AliAlgSteer::kTRD);
+  //    algSteer->AddDetector(AliAlgSteer::kTOF);
   //
   TString detalg = "GRP";
   for (int id=0;id<AliAlgSteer::kNDetectors;id++) {
@@ -73,7 +73,7 @@ void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   }
   //
   AliAlgDetITS* its = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
-  if (0 && its) {
+  if (its) {
     its->SetAddErrorLr(0,30e-4,200e-4);
     its->SetAddErrorLr(1,30e-4,200e-4);
     its->SetAddErrorLr(2,500e-4,80e-4);

@@ -24,6 +24,7 @@ AliAlgTrack::AliAlgTrack() :
   ,fMinX2X0Pt2Account(0.5e-3/1.0)
   ,fMass(0.14)
   ,fChi2(0)
+  ,fChi2CosmUp(0)
   ,fPoints(0)
 {
   // def c-tor
@@ -44,7 +45,7 @@ void AliAlgTrack::Clear(Option_t *)
   // reset the track
   ResetBit(0xffffffff);
   fPoints.Clear();
-  fChi2 = 0;
+  fChi2 = fChi2CosmUp = 0;
   fInnerPointID = -1;
   fNeedInv[0] = fNeedInv[1] = kFALSE;
   //
@@ -155,6 +156,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
   //
   AliExternalTrackParam probD[kNRDClones];     // use this to vary supplied param for derivative calculation
   double varDelta[kRichardsonN];
+  const int kInvElem[kNKinParBON] = {-1,1,1,-1,-1};
   //
   const double kDelta[kNKinParBON]  = {0.02,0.02, 0.001,0.001, 0.01}; // variations for ExtTrackParam and material effects
   //
@@ -194,6 +196,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       if (pnt->ContainsMeasurement()) {  
 	int offsDer = ip*fNLocPar + ipar;
 	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
+	if (invert&&kInvElem[ipar]<0) {
+	  fDerivA[0][offsDer] = -fDerivA[0][offsDer];
+	  fDerivA[1][offsDer] = -fDerivA[1][offsDer];
+	}
       }
     } // loop over points
   } // loop over ExtTrackParam parameters
@@ -295,7 +301,9 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   if (!CalcResiduals(params,fNeedInv[0],GetInnerPointID(),0)) return kFALSE;
   //
   if (IsCosmic()) { // cosmic upper leg
+    fChi2CosmUp = -fChi2;
     if (!CalcResiduals(params,fNeedInv[1],GetInnerPointID()+1,np-1)) return kFALSE;
+    fChi2CosmUp += fChi2;
   }
   //
   SetResidDone();
@@ -673,8 +681,15 @@ void AliAlgTrack::Print(Option_t *opt) const
   // print track data
   printf("%s ",IsCosmic() ? "  Cosmic  ":"Collision ");
   AliExternalTrackParam::Print();
-  printf("N Free Params: %d, for kinematics: %d | Npoints: %d (Inner:%d) | M : %.3f | Chi2: %.3f\n",fNLocPar,fNLocExtPar,
+  printf("N Free Par: %d (Kinem: %d) | Npoints: %d (Inner:%d) | M : %.3f | Chi2: %.1f",fNLocPar,fNLocExtPar,
 	 GetNPoints(),GetInnerPointID(),fMass,fChi2);
+  if (IsCosmic()) {
+    double chi2CosmLow = fChi2 - fChi2CosmUp;
+    int npLow = GetInnerPointID();
+    int npUp  = GetNPoints() - npLow - 1;
+    printf(" [Low:%.1f/%d Up:%.1f/%d]",chi2CosmLow,npLow, fChi2CosmUp,npUp);
+  }
+  printf("\n");
   //
   TString optS = opt;
   optS.ToLower();
@@ -737,7 +752,7 @@ Bool_t AliAlgTrack::IniFit()
   // the fit will always start from the outgoing track in inward direction
   if (!FitLeg(trc,0,GetInnerPointID(),fNeedInv[0])) return kFALSE; // collision track or cosmic lower leg
   //
-  printf("Lower leg: %d %d\n",0,GetInnerPointID()); trc.Print();
+  //  printf("Lower leg: %d %d\n",0,GetInnerPointID()); trc.Print();
   //
   if (IsCosmic()) {
     AliExternalTrackParam trcU = trc;
@@ -747,11 +762,10 @@ Bool_t AliAlgTrack::IniFit()
     const AliAlgPoint* refP = GetPoint(GetInnerPointID());
     if (!PropagateToPoint(trcU,refP,kMinNStep,kMaxDefStep,kTRUE)) return kFALSE;
     //
-    printf("Upper leg: %d %d\n",GetInnerPointID()+1,GetNPoints()-1); trcU.Print();
+    //    printf("Upper leg: %d %d\n",GetInnerPointID()+1,GetNPoints()-1); trcU.Print();
     //
     if (!CombineTracks(trc,trcU)) return kFALSE;
-    printf("Combined\n"); 
-    trc.Print();    
+    //printf("Combined\n"); trc.Print();    
   }
   CopyFrom(&trc);
   //
