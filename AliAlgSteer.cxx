@@ -382,7 +382,7 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
       int offs  = pnt->GetMaxLocVarID() - npm;
       for (int ipar=0;ipar<npm;ipar++) {
 	int parI = offs + ipar;
-	vec[parI] += expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
+	vec[parI] -= expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
 	mat(parI,parI) += 1./expMatCov[ipar]; // this measurement is orthogonal to all others
 	//printf("Pnt:%3d MatVar:%d DOF %3d | ExpVal: %+e Cov: %+e\n",ip,ipar,parI, expMatCorr[ipar], expMatCov[ipar]);
       }

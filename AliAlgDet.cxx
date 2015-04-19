@@ -19,6 +19,7 @@ AliAlgDet::AliAlgDet()
   ,fNSensors(0)
   ,fSID2VolID(0)
   //
+  ,fNPoints(0)
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
@@ -38,6 +39,7 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
   ,fNSensors(0)
   ,fSID2VolID(0)
   //
+  ,fNPoints(0)
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
@@ -79,6 +81,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, 
     algTrack->AddPoint(apnt);
     if (inv) apnt->SetInvDir();
     npSel++;
+    fNPoints++;
   }
   //
   return npSel;
@@ -93,10 +96,11 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   UShort_t vid = trpArr->GetVolumeID()[pntId];
   Int_t sid = VolID2SID(vid); // sensor index within the detector
   if (!sid<0) return 0;
+  AliAlgSens* sens = GetSensor(sid);
+  if (sens->GetSkip()) return 0;
   AliAlgPoint* pnt = GetPointFromPool();
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
-  AliAlgSens* sens = GetSensor(sid);
   //  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
   const TGeoHMatrix& matL2Gor = sens->GetMatrixL2GOrig(); // local to global orig matrix
   matL2Gor.MasterToLocal(glo,loc);
@@ -166,6 +170,7 @@ void AliAlgDet::ResetPool()
 {
   // declare pool free
   fPoolFreePointID = 0;
+  fNPoints = 0;
 }
  
 //_________________________________________________________

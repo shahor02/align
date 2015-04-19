@@ -26,8 +26,8 @@ class AliAlgVol : public TNamed
   //
   const char* GetSymName()                       const {return GetName();}
   //
-  Bool_t IsFreeDOFGeom(DOFGeom_t dof)            const {return (fDOF&(0x1<<dof))!=0;}
-  void   SetFreeDOFGeom(DOFGeom_t dof)                 {fDOF |= 0x1<<dof;}
+  Bool_t     IsFreeDOFGeom(DOFGeom_t dof)        const {return (fDOF&(0x1<<dof))!=0;}
+  void       SetFreeDOFGeom(DOFGeom_t dof)             {fDOF |= 0x1<<dof;}
   //
   AliAlgVol* GetParent()                         const {return fParent;}
   void       SetParent(AliAlgVol* par)                 {fParent = par;}

@@ -53,7 +53,7 @@ class AliAlgSteer : public TObject
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
-  void   ResetDetectors();
+  void       ResetDetectors();
   //----------------------------------------
   //
   virtual void Print(const Option_t *opt="")              const;

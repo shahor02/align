@@ -32,7 +32,8 @@ class AliAlgDet : public TNamed
   Bool_t  SensorOfDetector(Int_t vid)           const {return vid>=fVolIDMin && vid<=fVolIDMax;}
   void    SetAddError(double y, double z);
   const   Double_t* GetAddError()               const {return fAddError;} 
-
+  //
+  Int_t   GetNPoints()                          const {return fNPoints;}
   //
   AliAlgSens* GetSensor(Int_t id)               const {return (AliAlgSens*)fSensors.UncheckedAt(id);}
   AliAlgSens* GetSensorByVolId(Int_t vid)       const {int sid=VolID2SID(vid); return sid<0 ? 0:GetSensor(sid);}
@@ -60,12 +61,13 @@ class AliAlgDet : public TNamed
   void     SortSensors();
   //
  protected:
-  
+  //  
   Int_t     fVolIDMin;                   // min volID for this detector (for sensors only)
   Int_t     fVolIDMax;                   // max volID for this detector (for sensors only)
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
   Int_t*    fSID2VolID;                    //[fNSensors] table of conversion from VolID to sid
   //
+  Int_t     fNPoints;                // number of points from this detector
   Int_t     fPoolNPoints;            // number of points in the pool
   Int_t     fPoolFreePointID;        // id of the last free point in the pool
   Double_t  fAddError[2];            // additional error increment for measurement

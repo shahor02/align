@@ -41,9 +41,12 @@ Bool_t LoadAlgLibs()
   //
   gROOT->ProcessLine(".L AliAlgDetTOF.cxx+g");
   if (gClassTable->GetID("AliAlgDetTOF")<0) return kFALSE;
-   //
+  //
   gROOT->ProcessLine(".L AliAlgSteer.cxx+g");
   if (gClassTable->GetID("AliAlgSteer")<0) return kFALSE;
+  //
+  gROOT->ProcessLine(".L AliAlgMPRecord.cxx+g");
+  if (gClassTable->GetID("AliAlgMPRecord")<0) return kFALSE;
   //
   printf("LoadAlgLibs <<\n");
   return kTRUE;
