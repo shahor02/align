@@ -87,7 +87,6 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
   //
   for (int ip=0;ip<np;ip++) {
     AliAlgPoint* pnt = trc->GetPoint(ip);
-    int npm = pnt->GetNMatPar();       // number of material variables for the point
     if (pnt->ContainsMeasurement()) {
       for (int idim=0;idim<2;idim++) { // 2 dimensional orthogonal measurement
 	fNDGlo[fNResid] = 0;
@@ -171,7 +170,7 @@ void AliAlgMPRecord::Resize(Int_t nresid, Int_t nloc, Int_t nglo)
 }
 
 //____________________________________________
-void AliAlgMPRecord::Print(const Option_t *opt) const
+void AliAlgMPRecord::Print(const Option_t *) const
 {
   // print info
   //

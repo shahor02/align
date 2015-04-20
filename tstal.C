@@ -17,7 +17,7 @@ TGeoHMatrix fMatT2L,fMatG2T,fMatG2L;
 
 void tstal(double xg,double yg,double zg, int vid)
 {
-  if (!AliGeomManager::GetGeometry()) AliGeomManager::LoadGeometry("geometry.root");
+  if (!AliGeomManager::GetGeometry()) AliGeomManager::LoadGeometry("data/geometry.root");
   //
   fMatT2L = *AliGeomManager::GetTracking2LocalMatrix(vid);
   fMatG2L = *AliGeomManager::GetMatrix(vid);

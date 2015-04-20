@@ -343,7 +343,6 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
   // build matrix/vector for local track
   int npnt = fAlgTrack->GetNPoints();
   int nlocpar = fAlgTrack->GetNLocPar();
-  int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
   //
   vec.ResizeTo(nlocpar);
   memset(vec.GetMatrixArray(),0,nlocpar*sizeof(double));

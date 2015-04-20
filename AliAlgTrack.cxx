@@ -558,9 +558,8 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *c
 {
   // Modify track param (e.g. AliExternalTrackParam) in the tracking frame 
   // by delta accounting for material effects
-  // Note: corrPar contains delta to track parameters rotated by the matrix DIAGONALIZING ITS 
-  // COVARIANCE MATRIX
-  const double kMaxSnp = 0.95;
+  // Note: corrPar contains delta to track parameters rotated by the matrix 
+  // DIAGONALIZING ITS  COVARIANCE MATRIX!
   // transform parameters from the frame diagonalizing the errors to track frame
   int nCorrPar = pnt->GetNMatPar();
   const double *corrDiag = &corrPar[pnt->GetMaxLocVarID()-nCorrPar]; // material corrections for this point start here
@@ -935,9 +934,6 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
   const double kErrSpcT = 1e-6;
   const double kErrAngT = 1e-6;
   const double kErrPtIT = 1e-12;
-  const double kErrSpcH = 10.0;
-  const double kErrAngH = 0.5;
-  const double kErrPtIH = 0.5;
   const double kErrTiny[15] = { // initial tiny error
     kErrSpcT*kErrSpcT,
     0                  , kErrSpcT*kErrSpcT,
@@ -945,6 +941,10 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     0                  ,                   0,               0, kErrAngT*kErrAngT,
     0                  ,                   0,               0,               0, kErrPtIT*kErrPtIT
   };
+  /*
+  const double kErrSpcH = 10.0;
+  const double kErrAngH = 0.5;
+  const double kErrPtIH = 0.5;  
   const double kErrHuge[15] = { // initial tiny error
     kErrSpcH*kErrSpcH,
     0                  , kErrSpcH*kErrSpcH,
@@ -952,6 +952,7 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     0                  ,                   0,               0, kErrAngH*kErrAngH,
     0                  ,                   0,               0,               0, kErrPtIH*kErrPtIH
   };
+  */
   //
   // 2 copies of the track, one will be propagated accounting for materials, other - w/o
   AliExternalTrackParam tr0;
