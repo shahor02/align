@@ -89,7 +89,7 @@ class AliAlgVol : public TNamed
   Float_t*   fParCstr;            // Gaussian type constraint on parameter, 0 means fixed param
   //
   TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
-  TGeoHMatrix fMatL2GOrig;       // local to global matrix, ideal
+  TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal
   //
   ClassDef(AliAlgVol,1)
 };
