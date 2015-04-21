@@ -75,7 +75,7 @@ class AliAlgVol : public TNamed
   //
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
   Char_t*    fParOffs;                // offset for every parameters wrt the 1st free in global results array
-  UInt_t     fDOF;                    // degrees of freedom
+  UInt_t     fDOF;                    // bitpattern degrees of freedom
   Char_t     fNDOF;                   // number of degrees of freedom
   Char_t     fNDOFGeomFree;           // number of free geom degrees of freedom
   Char_t     fNDOFFree;               // number of all free degrees of freedom

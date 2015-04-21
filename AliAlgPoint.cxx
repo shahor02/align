@@ -1,6 +1,7 @@
 #include <TMath.h>
 #include <TString.h>
 #include "AliAlgPoint.h"
+#include "AliAlgSens.h"
 #include "AliAlgAux.h"
 #include "AliExternalTrackParam.h"
 
@@ -19,6 +20,7 @@ AliAlgPoint::AliAlgPoint()
   ,fSinDiagErr(0)
   ,fX2X0(0)
   ,fXTimesRho(0)
+  ,fSensor(0)
 {
   // def c-tor
   for (int i=3;i--;) {
@@ -161,6 +163,7 @@ void AliAlgPoint::Clear(Option_t* )
   fMaxLocVarID = -1;
   fDetID = -1;
   fSID   = -1;
+  fSensor = 0;
 }
 
 //__________________________________________________________________

@@ -43,7 +43,7 @@ AliAlgSteer::AliAlgSteer()
   ,fRunNumber(-1)
   ,fAlgTrack(0)
   ,fRefPoint()
-  ,fESDEvent()
+  ,fESDEvent(0)
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {

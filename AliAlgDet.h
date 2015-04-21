@@ -67,13 +67,16 @@ class AliAlgDet : public TNamed
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
   Int_t*    fSID2VolID;                    //[fNSensors] table of conversion from VolID to sid
   //
-  Int_t     fNPoints;                // number of points from this detector
-  Int_t     fPoolNPoints;            // number of points in the pool
-  Int_t     fPoolFreePointID;        // id of the last free point in the pool
   Double_t  fAddError[2];            // additional error increment for measurement
-  TObjArray fPointsPool;             // pool of aligment points
   TObjArray fSensors;                // all sensors of the detector
   TObjArray fVolumes;                // all volumes of the detector  
+  //
+  // this is transient info
+  Int_t     fNPoints;                //! number of points from this detector
+  Int_t     fPoolNPoints;            //! number of points in the pool
+  Int_t     fPoolFreePointID;        //! id of the last free point in the pool
+  TObjArray fPointsPool;             //! pool of aligment points
+  //
   ClassDef(AliAlgDet,1);             // base class for detector global alignment
 };
 

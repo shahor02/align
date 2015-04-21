@@ -59,6 +59,7 @@
   gSystem->Load("libANALYSIS.so");
   gSystem->Load("libANALYSISalice.so");
   //
-  gROOT->ProcessLine(".x LoadAlgLibs.C");
+  //  gROOT->ProcessLine(".x LoadAlgLibs.C");
+  gSystem->Load("libAlg.so");
   //
 }

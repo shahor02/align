@@ -19,12 +19,13 @@ AliAlgDet::AliAlgDet()
   ,fNSensors(0)
   ,fSID2VolID(0)
   //
+  ,fSensors()
+  ,fVolumes()
+  //
   ,fNPoints(0)
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
-  ,fSensors()
-  ,fVolumes()
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
@@ -39,12 +40,13 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
   ,fNSensors(0)
   ,fSID2VolID(0)
   //
+  ,fSensors()
+  ,fVolumes()
+  //
   ,fNPoints(0)
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
-  ,fSensors()
-  ,fVolumes()
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this  
@@ -99,6 +101,7 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   AliAlgSens* sens = GetSensor(sid);
   if (sens->GetSkip()) return 0;
   AliAlgPoint* pnt = GetPointFromPool();
+  pnt->SetSensor(sens);
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
   //  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix

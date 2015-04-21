@@ -6,7 +6,7 @@
 #include <TVectorD.h>
 
 class AliExternalTrackParam;
-
+class AliAlgSens;
 
 class AliAlgPoint : public TObject
 {
@@ -33,6 +33,8 @@ class AliAlgPoint : public TObject
   const Double_t* GetXYZTracking()    const {return fXYZTracking;}
   const Double_t* GetYZErrTracking()  const {return fErrYZTracking;}
   //
+  const AliAlgSens* GetSensor()       const {return fSensor;}
+  void       SetSensor(AliAlgSens* s)       {fSensor = s;}
   Int_t      GetDetID()               const {return fDetID;}
   Int_t      GetSID()                 const {return fSID;}
   Int_t      GetMinLocVarID()         const {return fMinLocVarID;}
@@ -123,6 +125,8 @@ class AliAlgPoint : public TObject
   Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
   //
   Double_t   fTrParamWS[kNMatDOFs];                    // workspace for tracks params at this point
+  //
+  AliAlgSens* fSensor;                                 // sensor of this point
   //
   ClassDef(AliAlgPoint,1)
 };
