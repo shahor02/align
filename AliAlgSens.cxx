@@ -26,9 +26,6 @@ using namespace TMath;
 AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid) 
   : AliAlgVol(name)
   ,fIntID(iid)
-  ,fX(0)
-  ,fAlp(0)
-  ,fMatT2L()
 {
   // def c-tor
   SetVolID(vid);
@@ -223,7 +220,7 @@ void AliAlgSens::Print(const Option_t *opt) const
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
     printf("T2L         : "); 
-    ((AliAlgSens*)this)->GetMatrixT2L().Print();
+    GetMatrixT2L().Print();
   }
   //
 }
@@ -234,6 +231,6 @@ void AliAlgSens::PrepareMatrixT2L()
   // extract from geometry T2L matrix
   const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(GetVolID());
   if (!t2l) AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
-  SetMatrixT2L(*t2l);
+  SetMatrixT2L(*t2l);  
   //
 }

@@ -215,21 +215,15 @@ void AliAlgDet::DefineMatrices()
     // ideal global-local matrix
     vol->PrepareMatrixL2GOrig();
     //
-    if (vol->IsSensor()) { // tracking-local matrix
-      AliAlgSens* sens = (AliAlgSens*)vol;
-      sens->PrepareMatrixT2L();
-      const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(sens->GetVolID());
-      sens->SetMatrixT2L(*t2l);
-    }
   }
+  // Now set tracking-local matrix (MUST be done after ALL L2G matrices are done!)
+  // Attention: for sensor it is a real tracking matrix extracted from
+  // the geometry but for container alignable volumes the tracking frame
+  // is used for as the reference for the alignment parameters only,
+  // see its definition in the AliAlgVol::PrepateMatrixT2L
+  next.Reset();
+  while ( (vol=(AliAlgVol*)next()) ) vol->PrepareMatrixT2L();
   //
-}
-
-//_________________________________________________________
-void AliAlgDet::SetTrackingFrames()
-{
-  // define tracking frames for sensors
-  for (int isn=GetNSensors();isn--;) GetSensor(isn)->SetTrackingFrame();
 }
 
 //_________________________________________________________
@@ -256,7 +250,6 @@ void AliAlgDet::Init()
   DefineVolumes();
   SortSensors();    // VolID's must be in increasing order
   DefineMatrices();
-  SetTrackingFrames();
   //
   SetInitDone();
 }

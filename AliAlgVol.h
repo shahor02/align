@@ -37,6 +37,9 @@ class AliAlgVol : public TNamed
   AliAlgVol* GetChild(int i)                     const {return fChildren ? (AliAlgVol*)fChildren->UncheckedAt(i):0;}
   virtual void AddChild(AliAlgVol* ch)                 {if (!fChildren) fChildren = new TObjArray(); fChildren->AddLast(ch);}
   //
+  Double_t GetXTracking()                        const {return fX;}
+  Double_t GetAlpTracking()                      const {return fAlp;}
+  //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
   void       IncNProcessedPoints(Int_t step=1)         {fNProcPoints += step;}
   void       SetNProcessedPoints(Int_t v)              {fNProcPoints = v;}
@@ -57,12 +60,19 @@ class AliAlgVol : public TNamed
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //
+  virtual void   PrepareMatrixT2L();
+  virtual void   SetTrackingFrame();
+  //
   const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
   const TGeoHMatrix&  GetMatrixL2GOrig()         const {return fMatL2GOrig;}
   void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
   void  SetMatrixL2GOrig(const TGeoHMatrix& m)         {fMatL2GOrig = m;}
   virtual void   PrepareMatrixL2G();
   virtual void   PrepareMatrixL2GOrig();
+  //
+  //
+  const TGeoHMatrix&  GetMatrixT2L()             const {return fMatT2L;}
+  void  SetMatrixT2L(const TGeoHMatrix& m);
   //
   void  GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
   void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
@@ -71,9 +81,10 @@ class AliAlgVol : public TNamed
   virtual Bool_t IsSensor()                     const {return kFALSE;}
   virtual void Print(const Option_t *opt="")    const;
   //
-  virtual void   PrepareMatrixT2L();
-  //
  protected:
+  //
+  Double_t   fX;                      // tracking frame X offset
+  Double_t   fAlp;                    // tracking frame alpa
   //
   Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
   Char_t*    fParOffs;                // offset for every parameters wrt the 1st free in global results array
@@ -92,6 +103,7 @@ class AliAlgVol : public TNamed
   //
   TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
   TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal
+  TGeoHMatrix fMatT2L;            // tracking to local matrix
   //
   ClassDef(AliAlgVol,1)
 };

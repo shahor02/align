@@ -22,17 +22,11 @@ class AliAlgSens : public AliAlgVol
   //
   virtual void AddChild(AliAlgVol*);
   //
-  const TGeoHMatrix&  GetMatrixT2L()             const {return fMatT2L;}
-  void  SetMatrixT2L(const TGeoHMatrix& m)             {fMatT2L = m;}
-  //
   Int_t GetVolID()                              const  {return (Int_t)GetUniqueID();}
   void  SetVolID(Int_t v)                              {SetUniqueID(v);}
   //
   Int_t GetInternalID()                         const  {return fIntID;}
   void  SetInternalID(Int_t v)                         {fIntID = v;}
-  //
-  Double_t GetXTracking()                        const {return fX;}
-  Double_t GetAlpTracking()                      const {return fAlp;}
   //
   virtual void DPosTraDParLoc(const double *tra, double* deriv) const;
   virtual void DPosTraDParLoc(const AliAlgVol* parent, const double *tra, double* deriv) const;
@@ -54,17 +48,16 @@ class AliAlgSens : public AliAlgVol
   //
   void           SetSkip(Bool_t v=kTRUE)                {SetBit(kSkipBit,v);}
   Bool_t         GetSkip()                        const {return TestBit(kSkipBit);}
+  //
  protected:
+  //
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;
   //
  protected:
   //
   Int_t    fIntID;                    // internal id within the detector
-  Double_t fX;                        // tracking frame X offset
-  Double_t fAlp;                      // tracking frame alpa
   Double_t fAddError[2];              // additional error increment for measurement
-  TGeoHMatrix fMatT2L;                // tracking to local matrix
   //
   ClassDef(AliAlgSens,1)
 };

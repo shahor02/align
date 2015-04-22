@@ -45,7 +45,6 @@ class AliAlgDet : public TNamed
   virtual void AddVolume(AliAlgVol* vol);
   virtual void DefineVolumes();
   virtual void DefineMatrices();
-  virtual void SetTrackingFrames();
   virtual void Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);

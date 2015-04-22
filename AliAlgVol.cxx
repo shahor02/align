@@ -30,13 +30,15 @@ using namespace TMath;
 //_________________________________________________________
 AliAlgVol::AliAlgVol(const char* symname) :
   TNamed(symname,"")
+  ,fX(0)
+  ,fAlp(0)
   ,fFirstParOffs(-1)
   ,fParOffs(0)
   ,fDOF(0)
   ,fNDOF(0)
   ,fNDOFGeomFree(0)
   ,fNDOFFree(0)
-
+  //
   ,fParent(0)
   ,fChildren(0)
 
@@ -47,6 +49,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
   //
   ,fMatL2G()
   ,fMatL2GOrig()
+  ,fMatT2L()
 {
   // def c-tor
 }
@@ -113,13 +116,16 @@ void AliAlgVol::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s | %2d nodes\n",CountParents(),GetSymName(),GetNChildren());
+  printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f\n",
+	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp);
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
     GetMatrixL2GOrig().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
-  }
+    printf("T2L (fake)  : "); 
+    GetMatrixT2L().Print();
+ }
   //
 }
 
@@ -160,4 +166,53 @@ void AliAlgVol::PrepareMatrixL2GOrig()
     AliFatalF("Failed to find ideal L2G matrix for %s",GetSymName());
   SetMatrixL2GOrig(mtmp);
   //
+}
+
+//____________________________________________
+void AliAlgVol::PrepareMatrixT2L()
+{
+  // for non-sensors we define the fake tracking frame with the alpha angle being
+  // the average angle of centers of its children
+  //
+  double tot[3]={0,0,0},loc[3]={0,0,0},glo[3];
+  int nch = GetNChildren();
+  for (int ich=nch;ich--;) {
+    AliAlgVol* vol = GetChild(ich);
+    vol->GetMatrixL2GOrig().LocalToMaster(loc,glo);
+    for (int j=3;j--;) tot[j] += glo[j];
+  }
+  if (nch) for (int j=3;j--;) tot[j] /= nch;
+  //
+  fAlp = TMath::ATan2(tot[1],tot[0]);
+  AliAlgAux::BringToPiPM(fAlp);
+  //
+  fX = TMath::Sqrt(tot[0]*tot[0]+tot[1]*tot[1]);
+  //
+  // 1st create Tracking to Global matrix
+  fMatT2L.Clear();
+  fMatT2L.RotateZ(fAlp*RadToDeg());
+  fMatT2L.SetDx(fX);
+  // then convert it to Tracking to Local  matrix
+  fMatT2L.MultiplyLeft(&GetMatrixL2GOrig().Inverse());
+  //
+}
+
+//____________________________________________
+void AliAlgVol::SetMatrixT2L(const TGeoHMatrix& m)
+{
+  // set the T2L matrix and define tracking frame
+  // Note that this method is used for the externally set matrices
+  // (in case of sensors). For other volumes the tracking frame and matrix
+  // is defined in the PrepareMatrixT2L method
+  fMatT2L = m;
+  SetTrackingFrame();
+}
+
+//__________________________________________________________________
+void AliAlgVol::SetTrackingFrame()
+{
+  // Define tracking frame of the sensor
+  // This method should be implemented for sensors, which receive the T2L
+  // matrix from the geometry
+  AliErrorF("Volume %s was supposed to implement its own method",GetName());
 }
