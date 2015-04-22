@@ -113,7 +113,7 @@ void AliAlgVol::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s\n",CountParents(),GetSymName());
+  printf("Lev:%2d %s | %2d nodes\n",CountParents(),GetSymName(),GetNChildren());
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
     GetMatrixL2GOrig().Print();

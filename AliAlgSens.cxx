@@ -76,7 +76,8 @@ void AliAlgSens::DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& del
 //_________________________________________________________
 void AliAlgSens::DPosTraDParLoc(const double *tra, double* deriv) const
 {
-  // Jacobian of position in sensor tracking frame (tra) vs sensor local parameters.
+  // Jacobian of position in sensor tracking frame (tra) vs sensor local 
+  // parameters in TGeoHMatrix convention.
   // Result is stored in array deriv as linearized matrix 6x3 
   const double kDelta[kNDOFGeom]={0.1,0.1,0.1,0.5,0.5,0.5};
   double delta[kNDOFGeom],loc[3],pos0[3],pos1[3],pos2[3],pos3[3];
@@ -191,7 +192,7 @@ Int_t AliAlgSens::Compare(const TObject* b) const
 void AliAlgSens::SetTrackingFrame()
 {
   // define tracking frame of the sensor
-  AliWarningF("BaseClass called for %s",GetSymName());
+  AliWarningF("Generic method called for %s",GetSymName());
   double tra[3]={0},loc[3],glo[3];
   const TGeoHMatrix &t2l = GetMatrixT2L();
   const double* t = t2l.GetTranslation();

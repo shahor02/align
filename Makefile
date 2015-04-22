@@ -27,12 +27,19 @@ all: 	$(TGT)
 $(TGT):	$(OBJ) $(DICTO)
 	$(CC) $(CFLAGS)  -shared -o $(TGT) $(OBJ) $(DICTO) `root-config --ldflags` $(LFLAGS)
 
+# pull in dependency info for *existing* .o files
+-include $(OBJ:.o=.d)
 
 %.o : %.cxx
 	$(CC) $(CFLAGS) $(INC) -c $<  -o $@
+	$(CC) -MM $(CFLAGS) $(INC) -c $*.cxx > $*.d
+	@cp -f $*.d $*.d.tmp
+	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
+	sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
+	@rm -f $*.d.tmp
 
 clean:
-	rm *.o *~ AlgDict.{h,cxx} $(TGT)
+	rm *.o *~ *.so *.d AlgDict.{h,cxx}
 
 $(DICT): $(HDR) AlgLinkDef.h
 	rootcint -f $@ -c $(INC) $(HDR) $^

@@ -30,7 +30,7 @@ class AliAlgVol : public TNamed
   void       SetFreeDOFGeom(DOFGeom_t dof)             {fDOF |= 0x1<<dof;}
   //
   AliAlgVol* GetParent()                         const {return fParent;}
-  void       SetParent(AliAlgVol* par)                 {fParent = par;}
+  void       SetParent(AliAlgVol* par)                 {fParent = par; if (par) par->AddChild(this);}
   Int_t      CountParents()                      const;
   //
   Int_t      GetNChildren()                      const {return fChildren ? fChildren->GetEntriesFast():0;}
@@ -70,6 +70,8 @@ class AliAlgVol : public TNamed
   //
   virtual Bool_t IsSensor()                     const {return kFALSE;}
   virtual void Print(const Option_t *opt="")    const;
+  //
+  virtual void   PrepareMatrixT2L();
   //
  protected:
   //
