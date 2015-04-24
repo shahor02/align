@@ -66,7 +66,7 @@ AliAlgVol::~AliAlgVol()
 }
 
 //_________________________________________________________
-void AliAlgVol::GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta) const
+void AliAlgVol::Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta) const
 {
   // prepare delta matrix for the volume from its
   // local delta vector (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
@@ -78,6 +78,7 @@ void AliAlgVol::GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta) co
   //  
 }
 
+/*
 //_________________________________________________________
 void AliAlgVol::GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
 				  const Double_t *delta, const TGeoHMatrix* relMat) const
@@ -98,6 +99,16 @@ void AliAlgVol::GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM,
     deltaM.Multiply(&GetMatrixL2G());
   }
   //  
+}
+*/
+
+//__________________________________________________________________
+void AliAlgVol::GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const
+{
+  // prepare for modified L2G matrix from its current matrix 
+  // by applying local delta, i.e. glo = L2G*loc = L2G*delta*loc -> L2G = L2G*delta
+  Delta2Matrix(matMod, delta);
+  matMod.MultiplyLeft(&GetMatrixL2G());
 }
 
 //_________________________________________________________

@@ -1,1 +1,3 @@
-Test does not improve inverted leg
+implement 
+
+virtual void AliAlgSens::DPosTraDParTRA(const AliAlgVol* parent, const double *tra, double* deriv) const;

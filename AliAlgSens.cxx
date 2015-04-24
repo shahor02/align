@@ -37,8 +37,8 @@ AliAlgSens::~AliAlgSens()
 {
   // d-tor
 }
-
-//__________________________________________________________________
+/*
+//__________________________________________________________________???
 void AliAlgSens::GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const
 {
   // prepare delta matrix for the sensitive volume from delta vector
@@ -59,46 +59,47 @@ void AliAlgSens::GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) c
   //  
 }
 
-//_________________________________________________________
+//_________________________________________________________???
 void AliAlgSens::DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const
 {
   // convert delta matrix for tracking frame (obtained by GetDeltaMatrixTra)
-  // to delta matrix in local frame (like the one from GetDeltaMatrixLoc)
+  // to delta matrix in local frame (like the one from Delta2Matrix)
   deltaLoc = deltaTra;
   deltaLoc.MultiplyLeft(&fMatT2L);
   deltaLoc.Multiply(&fMatT2L.Inverse());
   //  
 }
+*/
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParLoc(const double *tra, double* deriv) const
+void AliAlgSens::DPosTraDParLOC(const double *tra, double* deriv) const
 {
-  // Jacobian of position in sensor tracking frame (tra) vs sensor local 
+  // Jacobian of position in sensor tracking frame (tra) vs sensor LOCAL frame 
   // parameters in TGeoHMatrix convention.
   // Result is stored in array deriv as linearized matrix 6x3 
   const double kDelta[kNDOFGeom]={0.1,0.1,0.1,0.5,0.5,0.5};
   double delta[kNDOFGeom],loc[3],pos0[3],pos1[3],pos2[3],pos3[3];
   TGeoHMatrix matMod;
   //
-  fMatT2L.MasterToLocal(tra,loc);
   for (int ip=kNDOFGeom;ip--;) delta[ip] = 0;
   for (int ip=kNDOFGeom;ip--;) {
     //
     double var = kDelta[ip];
     delta[ip] -= var;
-    GetModifiedMatrixT2L(matMod, delta);
+    // variation matrix in tracking frame for variation in sensor LOCAL frame
+    GetDeltaT2LmodLOC(matMod, delta); 
     matMod.LocalToMaster(loc,pos0);     // varied position in tracking frame
     //
     delta[ip] += 0.5*var;
-    GetModifiedMatrixT2L(matMod, delta);
+    GetDeltaT2LmodLOC(matMod, delta); 
     matMod.LocalToMaster(loc,pos1);     // varied position in tracking frame
     //
     delta[ip] += var;
-    GetModifiedMatrixT2L(matMod, delta);
+    GetDeltaT2LmodLOC(matMod, delta); 
     matMod.LocalToMaster(loc,pos2);     // varied position in tracking frame
     //
     delta[ip] += 0.5*var;
-    GetModifiedMatrixT2L(matMod, delta);
+    GetDeltaT2LmodLOC(matMod, delta); 
     matMod.LocalToMaster(loc,pos3);     // varied position in tracking frame
     //
     delta[ip] = 0;
@@ -109,41 +110,75 @@ void AliAlgSens::DPosTraDParLoc(const double *tra, double* deriv) const
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParLoc(const AliAlgVol* parent, const double *tra, double* deriv) const
+void AliAlgSens::DPosTraDParLOC(const AliAlgVol* parent, const double *tra, double* deriv) const
 {
-  // Jacobian of position in sensor tracking frame (tra) vs parent volume local parameters.
+  // Jacobian of position in sensor tracking frame (tra) vs parent volume LOCAL frame parameters.
   // NO check of parentship is done!
   // Result is stored in array deriv as linearized matrix 6x3 
   const double kDelta[kNDOFGeom]={0.1,0.1,0.1,0.5,0.5,0.5};
   double delta[kNDOFGeom],loc[3],pos0[3],pos1[3],pos2[3],pos3[3];
   TGeoHMatrix matMod;
   TGeoHMatrix matRel = parent->GetMatrixL2G().Inverse(); // 
-  // this is the matrix for transition from sensor to parent volume local frames
+  // this is the matrix for transition from sensor to parent volume local frames: LOC=matRel*loc
   matRel *= GetMatrixL2G();
   //
-  fMatT2L.MasterToLocal(tra,loc);
   for (int ip=kNDOFGeom;ip--;) delta[ip] = 0;
   for (int ip=kNDOFGeom;ip--;) {
     //
     double var = kDelta[ip];
     delta[ip] -= var;
-    GetDeltaMatrixLoc(parent, matMod, delta, &matRel);
-    matMod.MultiplyLeft(&GetMatrixT2L());   
+    GetDeltaT2LmodLOC(matMod, delta, matRel);
     matMod.LocalToMaster(loc,pos0);     // varied position in tracking frame
     //
     delta[ip] += 0.5*var;
-    GetDeltaMatrixLoc(parent, matMod, delta, &matRel);
-    matMod.MultiplyLeft(&GetMatrixT2L());   
+    GetDeltaT2LmodLOC(matMod, delta, matRel);
     matMod.LocalToMaster(loc,pos1);     // varied position in tracking frame
     //
     delta[ip] += var;
-    GetDeltaMatrixLoc(parent, matMod, delta, &matRel);
-    matMod.MultiplyLeft(&GetMatrixT2L());   
+    GetDeltaT2LmodLOC(matMod, delta, matRel);
     matMod.LocalToMaster(loc,pos2);     // varied position in tracking frame
     //
     delta[ip] += 0.5*var;
-    GetDeltaMatrixLoc(parent, matMod, delta, &matRel);
-    matMod.MultiplyLeft(&GetMatrixT2L());   
+    GetDeltaT2LmodLOC(matMod, delta, matRel);
+    matMod.LocalToMaster(loc,pos3);     // varied position in tracking frame
+    //
+    delta[ip] = 0;
+    double *curd = deriv + ip*3;
+    for (int i=3;i--;) curd[i] = (8.*(pos2[i]-pos1[i]) - (pos3[i]-pos0[i]))/6./var;
+  }
+  //
+}
+
+//_________________________________________________________
+void AliAlgSens::DPosTraDParTra(const double *tra, double* deriv) const
+{
+  // Jacobian of position in sensor tracking frame (tra) vs sensor TRACKING 
+  // frame parameters in TGeoHMatrix convention, i.e. the modified parameter is
+  // tra' = tau*tra
+  //
+  // Result is stored in array deriv as linearized matrix 6x3 
+  const double kDelta[kNDOFGeom]={0.1,0.1,0.1,0.5,0.5,0.5};
+  double delta[kNDOFGeom],loc[3],pos0[3],pos1[3],pos2[3],pos3[3];
+  TGeoHMatrix matMod;
+  //
+  for (int ip=kNDOFGeom;ip--;) delta[ip] = 0;
+  for (int ip=kNDOFGeom;ip--;) {
+    //
+    double var = kDelta[ip];
+    delta[ip] -= var;
+    GetDeltaT2LmodTRA(matMod,delta);
+    matMod.LocalToMaster(loc,pos0);     // varied position in tracking frame
+    //
+    delta[ip] += 0.5*var;
+    GetDeltaT2LmodTRA(matMod,delta);
+    matMod.LocalToMaster(loc,pos1);     // varied position in tracking frame
+    //
+    delta[ip] += var;
+    GetDeltaT2LmodTRA(matMod,delta);
+    matMod.LocalToMaster(loc,pos2);     // varied position in tracking frame
+    //
+    delta[ip] += 0.5*var;
+    GetDeltaT2LmodTRA(matMod,delta);
     matMod.LocalToMaster(loc,pos3);     // varied position in tracking frame
     //
     delta[ip] = 0;
@@ -154,23 +189,62 @@ void AliAlgSens::DPosTraDParLoc(const AliAlgVol* parent, const double *tra, doub
 }
 
 //__________________________________________________________________
-void AliAlgSens::GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const
+void AliAlgSens::GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const
 {
-  // prepare for the sensitive module global2local matrix from its current matrix 
-  // by applying local delta
-  GetDeltaMatrixLoc(matMod, delta);
-  matMod.MultiplyLeft(&GetMatrixL2G());
+  // prepare the sensitive module tracking2local matrix from its current T2L matrix 
+  // by applying local delta of modification of LOCAL frame:
+  // loc' = delta*loc = T2L'*tra = T2L'*T2L^-1*loc   ->  T2L' = delta*T2L
+  Delta2Matrix(matMod, delta);
+  matMod.Multiply(&GetMatrixT2L());
 }
 
 //__________________________________________________________________
-void AliAlgSens::GetModifiedMatrixT2L(TGeoHMatrix& matMod, const Double_t *delta) const
+void AliAlgSens::GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const
 {
-  // prepare the sensitive module tracking2local matrix from its current T2L matrix 
-  // by applying local delta
-  GetDeltaMatrixLoc(matMod, delta);
-  matMod.MultiplyLeft(&GetMatrixT2L());
+  // prepare the variation matrix tau in sensor TRACKING frame by applying 
+  // local delta of modification of LOCAL frame:
+  // tra' = tau*tra = tau*T2L^-1*loc = T2L^-1*loc' = T2L^-1*delta*loc 
+  // tau = T2L^-1*delta*T2L
+  Delta2Matrix(matMod, delta);
+  matMod.Multiply(&GetMatrixT2L());
+  matMod.MultiplyLeft(&GetMatrixT2L().Inverse());
 }
 
+//__________________________________________________________________
+void AliAlgSens::GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const
+{
+  // prepare the variation matrix tau in sensor TRACKING frame by applying 
+  // local delta of modification of LOCAL frame of its PARENT; 
+  // The relMat is matrix for transformation from child to parent frame: LOC = relMat*loc
+  //
+  // tra' = tau*tra = tau*T2L^-1*loc = T2L^-1*loc' = T2L^-1*relMat^-1*Delta*relMat*loc
+  // tau = (relMat*T2L)^-1*Delta*(relMat*T2L)
+  Delta2Matrix(matMod, delta);
+  TGeoHMatrix tmp = relMat;
+  tmp *= GetMatrixT2L();
+  matMod.Multiply(&tmp);
+  matMod.MultiplyLeft(&tmp.Inverse());
+}
+
+
+//__________________________________________________________________
+void AliAlgSens::GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const
+{
+  // prepare the variation matrix tau in sensor TRACKING frame by applying 
+  // local delta of modification of the same TRACKING frame:
+  // tra' = tau*tra
+  Delta2Matrix(matMod, delta);
+}
+
+//__________________________________________________________________
+void AliAlgSens::GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const
+{
+  // prepare the sensitive module tracking2local matrix from its current T2L matrix 
+  // by applying local delta of modification of TRACKING frame:
+  // loc' = T2L'*tra = T2L*delta*tra    ->  T2L' = T2L*delta
+  Delta2Matrix(matMod, delta);
+  matMod.MultiplyLeft(&GetMatrixT2L());
+}
 
 //__________________________________________________________________
 void AliAlgSens::AddChild(AliAlgVol*)

@@ -74,9 +74,11 @@ class AliAlgVol : public TNamed
   const TGeoHMatrix&  GetMatrixT2L()             const {return fMatT2L;}
   void  SetMatrixT2L(const TGeoHMatrix& m);
   //
-  void  GetDeltaMatrixLoc(TGeoHMatrix& deltaM, const Double_t *delta)         const;
-  void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
-			  const Double_t *delta, const TGeoHMatrix* relMat=0) const;
+  void  Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta)         const;
+  void  GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const;
+
+  //  void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
+  //			  const Double_t *delta, const TGeoHMatrix* relMat=0) const;
   //
   virtual Bool_t IsSensor()                     const {return kFALSE;}
   virtual void Print(const Option_t *opt="")    const;
