@@ -30,7 +30,9 @@ class AliAlgSteer : public TObject
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
-  void  Init();
+  void  InitDetectors();
+  void  InitDOFs();
+  
   //
   void  AddDetector(UInt_t id, AliAlgDet* det=0);
   void  AddDetector(AliAlgDet* det);
@@ -54,6 +56,7 @@ class AliAlgSteer : public TObject
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
   void       ResetDetectors();
+  Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
   //
   virtual void Print(const Option_t *opt="")              const;
@@ -69,10 +72,13 @@ class AliAlgSteer : public TObject
  protected:
   //
   Int_t         fNDet;                                    // number of deectors participating in the alignment
+  Int_t         fNDOFs;                                   // number of degrees of freedom
   Int_t         fRunNumber;                               // current run number
   AliAlgTrack*  fAlgTrack;                                // current alignment track 
   AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
+  //
+  Double_t*     fDOFPars;                                 //[fNDOFs] parameters for free DOFs
   //
   AliAlgPoint   fRefPoint;                                //! reference point for track definition
   //

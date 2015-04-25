@@ -28,18 +28,14 @@ class AliAlgSens : public AliAlgVol
   Int_t GetInternalID()                         const  {return fIntID;}
   void  SetInternalID(Int_t v)                         {fIntID = v;}
   //
+  // derivatives calculation
   virtual void DPosTraDParLOC(const double *tra, double* deriv) const;
-  virtual void DPosTraDParTra(const double *tra, double* deriv) const;
+  virtual void DPosTraDParTRA(const double *tra, double* deriv) const;
   virtual void DPosTraDParLOC(const AliAlgVol* parent, const double *tra, double* deriv) const;
-  //  virtual void DPosTraDParTRA(const AliAlgVol* parent, const double *tra, double* deriv) const; TODO
+  virtual void DPosTraDParTRA(const AliAlgVol* parent, const double *tra, double* deriv) const;
   //
-  void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
-  void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;
-  void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
-
   void GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;
-  void GetModifiedMatrixT2L(TGeoHMatrix& matMod, const Double_t *delta) const;
 
   // void GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const; ??
   //  void DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const; ??

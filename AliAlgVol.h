@@ -18,16 +18,28 @@ class TObjArray;
 class AliAlgVol : public TNamed
 {
  public:
-  enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS};
-  enum {kNDOFGeom=6,kNDOFMax=32};
+  enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS,kNDOFGeom,kAllGeomDOF=0x3F};
+  enum {kNDOFMax=32};
+  enum Frame_t {kLOC,kTRA,kNVarFrames};  // variation frames defined
   //
   AliAlgVol(const char* symname=0);
   virtual ~AliAlgVol();
   //
   const char* GetSymName()                       const {return GetName();}
   //
+  Int_t      InitDOFs();
+  //
+  Frame_t    GetVarFrame()                       const {return fVarFrame;}
+  void       SetVarFrame(Frame_t f)                    {fVarFrame = f;}
+  Bool_t     IsFrameTRA()                        const {return fVarFrame == kTRA;}
+  Bool_t     IsFrameLOC()                        const {return fVarFrame == kLOC;}
+  //
   Bool_t     IsFreeDOFGeom(DOFGeom_t dof)        const {return (fDOF&(0x1<<dof))!=0;}
   void       SetFreeDOFGeom(DOFGeom_t dof)             {fDOF |= 0x1<<dof;}
+  void       SetFreeDOFPattern(UInt_t pat)             {fDOF = pat;}
+  UInt_t     GetFreeDOFPattern()                 const {return fDOF;}
+  UInt_t     GetFreeDOFGeomPattern()             const {return fDOF&kAllGeomDOF;}
+
   //
   AliAlgVol* GetParent()                         const {return fParent;}
   void       SetParent(AliAlgVol* par)                 {fParent = par; if (par) par->AddChild(this);}
@@ -55,6 +67,10 @@ class AliAlgVol : public TNamed
   void       SetParErr(Int_t par,Double_t e=0)          {fParErrs[par] = e;}
   void       SetParConstraint(Int_t par,Double_t s=1e6) {fParCstr[par] = s>0. ? s:0.0;}
   //
+  void       SetNDOFTot(Int_t n=kNDOFGeom);
+  Int_t      GetNDOFTot()                        const  {return fNDOFTot;}
+  Int_t      GetNDOFFree()                       const  {return fNDOFFree;}
+  Int_t      GetNDOFGeomFree()                   const  {return fNDOFGeomFree;}
   Int_t      GetParOffs(Int_t par)               const  {return fParOffs[par];}
   Int_t      GetParGloOffs(Int_t par)            const  {return fParOffs[par]<0?-1:fFirstParOffs+fParOffs[par];}
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
@@ -70,28 +86,34 @@ class AliAlgVol : public TNamed
   virtual void   PrepareMatrixL2G();
   virtual void   PrepareMatrixL2GOrig();
   //
+  void  GetMatrixT2G(TGeoHMatrix& m)             const;
   //
   const TGeoHMatrix&  GetMatrixT2L()             const {return fMatT2L;}
   void  SetMatrixT2L(const TGeoHMatrix& m);
   //
   void  Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta)         const;
   void  GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const;
-
-  //  void  GetDeltaMatrixLoc(const AliAlgVol* parent, TGeoHMatrix& deltaM, 
-  //			  const Double_t *delta, const TGeoHMatrix* relMat=0) const;
   //
-  virtual Bool_t IsSensor()                     const {return kFALSE;}
-  virtual void Print(const Option_t *opt="")    const;
+  // preparation of variation matrices
+  void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
+  void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;
+  void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
+  void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
+  //
+  virtual Bool_t IsSensor()                   const {return kFALSE;}
+  virtual void Print(const Option_t *opt="")  const;
+  //
+  static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
+  static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}
   //
  protected:
   //
+  Frame_t    fVarFrame;               // Variation frame for this volume
   Double_t   fX;                      // tracking frame X offset
   Double_t   fAlp;                    // tracking frame alpa
   //
-  Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
-  Char_t*    fParOffs;                // offset for every parameters wrt the 1st free in global results array
+  Char_t     fNDOFTot;                // number of degrees of freedom, including fixed ones
   UInt_t     fDOF;                    // bitpattern degrees of freedom
-  Char_t     fNDOF;                   // number of degrees of freedom
   Char_t     fNDOFGeomFree;           // number of free geom degrees of freedom
   Char_t     fNDOFFree;               // number of all free degrees of freedom
   //
@@ -99,13 +121,18 @@ class AliAlgVol : public TNamed
   TObjArray* fChildren;           // array of childrens
   //
   Int_t      fNProcPoints;        // n of processed points
-  Float_t*   fParVals;            // values of the fitted params
-  Float_t*   fParErrs;            // errors of the fitted params
-  Float_t*   fParCstr;            // Gaussian type constraint on parameter, 0 means fixed param
+  Int_t      fFirstParOffs;           // entry of the 1st free parameter in the global results array
+  Char_t*    fParOffs;                //[fNDOFTot] offset for every parameters wrt the 1st free in global results array
+  Float_t*   fParVals;            //[fNDOFTot]  values of the fitted params
+  Float_t*   fParErrs;            //[fNDOFTot]  errors of the fitted params
+  Float_t*   fParCstr;            //[fNDOFTot]  Gaussian type constraint on parameter, 0 means fixed param
   //
   TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
   TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal
   TGeoHMatrix fMatT2L;            // tracking to local matrix
+  //
+  static const char* fgkFrameName[kNVarFrames];
+  static UInt_t      fgDefGeomFree;
   //
   ClassDef(AliAlgVol,1)
 };
@@ -115,6 +142,13 @@ inline void AliAlgVol::SetParVals(Double_t *vl,Int_t npar)
 {
   // set parameters
   for (int i=npar;i--;) fParVals[i] = vl[i];
+}
+
+inline void AliAlgVol::GetMatrixT2G(TGeoHMatrix& m) const
+{
+  // compute tracking to global matrix, i.e. glo = T2G*tra = L2G*loc = L2G*T2L*tra
+  m = GetMatrixL2G();
+  m *= GetMatrixT2L();
 }
 
 #endif

@@ -11,7 +11,6 @@
 
 ClassImp(AliAlgDet)
 
-
 //____________________________________________
 AliAlgDet::AliAlgDet()
   :fVolIDMin(-1)
@@ -26,6 +25,7 @@ AliAlgDet::AliAlgDet()
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
+  ,fAlgSteer(0)
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
@@ -47,6 +47,7 @@ AliAlgDet::AliAlgDet(const char* name, const char* title)
   ,fPoolNPoints(0)
   ,fPoolFreePointID(0)
   ,fPointsPool()
+  ,fAlgSteer(0)
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this  
@@ -242,16 +243,36 @@ void AliAlgDet::SortSensors()
 }
 
 //_________________________________________________________
-void AliAlgDet::Init()
+void AliAlgDet::InitGeom()
 {
   // define hiearchy, initialize matrices
-  if (GetInitDone()) return;
+  if (GetInitGeomDone()) return;
   //
   DefineVolumes();
   SortSensors();    // VolID's must be in increasing order
   DefineMatrices();
   //
-  SetInitDone();
+  SetInitGeomDone();
+}
+
+//_________________________________________________________
+void AliAlgDet::InitDOFs()
+{
+  // initialize free parameters
+  if (GetInitDOFsDone()) return;
+  //
+  int gloCount0(fAlgSteer->GetNDOFs()), gloCount(fAlgSteer->GetNDOFs());
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    vol->SetFirstParOffs(gloCount);
+    gloCount += vol->InitDOFs();
+  }
+  //
+  fNDOFs = gloCount-gloCount0;
+  //
+  SetInitDOFsDone();
+  return;
 }
 
 //_________________________________________________________
@@ -299,3 +320,4 @@ void AliAlgDet::SetAddError(double sigy, double sigz)
   for (int isn=GetNSensors();isn--;) GetSensor(isn)->SetAddError(sigy,sigz);
   //
 }
+

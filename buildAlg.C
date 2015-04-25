@@ -64,7 +64,11 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
 
   //  AliAlgDet* its = new AliAlgDetITS("its");
   //  its->Init();
-  algSteer->Init();
+  algSteer->InitDetectors();
+  // set/fix needed DOFS per detectort, TODO
+  //
+  algSteer->InitDOFs(); 
+  //
   //
   AliAlgDet* tpc = algSteer->GetDetectorByDetID(AliAlgSteer::kTPC);
   if (tpc) {

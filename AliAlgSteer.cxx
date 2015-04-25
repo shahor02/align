@@ -40,8 +40,10 @@ const Int_t   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManage
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer()
   :fNDet(0)
+  ,fNDOFs(0)
   ,fRunNumber(-1)
   ,fAlgTrack(0)
+  ,fDOFPars(0)
   ,fRefPoint()
   ,fESDEvent(0)
 {
@@ -57,13 +59,14 @@ AliAlgSteer::~AliAlgSteer()
 {
   // d-tor
   delete fAlgTrack;
+  delete[] fDOFPars;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
 }
 
 //________________________________________________________________
-void AliAlgSteer::Init()
+void AliAlgSteer::InitDetectors()
 {
-  // init all detectors
+  // init all detectors geometry
   //
   static Bool_t done = kFALSE;
   if (done) return;
@@ -71,7 +74,28 @@ void AliAlgSteer::Init()
   //
   fAlgTrack = new AliAlgTrack();
   //
-  for (int i=0;i<fNDet;i++) fDetectors[i]->Init();
+  for (int i=0;i<fNDet;i++) fDetectors[i]->InitGeom();
+}
+
+//________________________________________________________________
+void AliAlgSteer::InitDOFs()
+{
+  // scan all free global parameters, link detectors to array of params
+  //
+  static Bool_t done = kFALSE;
+  if (done) return;
+  done = kTRUE;
+  //
+  fNDOFs = 0;
+  for (int i=0;i<fNDet;i++) {
+    fDetectors[i]->InitDOFs();
+    fNDOFs += fDetectors[i]->GetNDOFs();
+  }
+  if (fNDOFs) {
+    fDOFPars = new Double_t[fNDOFs];
+    memset(fDOFPars,0,fNDOFs*sizeof(double));
+  }
+  //
 }
 
 //________________________________________________________________
@@ -94,6 +118,7 @@ void AliAlgSteer::Init()
   //
   fDetectors[fNDet] = det;
   fDetPos[id] = fNDet;
+  det->SetAlgSteer(this);
   fNDet++;
   //
 }
@@ -280,6 +305,7 @@ AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t vid) const
 void AliAlgSteer::Print(const Option_t *opt) const
 {
   // print info
+  printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (det) det->Print(opt);

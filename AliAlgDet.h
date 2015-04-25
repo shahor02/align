@@ -8,12 +8,14 @@ class AliAlgTrack;
 class AliAlgPoint;
 class AliAlgSens;
 class AliAlgVol;
+class AliAlgSteer;
 class AliTrackPointArray;
+
 
 class AliAlgDet : public TNamed
 {
  public:
-  enum {kInitDone=BIT(14)};
+  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15)};
   //
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
@@ -35,13 +37,15 @@ class AliAlgDet : public TNamed
   //
   Int_t   GetNPoints()                          const {return fNPoints;}
   //
+  void        SetAlgSteer(AliAlgSteer* s)             {fAlgSteer = s;}
   AliAlgSens* GetSensor(Int_t id)               const {return (AliAlgSens*)fSensors.UncheckedAt(id);}
   AliAlgSens* GetSensorByVolId(Int_t vid)       const {int sid=VolID2SID(vid); return sid<0 ? 0:GetSensor(sid);}
   AliAlgSens* GetSensor(const char* symname)    const {return (AliAlgSens*)fSensors.FindObject(symname);}
   AliAlgVol*  GetVolume(Int_t id)               const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
   AliAlgVol*  GetVolume(const char* symname)    const {return (AliAlgVol*)fVolumes.FindObject(symname);}
   //
-  virtual void Init();
+  virtual void InitGeom();
+  virtual void InitDOFs();
   virtual void AddVolume(AliAlgVol* vol);
   virtual void DefineVolumes();
   virtual void DefineMatrices();
@@ -53,14 +57,20 @@ class AliAlgDet : public TNamed
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
   //
-  void    SetInitDone()                               {SetBit(kInitDone);}
-  Bool_t  GetInitDone()                         const {return TestBit(kInitDone);}
+  void    SetInitGeomDone()                               {SetBit(kInitGeomDone);}
+  Bool_t  GetInitGeomDone()                         const {return TestBit(kInitGeomDone);}
+  //
+  void    SetInitDOFsDone()                               {SetBit(kInitDOFsDone);}
+  Bool_t  GetInitDOFsDone()                         const {return TestBit(kInitDOFsDone);}
+  //
+  Int_t   GetNDOFs()                                const {return fNDOFs;}
   //
  protected:
   void     SortSensors();
   //
  protected:
-  //  
+  //
+  Int_t     fNDOFs;                      // number of DOFs free
   Int_t     fVolIDMin;                   // min volID for this detector (for sensors only)
   Int_t     fVolIDMax;                   // max volID for this detector (for sensors only)
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
@@ -75,6 +85,8 @@ class AliAlgDet : public TNamed
   Int_t     fPoolNPoints;            //! number of points in the pool
   Int_t     fPoolFreePointID;        //! id of the last free point in the pool
   TObjArray fPointsPool;             //! pool of aligment points
+  //
+  AliAlgSteer* fAlgSteer;            // pointer to alignment steering object
   //
   ClassDef(AliAlgDet,1);             // base class for detector global alignment
 };
