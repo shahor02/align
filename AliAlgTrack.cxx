@@ -301,20 +301,20 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 }
 
 //______________________________________________________
-Bool_t AliAlgTrack::CalcResidDerivGlo(const AliAlgPoint* pnt)
+Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
 {
   // calculate residuals derivatives over point's sensor and its parents global params
   double derGeom[AliAlgVol::kNDOFGeom*3];
   //
   const AliAlgSens* sens = pnt->GetSensor();
   const AliAlgVol* vol = sens;
-  double dResYZ[2];
   // precalculated track parameters
   double snp=pnt->GetTrParamWSA(kParSnp),tgl=pnt->GetTrParamWSA(kParTgl);
   // precalculate track slopes to account tracking X veriation 
   // these are coeffs to translate deltaX of the point to deltaY and deltaZ of track
   double cspi = 1./Sqrt((1-snp)*(1+snp)), slpY = snp*cspi, slpZ = tgl*cspi;
   //
+  pnt->SetDGloOffs(fNGloPar);  // mark 1st entry of derivatives
   do {
     // measurement residuals
     int nfree = vol->GetNDOFFree();
@@ -323,7 +323,7 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(const AliAlgPoint* pnt)
     //
     CheckExpandDerGloBuffer(fNGloPar+nfree);  // if needed, expand derivatives buffer
     //
-    for (int ip=AliAlgVol::kNDOFGeom;ip--;) { // we need only free parameters
+    for (int ip=0;ip<AliAlgVol::kNDOFGeom;ip++) { // we need only free parameters
       if (!vol->IsFreeDOFGeom(AliAlgVol::DOFGeom_t(ip))) continue;
       double* dXYZ = &derGeom[ip*3];   // tracking XYZ derivatives over this parameter
       // residual is defined as diagonalized track_estimate - measured Y,Z in tracking frame
@@ -331,16 +331,19 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(const AliAlgPoint* pnt)
       // -> take into account modified X using track parameterization at the point (paramWSA)
       // Attention: small simplifications(to be checked if it is ok!!!): 
       // effect of changing X is accounted neglecting track curvature
-      dResYZ[0] = dXYZ[AliAlgPoint::kX]*slpY - dXYZ[AliAlgPoint::kY];
-      dResYZ[1] = dXYZ[AliAlgPoint::kX]*slpZ - dXYZ[AliAlgPoint::kZ];
+      //
       // store diagonalize residuals in track buffer
-      pnt->GetResidualsDiag(dResYZ,fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
+      pnt->DiagonalizeResiduals(dXYZ[AliAlgPoint::kX]*slpY - dXYZ[AliAlgPoint::kY],
+				dXYZ[AliAlgPoint::kX]*slpZ - dXYZ[AliAlgPoint::kZ],
+				fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
       // and register global ID of varied parameter
       fGloParIDA[fNGloPar] = vol->GetParGloOffsNC(ip);
       fNGloPar++;
     }
     //
   } while( (vol=vol->GetParent()) );
+  //
+  pnt->SetNGloDOFs(fNGloPar-pnt->GetDGloOffs());  // mark number of global derivatives filled
   //
   return kTRUE;
 }

@@ -20,6 +20,8 @@ AliAlgPoint::AliAlgPoint()
   ,fSinDiagErr(0)
   ,fX2X0(0)
   ,fXTimesRho(0)
+  ,fNGloDOFs(0)
+  ,fDGloOffs(0)
   ,fSensor(0)
 {
   // def c-tor
@@ -33,17 +35,6 @@ AliAlgPoint::AliAlgPoint()
   //
   memset(fTrParamWSA,0,5*sizeof(double));
   memset(fTrParamWSB,0,5*sizeof(double));
-  //
-}
-
-//_____________________________________
-void AliAlgPoint::GetResidualsDiag(const double* pos, double &resU, double &resV) const
-{
-  // calculate residuals in the frame where the errors are diagonal, given the position
-  // of the track in the standard tracking frame
-  double d0=pos[0]-fXYZTracking[1], d1=pos[1]-fXYZTracking[2];
-  resU = fCosDiagErr*d0 - fSinDiagErr*d1;
-  resV = fSinDiagErr*d0 + fCosDiagErr*d1;
   //
 }
 
@@ -105,9 +96,9 @@ void AliAlgPoint::Print(Option_t* opt) const
   else printf("x2X0: %.4f x*rho: %.4f | pars:[%3d:%3d)\n",GetX2X0(),GetXTimesRho(),GetMinLocVarID(),GetMaxLocVarID());
   //
   if (opts.Contains("meas") && ContainsMeasurement()) {
-    printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e\n",
+    printf("  MeasPnt: Xtr: %+9.4f Ytr: %+8.4f Ztr: %+9.4f | ErrYZ: %+e %+e %+e | %d DOFglo\n",
 	   GetXTracking(),GetYTracking(),GetZTracking(),
-	   fErrYZTracking[0],fErrYZTracking[1],fErrYZTracking[2]);
+	   fErrYZTracking[0],fErrYZTracking[1],fErrYZTracking[2],GetNGloDOFs());
     printf("  DiagErr: %+e %+e\n", fErrDiag[0], fErrDiag[1]);
   }
   //
@@ -169,6 +160,9 @@ void AliAlgPoint::Clear(Option_t* )
   fMaxLocVarID = -1;
   fDetID = -1;
   fSID   = -1;
+  fNGloDOFs = 0;
+  fDGloOffs = 0;
+  //
   fSensor = 0;
 }
 

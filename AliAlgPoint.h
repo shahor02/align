@@ -70,6 +70,7 @@ class AliAlgPoint : public TObject
   void       SetInvDir(Bool_t v=kTRUE)                {SetBit(kInvDir,v);}
   //
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;
+  void       DiagonalizeResiduals(double rY, double rZ, double &resU, double &resV) const;
   //
   void       SetAlphaSens(double a)                   {fAlphaSens = a;}
   void       SetXSens(double x)                       {fXSens = x;}
@@ -106,6 +107,11 @@ class AliAlgPoint : public TObject
   Double_t   GetPhiGlo()                    const;
   Int_t      GetAliceSector()               const;
   //
+  Int_t      GetNGloDOFs()                  const {return fNGloDOFs;}
+  Int_t      GetDGloOffs()                  const {return fDGloOffs;}
+  void       SetNGloDOFs(int n)                   {fNGloDOFs = n;}
+  void       SetDGloOffs(int n)                   {fDGloOffs = n;}
+  //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
   //
@@ -134,6 +140,8 @@ class AliAlgPoint : public TObject
   Float_t    fX2X0;                                    // X2X0 seen by the track (including inclination)
   Float_t    fXTimesRho;                               // signed Density*Length seen by the track (including inclination)
   //
+  Int_t      fNGloDOFs;                                // number of global DOFs this point depends on
+  Int_t      fDGloOffs;                                // 1st entry slot of d/dGloPar in the AlgTrack fDResDGlo arrays
   Float_t    fMatCorrExp[kNMatDOFs];                   // material correction expectation (diagonalized)
   Float_t    fMatCorrCov[kNMatDOFs];                   // material correction delta covariance (diagonalized)
   Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
@@ -165,5 +173,24 @@ inline Int_t AliAlgPoint::GetNMatPar() const
   // get number of free params for material descriptoin
   return ContainsMaterial() ? (GetELossVaried() ? kNMSPar+kNELossPar:kNMSPar) : 0;
 }
+
+//_____________________________________
+inline void AliAlgPoint::DiagonalizeResiduals(double rY,double rZ, double &resU, double &resV) const
+{
+  // rotate residuals to frame where their error matrix is diagonal
+  resU = fCosDiagErr*rY - fSinDiagErr*rZ;
+  resV = fSinDiagErr*rY + fCosDiagErr*rZ;
+  //
+}
+
+//_____________________________________
+inline void AliAlgPoint::GetResidualsDiag(const double* pos, double &resU, double &resV) const
+{
+  // calculate residuals in the frame where the errors are diagonal, given the position
+  // of the track in the standard tracking frame
+  DiagonalizeResiduals(pos[0]-fXYZTracking[1],pos[1]-fXYZTracking[2],resU,resV);
+  //
+}
+
 
 #endif

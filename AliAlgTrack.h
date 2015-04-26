@@ -46,7 +46,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Bool_t CalcResiduals(const double *params=0);
   Bool_t CalcResidDeriv(double *params=0);
-  Bool_t CalcResidDerivGlo(const AliAlgPoint* pnt);
+  Bool_t CalcResidDerivGlo(AliAlgPoint* pnt);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
   void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit,v);}
@@ -74,8 +74,10 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Double_t *corrDiaf,const AliAlgPoint* pnt);
   Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrpar);
   //
-  Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
+  Double_t  GetResidual(int dim, int pntID)       const {return fResidA[dim][pntID];}
   Double_t *GetDResDLoc(int dim, int pntID)       const {return &fDResDLocA[dim][pntID*fNLocPar];}
+  Double_t *GetDResDGlo(int dim, int id)          const {return &fDResDGloA[dim][id];}
+  Int_t    *GetGloParID()                         const {return fGloParIDA;}
   //
   void SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par,Bool_t add);
   void SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par,Bool_t add);
@@ -88,7 +90,8 @@ class AliAlgTrack: public AliExternalTrackParam
 		       const AliAlgPoint* pnt, double& derY, double& derZ);
   //
   const Double_t* GetLocPars()                    const {return fLocParA;}
-  void            SetLocPars(const double* pars); 
+  void            SetLocPars(const double* pars);
+  //
  protected: 
   //
   Bool_t CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pTo);

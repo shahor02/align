@@ -70,10 +70,11 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
   int nglod = 0;
   for (int ip=np;ip--;) {
     AliAlgPoint* pnt = trc->GetPoint(ip);
+    int ngl = pnt->GetNGloDOFs();
     if (pnt->ContainsMeasurement()) {
       nres    += 2;                     // every point has 2 residuals
       nlocd   += fNVarLoc+fNVarLoc;     // each residual has max fNVarLoc local derivatives
-      nglod   += fNVarGlo+fNVarGlo;     // and max fNVarGlo global derivatives
+      nglod   += ngl + ngl;             // number of global derivatives
     }
     if (pnt->ContainsMaterial()) {
       int nmatpar = pnt->GetNMatPar();
@@ -85,14 +86,22 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
   Resize(nres,nlocd,nglod);
   int nParETP = trc->GetNLocExtPar();   // numnber of local parameters for reference track param
   //
+  const int* gloParID = trc->GetGloParID(); // IDs of global DOFs this track depends on
   for (int ip=0;ip<np;ip++) {
     AliAlgPoint* pnt = trc->GetPoint(ip);
     if (pnt->ContainsMeasurement()) {
+      int gloOffs = pnt->GetDGloOffs(); // 1st entry of global derivatives for this point
+      int nDGlo   = pnt->GetNGloDOFs(); // number of global derivatives (number of DOFs it depends on)
+      //
       for (int idim=0;idim<2;idim++) { // 2 dimensional orthogonal measurement
 	fNDGlo[fNResid] = 0;
-	fResid[fNResid]  = trc->GetResidual(idim,ip);
+	// 
+	// measured residual/error
+	fResid[ fNResid] = trc->GetResidual(idim,ip);
 	fResErr[fNResid] = Sqrt(pnt->GetErrDiag(idim));
-	double* deriv  = trc->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams_loc
+	// 
+	// derivatives over local params
+	const double* deriv  = trc->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams_loc
 	int nnon0 = 0;
 	for (int j=0;j<nParETP;j++) {       // derivatives over reference track parameters
 	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;
@@ -112,6 +121,20 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	}
 	//
 	fNDLoc[fNResid] = nnon0;          // local derivatives done, store thier number for this residual
+	//
+	// derivatives over global params
+	nnon0 = 0;
+	deriv = trc->GetDResDGlo(idim, gloOffs);
+	const int* gloIDP = gloParID + gloOffs;
+	for (int j=0;j<nDGlo;j++) {
+	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;
+	  nnon0++;
+	  fDGlo[ fNDGloTot] = deriv[j];        // value of derivative
+	  fIDGlo[fNDGloTot] = gloIDP[j];       // global DOF ID
+	  fNDGloTot++;
+	}
+	fNDGlo[fNResid] = nnon0;
+	//
 	fNResid++;
       }
     }
@@ -122,7 +145,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
       int offs  = pnt->GetMaxLocVarID() - nmatpar;    // start of material variables
       // here all derivatives are 1 = dx/dx
       for (int j=0;j<nmatpar;j++) {
-	fNDGlo[fNResid]  = 0;
+	fNDGlo[fNResid]  = 0;                       // mat corrections don't depend on global params
 	fResid[fNResid]  = expMatCorr[j];
 	fResErr[fNResid] = Sqrt(expMatCov[j]);
 	fNDLoc[fNResid] = 1;                        // only 1 non-0 derivative
@@ -179,6 +202,7 @@ void AliAlgMPRecord::Print(const Option_t *) const
 	 fNResid,fNVarLoc,fNVarGlo,fNDLocTot,fNDGloTot);
   //
   int curLoc=0,curGlo=0;
+  const int kNColLoc=5;
   for (int ir=0;ir<fNResid;ir++) {
     int ndloc = fNDLoc[ir], ndglo = fNDGlo[ir];
     printf("Res:%3d %+e (%+e) | NDLoc:%3d NDGlo:%4d\n",ir,fResid[ir],fResErr[ir],ndloc,ndglo);
@@ -187,8 +211,8 @@ void AliAlgMPRecord::Print(const Option_t *) const
     Bool_t eolOK = kTRUE;
     for (int id=0;id<ndloc;id++) {
       int jd = id+curLoc;
-      printf("[%3d] %+.3e  ",fIDLoc[jd],fDLoc[jd]);
-      if (((id+1)%5)==0) {printf("\n"); eolOK = kTRUE;}
+      printf("[%3d] %+.2e  ",fIDLoc[jd],fDLoc[jd]);
+      if (((id+1)%kNColLoc)==0) {printf("\n"); eolOK = kTRUE;}
       else eolOK = kFALSE;
     }
     if (!eolOK) printf("\n");
@@ -197,10 +221,11 @@ void AliAlgMPRecord::Print(const Option_t *) const
     //
     printf("Global Derivatives:\n");
     eolOK = kTRUE;
+    const int kNColGlo=6;
     for (int id=0;id<ndglo;id++) {
       int jd = id+curGlo;
-      printf("[%3d] %+.3e  ",fIDGlo[jd],fDGlo[jd]);
-      if (((id+1)%5)==0) {printf("\n"); eolOK = kTRUE;}
+      printf("[%5d] %+.2e  ",fIDGlo[jd],fDGlo[jd]);
+      if (((id+1)%kNColGlo)==0) {printf("\n"); eolOK = kTRUE;}
       else eolOK = kFALSE;
     }
     if (!eolOK) printf("\n");
