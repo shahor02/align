@@ -52,7 +52,7 @@ class AliAlgDet : public TNamed
   virtual void Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
-  virtual Bool_t PresentInTrack(const AliESDtrack* trc) const = 0;
+  virtual Bool_t AcceptTrack(const AliESDtrack* trc) const = 0;
   //
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
@@ -65,6 +65,13 @@ class AliAlgDet : public TNamed
   //
   Int_t   GetNDOFs()                                const {return fNDOFs;}
   //
+  void      SetTrackFlagSel(ULong_t f)                    {fTrackFlagSel = f;}
+  ULong_t   GetTrackFlagSel()                       const {return fTrackFlagSel;}
+  void      SetNPointsSel(Int_t n)                        {fNPointsSel = n;}
+  Int_t     GetNPointsSel()                         const {return fNPointsSel;}
+  Bool_t    IsObligatory()                          const {return fObligatory;}
+  void      SetObligatory(Bool_t v=kTRUE)                 {fObligatory = v;}
+  //
  protected:
   void     SortSensors();
   //
@@ -75,6 +82,11 @@ class AliAlgDet : public TNamed
   Int_t     fVolIDMax;                   // max volID for this detector (for sensors only)
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
   Int_t*    fSID2VolID;                    //[fNSensors] table of conversion from VolID to sid
+  //
+  // Track selection
+  Bool_t    fObligatory;               // detector must be present in the track
+  ULong_t   fTrackFlagSel;             // flag for track selection
+  Int_t     fNPointsSel;               // min number of points to require                 
   //
   Double_t  fAddError[2];            // additional error increment for measurement
   TObjArray fSensors;                // all sensors of the detector

@@ -193,6 +193,17 @@ void AliAlgMPRecord::Resize(Int_t nresid, Int_t nloc, Int_t nglo)
 }
 
 //____________________________________________
+void AliAlgMPRecord::Clear(const Option_t *)
+{
+  // reset record
+  fNResid = 0;
+  fNVarLoc = 0;
+  fNVarGlo = 0;
+  fNDLocTot = 0;
+  fNDGloTot = 0;
+}
+
+//____________________________________________
 void AliAlgMPRecord::Print(const Option_t *) const
 {
   // print info

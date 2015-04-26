@@ -17,10 +17,23 @@ class AliAlgMPRecord : public TObject
   Int_t        GetTrackID()     const {return fTrackID;}
   void         SetTrackID(UInt_t t)   {fTrackID = t;}
   //
+  Int_t        GetNVarGlo()     const {return fNVarGlo;}
+  void         SetNVarGlo(int n)      {fNVarGlo = n;}
+  //
+  Int_t        GetNResid()      const {return fNResid;}
+  Int_t        GetNVarLoc()     const {return fNVarLoc;}
+  //
+  Int_t        GetNDLoc(int id) const {return fNDLoc[id];}
+  Int_t        GetNDGlo(int id) const {return fNDGlo[id];}
+  Double_t     GetResid(int id) const {return fResid[id];}
+  Double_t     GetResErr(int id) const {return fResErr[id];}
+  //
+  //
   Bool_t       FillTrack(const AliAlgTrack* trc);
   //
   void         Resize(Int_t nresid, Int_t nloc, Int_t nglo);
   //
+  virtual void Clear(const Option_t *opt="");
   virtual void Print(const Option_t *opt="") const;
  protected:
   //

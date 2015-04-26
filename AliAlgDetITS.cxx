@@ -101,10 +101,12 @@ void AliAlgDetITS::DefineVolumes()
 }
 
 //____________________________________________
-Bool_t AliAlgDetITS::PresentInTrack(const AliESDtrack* trc) const 
+Bool_t AliAlgDetITS::AcceptTrack(const AliESDtrack* trc) const 
 {
   // test if detector had seed this track
-  return trc->IsOn(AliESDtrack::kITSin);
+  if (!(trc->GetStatus()&fTrackFlagSel)) return kFALSE;
+  if (trc->GetNcls(0)<fNPointsSel) return kFALSE;
+  return kTRUE;
 }
 
 //____________________________________________

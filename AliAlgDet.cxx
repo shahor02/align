@@ -18,6 +18,10 @@ AliAlgDet::AliAlgDet()
   ,fNSensors(0)
   ,fSID2VolID(0)
   //
+  ,fObligatory(kTRUE)
+  ,fTrackFlagSel(0)
+  ,fNPointsSel(0)
+  //
   ,fSensors()
   ,fVolumes()
   //

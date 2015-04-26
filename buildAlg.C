@@ -61,31 +61,51 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   // apply alignment
   AliGeomManager::ApplyAlignObjsFromCDB(detalg.Data());
   //
-
-  //  AliAlgDet* its = new AliAlgDetITS("its");
-  //  its->Init();
+  //
   algSteer->InitDetectors();
   // set/fix needed DOFS per detectort, TODO
   //
   algSteer->InitDOFs(); 
   //
-  //
-  AliAlgDet* tpc = algSteer->GetDetectorByDetID(AliAlgSteer::kTPC);
-  if (tpc) {
-    if (cosm) tpc->SetAddError(0.2,1.0);  // cosmics is not calibrated
-    else      tpc->SetAddError(0.1,0.1);
-  }
+  // track selections
   //
   AliAlgDetITS* its = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
   if (its) {
+    its->SetTrackFlagSel(AliESDtrack::kITSin);
+    its->SetNPointsSel(2);
+    //
     its->SetAddErrorLr(0,30e-4,200e-4);
     its->SetAddErrorLr(1,30e-4,200e-4);
     its->SetAddErrorLr(2,500e-4,80e-4);
     its->SetAddErrorLr(3,500e-4,80e-4);
     its->SetAddErrorLr(4,50e-4,500e-4);
-    its->SetAddErrorLr(5,50e-4,500e-4);
+    its->SetAddErrorLr(5,50e-4,500e-4);   
   }
   //
+  AliAlgDetTPC* tpc = (AliAlgDetTPC*)algSteer->GetDetectorByDetID(AliAlgSteer::kTPC);
+  if (tpc) {
+    tpc->SetTrackFlagSel(AliESDtrack::kTPCin);
+    tpc->SetNPointsSel(50);
+    //
+    if (cosm) tpc->SetAddError(0.2,1.0);  // cosmics is not calibrated
+    else      tpc->SetAddError(0.1,0.1);
+  }
+  //
+  AliAlgDetTRD* trd = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
+  if (trd) {
+    trd->SetTrackFlagSel(AliESDtrack::kTRDout);
+    trd->SetNPointsSel(2);
+  }
+  //
+  AliAlgDetTOF* tof = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
+  if (tof) {
+    tof->SetTrackFlagSel(AliESDtrack::kTOFout);
+    tof->SetNPointsSel(2);
+  }
+  //
+  algSteer->SetMinDetAcc(2);
+  //
+  //----------------------------------------------------------------
   PrintTracks();
   //
   algSteer->SetESDEvent(esdEv);
