@@ -5,6 +5,7 @@
 #include "AliAlgPoint.h"
 #include <TObjArray.h>
 #include <TArrayD.h>
+#include <TArrayI.h>
 
 #define DEBUG 4
 
@@ -73,7 +74,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrpar);
   //
   Double_t  GetResidual(int dim, int pntID)       const {return  fResidA[dim][pntID];}
-  Double_t *GetDerivative(int dim, int pntID)     const {return &fDerivA[dim][pntID*fNLocPar];}
+  Double_t *GetDResDLoc(int dim, int pntID)       const {return &fDResDLocA[dim][pntID*fNLocPar];}
   //
   void SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par,Bool_t add);
   void SetParams(AliExternalTrackParam* trSet, int ntr, double x, double alp, const double* par,Bool_t add);
@@ -110,10 +111,14 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t  fChi2CosmUp;                 // chi2 for cosmic upper leg
   TObjArray fPoints;                     // alignment points
   TArrayD   fResid[2];                   // residuals array
-  TArrayD   fDeriv[2];                   // derivatives array  
+  TArrayD   fDResDLoc[2];                // array for derivatives over local params
+  TArrayD   fDResDGlo[2];                // array for derivatives over global params
   TArrayD   fLocPar;                     // local parameters array
+  TArrayI   fGloParID;                   // IDs of relevant global params
   Double_t  *fResidA[2];                 //! fast access to residuals
-  Double_t  *fDerivA[2];                 //! fast access to derivatives
+  Double_t  *fDResDLocA[2];              //! fast access to local derivatives
+  Double_t  *fDResDGloA[2];              //! fast access to global derivatives
+  Int_t     *fGloParIDA;                 //! fast access to relevant global param IDs
   Double_t  *fLocParA;                   //! fast access to local params
   //
   ClassDef(AliAlgTrack,1)

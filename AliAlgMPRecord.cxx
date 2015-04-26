@@ -92,7 +92,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	fNDGlo[fNResid] = 0;
 	fResid[fNResid]  = trc->GetResidual(idim,ip);
 	fResErr[fNResid] = Sqrt(pnt->GetErrDiag(idim));
-	double* deriv  = trc->GetDerivative(idim,ip);  // array of Dresidual/Dparams_loc
+	double* deriv  = trc->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams_loc
 	int nnon0 = 0;
 	for (int j=0;j<nParETP;j++) {       // derivatives over reference track parameters
 	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;

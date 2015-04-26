@@ -26,9 +26,17 @@ AliAlgTrack::AliAlgTrack() :
   ,fChi2(0)
   ,fChi2CosmUp(0)
   ,fPoints(0)
+  ,fLocPar()
+  ,fGloParID()
+  ,fGloParIDA(0)
+  ,fLocParA(0)
 {
   // def c-tor
-  for (int i=0;i<2;i++) fResidA[i] = fDerivA[i] = 0;
+  for (int i=0;i<2;i++) {
+    fResidA[i]    = 0;
+    fDResDLocA[i] = 0;
+    fDResDGloA[i] = 0;
+  }
   fNeedInv[0] = fNeedInv[1] = kFALSE;
   //
 }
@@ -92,15 +100,15 @@ void AliAlgTrack::DefineDOFs()
     fResid[0].Set(np);
     fResid[1].Set(np);
   }
-  if (fDeriv[0].GetSize()<fNLocPar*np) {
-    fDeriv[0].Set(fNLocPar*np);
-    fDeriv[1].Set(fNLocPar*np);
+  if (fDResDLoc[0].GetSize()<fNLocPar*np) {
+    fDResDLoc[0].Set(fNLocPar*np);
+    fDResDLoc[1].Set(fNLocPar*np);
   }
   for (int i=2;i--;) {
     fResid[i].Reset();
-    fDeriv[i].Reset();
+    fDResDLoc[i].Reset();
     fResidA[i] = fResid[i].GetArray();
-    fDerivA[i] = fDeriv[i].GetArray();
+    fDResDLocA[i] = fDResDLoc[i].GetArray();
   }
   //
   //  memcpy(fLocParA,GetParameter(),fNLocExtPar*sizeof(Double_t));
@@ -110,7 +118,7 @@ void AliAlgTrack::DefineDOFs()
 //______________________________________________________
 Bool_t AliAlgTrack::CalcResidDeriv(double *params)
 {
-  // Propagate for given local params and calculate residuals and their derivatives derivatives.
+  // Propagate for given local params and calculate residuals and their derivatives.
   // The 1st 4 or 5 elements of params vector should be the reference AliExternalTrackParam 
   // Then parameters of material corrections for each point
   // marked as having materials should come (4 or 5 dependending if ELoss is varied or fixed).
@@ -195,10 +203,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       //
       if (pnt->ContainsMeasurement()) {  
 	int offsDer = ip*fNLocPar + ipar;
-	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDer], fDerivA[1][offsDer]); // calculate derivatives
+	RichardsonDeriv(probD, varDelta, pnt, fDResDLocA[0][offsDer], fDResDLocA[1][offsDer]); // calculate derivatives
 	if (invert&&kInvElem[ipar]<0) {
-	  fDerivA[0][offsDer] = -fDerivA[0][offsDer];
-	  fDerivA[1][offsDer] = -fDerivA[1][offsDer];
+	  fDResDLocA[0][offsDer] = -fDResDLocA[0][offsDer];
+	  fDResDLocA[1][offsDer] = -fDResDLocA[1][offsDer];
 	}
       }
     } // loop over points
@@ -251,8 +259,8 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       }     
       if (pnt->ContainsMeasurement()) {   // calculate derivatives at the scattering point itself
 	int offsDerIP = ip*fNLocPar + offsIP;
-	RichardsonDeriv(probD, varDelta, pnt, fDerivA[0][offsDerIP], fDerivA[1][offsDerIP]); // calculate derivatives for ip
-	//	printf("DR SELF: %e %e at %d (%d)\n",fDerivA[0][offsDerIP], fDerivA[1][offsDerIP],offsI, offsDerIP);
+	RichardsonDeriv(probD, varDelta, pnt, fDResDLocA[0][offsDerIP], fDResDLocA[1][offsDerIP]); // calculate derivatives for ip
+	//	printf("DR SELF: %e %e at %d (%d)\n",fDResDLocA[0][offsDerIP], fDResDLocA[1][offsDerIP],offsI, offsDerIP);
       }
       //
       // loop over points whose residuals can be affected by the material effects on point ip
@@ -269,7 +277,8 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 	//
 	if (pntJ->ContainsMeasurement()) {  
 	  int offsDerJ = jp*fNLocPar + offsIP;
-	  RichardsonDeriv(probD, varDelta, pntJ, fDerivA[0][offsDerJ], fDerivA[1][offsDerJ]); // calculate derivatives
+	  // calculate derivatives
+	  RichardsonDeriv(probD, varDelta, pntJ, fDResDLocA[0][offsDerJ], fDResDLocA[1][offsDerJ]);
 	}
 	//
       } // << loop over points whose residuals can be affected by the material effects on point ip
@@ -712,7 +721,7 @@ void AliAlgTrack::Print(Option_t *opt) const
       }
       if (der && pnt->ContainsMeasurement()) {
 	for (int ipar=0;ipar<fNLocPar;ipar++) {
-	  printf("  Dres/dp%03d : %+.3e %+.3e\n",ipar,GetDerivative(0,ip)[ipar], GetDerivative(1,ip)[ipar]);
+	  printf("  Dres/dp%03d : %+.3e %+.3e\n",ipar,GetDResDLoc(0,ip)[ipar], GetDResDLoc(1,ip)[ipar]);
 	}
       }
       //

@@ -265,8 +265,8 @@ void AliAlgDet::InitDOFs()
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
-    vol->SetFirstParOffs(gloCount);
-    gloCount += vol->InitDOFs();
+    // call init for root level volumes, they will take care of their children
+    if (!vol->GetParent() && !vol->GetInitDOFsDone()) vol->InitDOFs(gloCount);
   }
   //
   fNDOFs = gloCount-gloCount0;

@@ -271,10 +271,13 @@ void AliAlgVol::SetTrackingFrame()
 }
 
 //__________________________________________________________________
-Int_t AliAlgVol::InitDOFs()
+void AliAlgVol::InitDOFs(Int_t &cntDOFs)
 {
-  // initialize degrees of freedom
+  // initialize degrees of freedom, assign offset of the DOFS of this volume in 
+  // global array of DOFs
   //
+  if (GetInitDOFsDone()) return;
+  SetFirstParOffs(cntDOFs);
   // index allowed DOFs
   fNDOFFree = fNDOFGeomFree = 0;
   for (int i=0;i<kNDOFGeom;i++) { // start with standard DOF geoms
@@ -284,7 +287,20 @@ Int_t AliAlgVol::InitDOFs()
   }
   fNDOFFree += fNDOFGeomFree;
   // TODO loop over other DOFs
-  return fNDOFFree;
+  //
+  cntDOFs += fNDOFFree; // increment total DOFs count
+  //
+  // go over childs
+  //
+  int nch = GetNChildren();
+  for (int ich=0;ich<nch;ich++) {
+    AliAlgVol* ch = GetChild(ich);
+    if (!ch->GetInitDOFsDone()) ch->InitDOFs(cntDOFs);
+  }
+  //
+  SetInitDOFsDone();
+  //
+  return;
 }
 
 //__________________________________________________________________
@@ -303,4 +319,15 @@ void AliAlgVol::SetNDOFTot(Int_t n)
     fParErrs[i] = 0;
     fParCstr[i] = 0;
   }
+}
+
+//__________________________________________________________________
+void AliAlgVol::AddChild(AliAlgVol* ch) 
+{
+  // add child volume
+  if (!fChildren) {
+    fChildren = new TObjArray(); 
+    fChildren->SetOwner(kFALSE);
+  }
+  fChildren->AddLast(ch);
 }

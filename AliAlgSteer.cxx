@@ -383,7 +383,7 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
       for (int idim=2;idim--;) { // each point has 2 position residuals
 	double  sigma2 = pnt->GetErrDiag(idim);              // residual error
 	double  resid  = fAlgTrack->GetResidual(idim,ip);    // residual
-	double* deriv  = fAlgTrack->GetDerivative(idim,ip);  // array of Dresidual/Dparams
+	double* deriv  = fAlgTrack->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams
 	//
 	double sg2inv = 1./sigma2;
 	for (int parI=nlocpar;parI--;) { 

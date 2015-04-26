@@ -21,13 +21,14 @@ class AliAlgVol : public TNamed
   enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS,kNDOFGeom,kAllGeomDOF=0x3F};
   enum {kNDOFMax=32};
   enum Frame_t {kLOC,kTRA,kNVarFrames};  // variation frames defined
+  enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15)};
   //
   AliAlgVol(const char* symname=0);
   virtual ~AliAlgVol();
   //
   const char* GetSymName()                       const {return GetName();}
   //
-  Int_t      InitDOFs();
+  void       InitDOFs(Int_t &cntDOFs);
   //
   Frame_t    GetVarFrame()                       const {return fVarFrame;}
   void       SetVarFrame(Frame_t f)                    {fVarFrame = f;}
@@ -47,7 +48,7 @@ class AliAlgVol : public TNamed
   //
   Int_t      GetNChildren()                      const {return fChildren ? fChildren->GetEntriesFast():0;}
   AliAlgVol* GetChild(int i)                     const {return fChildren ? (AliAlgVol*)fChildren->UncheckedAt(i):0;}
-  virtual void AddChild(AliAlgVol* ch)                 {if (!fChildren) fChildren = new TObjArray(); fChildren->AddLast(ch);}
+  virtual void AddChild(AliAlgVol* ch);
   //
   Double_t GetXTracking()                        const {return fX;}
   Double_t GetAlpTracking()                      const {return fAlp;}
@@ -100,8 +101,15 @@ class AliAlgVol : public TNamed
   void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   //
+  void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
+  Bool_t  GetSkip()                           const {return TestBit(kSkipBit);}
+  //
+  void    SetInitDOFsDone()                         {SetBit(kInitDOFsDoneBit);}
+  Bool_t  GetInitDOFsDone()                   const {return TestBit(kInitDOFsDoneBit);}
+  //
   virtual Bool_t IsSensor()                   const {return kFALSE;}
-  virtual void Print(const Option_t *opt="")  const;
+  //
+  virtual void   Print(const Option_t *opt="")  const;
   //
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}
