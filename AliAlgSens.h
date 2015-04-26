@@ -28,10 +28,12 @@ class AliAlgSens : public AliAlgVol
   void  SetInternalID(Int_t v)                         {fIntID = v;}
   //
   // derivatives calculation
-  virtual void DPosTraDParLOC(const double *tra, double* deriv) const;
-  virtual void DPosTraDParTRA(const double *tra, double* deriv) const;
-  virtual void DPosTraDParLOC(const AliAlgVol* parent, const double *tra, double* deriv) const;
-  virtual void DPosTraDParTRA(const AliAlgVol* parent, const double *tra, double* deriv) const;
+  virtual void DPosTraDParGeom(const double *tra, double* deriv,const AliAlgVol* parent=0) const;
+  //
+  virtual void DPosTraDParGeomLOC(const double *tra, double* deriv) const;
+  virtual void DPosTraDParGeomTRA(const double *tra, double* deriv) const;
+  virtual void DPosTraDParGeomLOC(const double *tra, double* deriv, const AliAlgVol* parent) const;
+  virtual void DPosTraDParGeomTRA(const double *tra, double* deriv, const AliAlgVol* parent) const;
   //
   void GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;

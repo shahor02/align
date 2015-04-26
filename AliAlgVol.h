@@ -72,8 +72,10 @@ class AliAlgVol : public TNamed
   Int_t      GetNDOFTot()                        const  {return fNDOFTot;}
   Int_t      GetNDOFFree()                       const  {return fNDOFFree;}
   Int_t      GetNDOFGeomFree()                   const  {return fNDOFGeomFree;}
+  Int_t      GetFirstParOffs()                   const  {return fFirstParOffs;}
   Int_t      GetParOffs(Int_t par)               const  {return fParOffs[par];}
   Int_t      GetParGloOffs(Int_t par)            const  {return fParOffs[par]<0?-1:fFirstParOffs+fParOffs[par];}
+  Int_t      GetParGloOffsNC(Int_t par)          const  {return fFirstParOffs+fParOffs[par];}
   void       SetFirstParOffs(Int_t id)                  {fFirstParOffs=id;}
   void       SetParOffs(Int_t par,Int_t offs)           {fParOffs[par]=offs;}
   //

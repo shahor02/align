@@ -46,6 +46,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Bool_t CalcResiduals(const double *params=0);
   Bool_t CalcResidDeriv(double *params=0);
+  Bool_t CalcResidDerivGlo(const AliAlgPoint* pnt);
   //
   Bool_t IsCosmic()                              const {return TestBit(kCosmicBit);}
   void   SetCosmic(Bool_t v=kTRUE)                     {SetBit(kCosmicBit,v);}
@@ -95,6 +96,8 @@ class AliAlgTrack: public AliExternalTrackParam
   Bool_t FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t &inv);
   Bool_t ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int pTo);
   //
+  void   CheckExpandDerGloBuffer(int minSize);
+  //
   static Double_t RichardsonExtrap(double *val, int ord=1);
   static Double_t RichardsonExtrap(const double *val, int ord=1);
   //
@@ -103,6 +106,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   Int_t     fNLocPar;                    // number of local params
   Int_t     fNLocExtPar;                 // number of local params for the external track param
+  Int_t     fNGloPar;                    // number of free global parameters the track depends on
   Int_t     fInnerPointID;               // ID of inner point in sorted track. For 2-leg cosmics - innermost point of lower leg
   Bool_t    fNeedInv[2];                 // set if one of cosmic legs need inversion
   Double_t  fMinX2X0Pt2Account;          // minimum X2X0/pT accumulated between 2 points worth to account

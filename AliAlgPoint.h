@@ -17,7 +17,14 @@ class AliAlgPoint : public TObject
 	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
 	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
   };
-  enum {kNMSPar=4,kNELossPar=1,kNMatDOFs=kNMSPar+kNELossPar};
+  enum {kParY = 0                           // track parameters
+	,kParZ
+	,kParSnp
+	,kParTgl
+	,kParQ2Pt,
+	kNMSPar=4,kNELossPar=1,kNMatDOFs=kNMSPar+kNELossPar};
+  enum {kX,kY,kZ};
+  //
   AliAlgPoint();
   virtual   ~AliAlgPoint() {}
   //
@@ -72,9 +79,16 @@ class AliAlgPoint : public TObject
   void       SetYZErrTracking(const double *err) {for (int i=3;i--;) fErrYZTracking[i]=err[i];}
   Double_t   GetErrDiag(int i)             const {return fErrDiag[i];}
   //
-  Double_t*  GetTrParamWS()                const {return (Double_t*)fTrParamWS;}
-  void       GetTrWS(AliExternalTrackParam& etp) const;
-  void       SetTrParamWS(const double* param)   {for (int i=5;i--;) fTrParamWS[i] = param[i];}
+  Double_t*  GetTrParamWSA()               const {return (Double_t*)fTrParamWSA;}
+  Double_t*  GetTrParamWSB()               const {return (Double_t*)fTrParamWSB;}
+  Double_t   GetTrParamWSA(int ip)         const {return fTrParamWSA[ip];}
+  Double_t   GetTrParamWSB(int ip)         const {return fTrParamWSB[ip];}
+  void       GetTrWSA(AliExternalTrackParam& etp) const;
+  void       GetTrWSB(AliExternalTrackParam& etp) const;
+  void       SetTrParamWSA(const double* param)   {for (int i=5;i--;) fTrParamWSA[i] = param[i];}
+  void       SetTrParamWSB(const double* param)   {for (int i=5;i--;) fTrParamWSB[i] = param[i];}
+  Double_t   GetResidY()                   const {return GetTrParamWSA(kParY) - GetYTracking();}
+  Double_t   GetResidZ()                   const {return GetTrParamWSA(kParZ) - GetZTracking();}
   //
   void       SetMatCovDiagonalizationMatrix(const TMatrixD& d);
   void       SetMatCovDiag(const TVectorD& v);
@@ -124,7 +138,8 @@ class AliAlgPoint : public TObject
   Float_t    fMatCorrCov[kNMatDOFs];                   // material correction delta covariance (diagonalized)
   Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
   //
-  Double_t   fTrParamWS[kNMatDOFs];                    // workspace for tracks params at this point
+  Double_t   fTrParamWSA[kNMatDOFs];                   // workspace for tracks params at this point AFTER material correction
+  Double_t   fTrParamWSB[kNMatDOFs];                   // workspace for tracks params at this point BEFORE material correction
   //
   AliAlgSens* fSensor;                                 // sensor of this point
   //

@@ -31,7 +31,8 @@ AliAlgPoint::AliAlgPoint()
   memset(fMatCorrCov,0,5*sizeof(float));
   memset(fMatDiag,0,5*5*sizeof(float));
   //
-  memset(fTrParamWS,0,5*sizeof(double));
+  memset(fTrParamWSA,0,5*sizeof(double));
+  memset(fTrParamWSB,0,5*sizeof(double));
   //
 }
 
@@ -147,9 +148,14 @@ void AliAlgPoint::Print(Option_t* opt) const
     }
   }
   //
-  if (opts.Contains("ws")) { // printf track state at this point stored during residuals calculation
-    printf("  Local Track: "); 
-    for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWS[i]); 
+  if (opts.Contains("wsa")) { // printf track state at this point stored during residuals calculation
+    printf("  Local Track (A): "); 
+    for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWSA[i]); 
+    printf("\n");
+  }
+  if (opts.Contains("wsb")) { // printf track state at this point stored during residuals calculation
+    printf("  Local Track (B): "); 
+    for (int i=0;i<5;i++) printf("%+.3e ",fTrParamWSB[i]); 
     printf("\n");
   }
   //
@@ -297,9 +303,9 @@ void AliAlgPoint::DiagMatCorr(const float* nodiag, float* diag) const
 }
 
 //__________________________________________________________________
-void AliAlgPoint::GetTrWS(AliExternalTrackParam& etp) const
+void AliAlgPoint::GetTrWSA(AliExternalTrackParam& etp) const
 {
-  // assign WS parameters to supplied track
+  // assign WSA (after material corrections) parameters to supplied track
   double covDum[15]={
     1.e-4,
     0    ,1.e-4,
@@ -307,5 +313,19 @@ void AliAlgPoint::GetTrWS(AliExternalTrackParam& etp) const
     0    ,    0,    0,1.e-4,
     0    ,    0,    0,    0,1e-4
   };
-  etp.Set(GetXPoint(),GetAlphaSens(),fTrParamWS,covDum);
+  etp.Set(GetXPoint(),GetAlphaSens(),fTrParamWSA,covDum);
+}
+
+//__________________________________________________________________
+void AliAlgPoint::GetTrWSB(AliExternalTrackParam& etp) const
+{
+  // assign WSB parameters (before material corrections) to supplied track
+  double covDum[15]={
+    1.e-4,
+    0    ,1.e-4,
+    0    ,    0,1.e-4,
+    0    ,    0,    0,1.e-4,
+    0    ,    0,    0,    0,1e-4
+  };
+  etp.Set(GetXPoint(),GetAlphaSens(),fTrParamWSB,covDum);
 }

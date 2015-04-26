@@ -140,7 +140,7 @@ void AliAlgVol::GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta, co
   // prepare the variation matrix tau in volume TRACKING frame by applying 
   // local delta of modification of TRACKING frame of its PARENT; 
   // The relMat is matrix for transformation from child to parent frame: TRA = relMat*tra
-  // (see DPosTraDParTRA)
+  // (see DPosTraDParGeomTRA)
   //
   // tra' = tau*tra = tau*relMat^-1*TRA = relMat^-1*TAU*TRA = relMat^-1*TAU*relMat*tra
   // tau = relMat^-1*TAU*relMat

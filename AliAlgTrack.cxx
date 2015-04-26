@@ -1,6 +1,8 @@
 #include "AliAlgTrack.h"
 #include "AliTrackerBase.h"
 #include "AliLog.h"
+#include "AliAlgSens.h"
+#include "AliAlgVol.h"
 #include "AliAlgAux.h"
 #include <TMatrixD.h>
 #include <TVectorD.h>
@@ -27,12 +29,17 @@ AliAlgTrack::AliAlgTrack() :
   ,fChi2CosmUp(0)
   ,fPoints(0)
   ,fLocPar()
-  ,fGloParID()
+  ,fGloParID(0)
   ,fGloParIDA(0)
   ,fLocParA(0)
 {
   // def c-tor
-  for (int i=0;i<2;i++) {
+  for (int i=0;i<2;i++) { 
+    // we start with 0 size buffers for derivatives, they will be expanded automatically
+    fResid[i].Set(0);
+    fDResDGlo[i].Set(0);
+    fDResDLoc[i].Set(0);
+    //
     fResidA[i]    = 0;
     fDResDLocA[i] = 0;
     fDResDGloA[i] = 0;
@@ -56,6 +63,7 @@ void AliAlgTrack::Clear(Option_t *)
   fChi2 = fChi2CosmUp = 0;
   fInnerPointID = -1;
   fNeedInv[0] = fNeedInv[1] = kFALSE;
+  fNLocPar = fNLocExtPar = fNGloPar = 0;
   //
 }
 
@@ -216,6 +224,10 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
   //
   for (int ip=pFrom;ip!=pTo;ip+=pinc) { // points are ordered against track direction
     AliAlgPoint* pnt = GetPoint(ip);
+    //
+    // global derivatives at this point
+    if (pnt->ContainsMeasurement() && !CalcResidDerivGlo(pnt)) return kFALSE; 
+    //
     if (!pnt->ContainsMaterial()) continue;
     //
     int nParFreeI = pnt->GetNMatPar();
@@ -236,8 +248,8 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
       // We will vary the tracks starting from the original parameters propagated to given point 
       // and stored there (before applying material corrections for this point)
       // 
-      SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWS(),kFALSE);
-      // no need for eventual track inversion here: if needed, this is already done in ParamWS
+      SetParams(probD,kNRDClones, pnt->GetXPoint(),pnt->GetAlphaSens(),pnt->GetTrParamWSB(),kFALSE);
+      // no need for eventual track inversion here: if needed, this is already done in ParamWSB
       //
       int offsIP = offsI+ipar;                 // parameter entry in the params array
       //      printf("  Var:%d (%d)  %e\n",ipar,offsIP, del); 
@@ -285,6 +297,51 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
     } // << loop over DOFs related to MS and ELoss are point ip
   }  // << loop over all points of the track
   //  
+  return kTRUE;
+}
+
+//______________________________________________________
+Bool_t AliAlgTrack::CalcResidDerivGlo(const AliAlgPoint* pnt)
+{
+  // calculate residuals derivatives over point's sensor and its parents global params
+  double derGeom[AliAlgVol::kNDOFGeom*3];
+  //
+  const AliAlgSens* sens = pnt->GetSensor();
+  const AliAlgVol* vol = sens;
+  double dResYZ[2];
+  // precalculated track parameters
+  double snp=pnt->GetTrParamWSA(kParSnp),tgl=pnt->GetTrParamWSA(kParTgl);
+  // precalculate track slopes to account tracking X veriation 
+  // these are coeffs to translate deltaX of the point to deltaY and deltaZ of track
+  double cspi = 1./Sqrt((1-snp)*(1+snp)), slpY = snp*cspi, slpZ = tgl*cspi;
+  //
+  do {
+    // measurement residuals
+    int nfree = vol->GetNDOFFree();
+    if (!nfree) continue; // no free parameters?
+    sens->DPosTraDParGeom(pnt->GetXYZTracking(),derGeom,vol==sens ? 0:vol);
+    //
+    CheckExpandDerGloBuffer(fNGloPar+nfree);  // if needed, expand derivatives buffer
+    //
+    for (int ip=AliAlgVol::kNDOFGeom;ip--;) { // we need only free parameters
+      if (!vol->IsFreeDOFGeom(AliAlgVol::DOFGeom_t(ip))) continue;
+      double* dXYZ = &derGeom[ip*3];   // tracking XYZ derivatives over this parameter
+      // residual is defined as diagonalized track_estimate - measured Y,Z in tracking frame
+      // where the track is evaluated at measured X! 
+      // -> take into account modified X using track parameterization at the point (paramWSA)
+      // Attention: small simplifications(to be checked if it is ok!!!): 
+      // effect of changing X is accounted neglecting track curvature
+      dResYZ[0] = dXYZ[AliAlgPoint::kX]*slpY - dXYZ[AliAlgPoint::kY];
+      dResYZ[1] = dXYZ[AliAlgPoint::kX]*slpZ - dXYZ[AliAlgPoint::kZ];
+      // store diagonalize residuals in track buffer
+      pnt->GetResidualsDiag(dResYZ,fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
+      // and register global ID of varied parameter
+      fGloParIDA[fNGloPar] = vol->GetParGloOffsNC(ip);
+      fNGloPar++;
+    }
+    //
+  } while( (vol=vol->GetParent()) );
+  //
   return kTRUE;
 }
 
@@ -351,12 +408,13 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params,Bool_t invert,int pFrom,i
     //
     // store the current track kinematics at the point BEFORE applying eventual material
     // corrections. This kinematics will be later varied around supplied parameters (in the CalcResidDeriv)
-    pnt->SetTrParamWS(probe.GetParameter());
+    pnt->SetTrParamWSB(probe.GetParameter());
     //
     // account for materials
     if (pnt->ContainsMaterial()) { // apply material corrections
       if (!ApplyMatCorr(probe, params, pnt)) return kFALSE;
     }
+    pnt->SetTrParamWSA(probe.GetParameter());
     //
     if (pnt->ContainsMeasurement()) { // need to calculate residuals in the frame where errors are orthogonal
       pnt->GetResidualsDiag(probe.GetParameter(),fResidA[0][ip],fResidA[1][ip]);
@@ -1079,5 +1137,21 @@ void AliAlgTrack::SetLocPars(const double* pars)
 {
   // store loc par corrections
   memcpy(fLocParA,pars,fNLocPar*sizeof(double));
+}
+
+//______________________________________________
+void AliAlgTrack::CheckExpandDerGloBuffer(int minSize)
+{
+  // if needed, expand global derivatives buffer
+  if (fGloParID.GetSize()<minSize) {
+    fGloParID.Set(minSize+100);
+    fDResDGlo[0].Set(minSize+100);
+    fDResDGlo[1].Set(minSize+100);
+    //
+    // reassign fast access arrays
+    fGloParIDA = fGloParID.GetArray();
+    fDResDGloA[0] =  fDResDGlo[0].GetArray();
+    fDResDGloA[1] =  fDResDGlo[1].GetArray();
+  }
 }
 
