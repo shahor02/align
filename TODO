@@ -1,3 +1,22 @@
-implement 
+Add DCA selection for for collision tracks
 
-virtual void AliAlgSens::DPosTraDParTRA(const AliAlgVol* parent, const double *tra, double* deriv) const;
+why cosmic rejected:
+Ev 4676
+  0: its:0 tpc:-27 trd:0 tof:0 | P:  0.11 Fr:ON
+  1: its:-3 tpc:159 trd:0 tof:1 | P: 31.27 Fr:ON
+  2: its:5 tpc:158 trd:160 tof:1 | P: 33.98 Fr:ON
+  3: its:5 tpc:0 trd:0 tof:0 | P: 95.04 Fr:ON
+NCosm: 1
+
+Ev 5419
+  0: its:-4 tpc:157 trd:0 tof:0 | P: 39.25 Fr:ON
+  1: its:-3 tpc:157 trd:0 tof:1 | P: 46.37 Fr:ON
+  2: its:-4 tpc:0 trd:0 tof:0 | P: 15.66 Fr:ON
+NCosm: 1
+
+Ev 5481
+  0: its:-4 tpc:153 trd:0 tof:1 | P: 59.79 Fr:ON
+  1: its:-4 tpc:157 trd:153 tof:1 | P: 79.21 Fr:ON
+  2: its:-4 tpc:0 trd:0 tof:0 | P:230.53 Fr:ON
+  3: its:-4 tpc:0 trd:0 tof:0 | P:  1.09 Fr:ON
+NCosm: 1

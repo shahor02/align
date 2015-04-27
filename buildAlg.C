@@ -24,14 +24,15 @@ void ConnectFriends();
 AliAlgSteer * algSteer = 0;
 
 //void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+//void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
 
-//void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
+void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
   LoadEvent(evID);
   esdEv->InitMagneticField();
   int run = esdEv->GetRunNumber();
+  int nEv = esdTree->GetEntries();
   AliCDBManager* man = AliCDBManager::Instance();
   if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
     man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
@@ -95,6 +96,7 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   if (trd) {
     trd->SetTrackFlagSel(AliESDtrack::kTRDout);
     trd->SetNPointsSel(2);
+    trd->SetObligatory(kFALSE);
   }
   //
   AliAlgDetTOF* tof = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
@@ -105,7 +107,9 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   //
   algSteer->SetMinDetAcc(2);
   //
+  algSteer->AcknowledgeNewRun(run);
   //----------------------------------------------------------------
+  /*
   PrintTracks();
   //
   algSteer->SetESDEvent(esdEv);
@@ -118,6 +122,13 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
     algSteer->ProcessTrack(trC);
   }
   //
+  */
+  for (int iev=0;iev<nEv;iev++) {
+    LoadEvent(iev);
+    algSteer->ProcessEvent(esdEv);
+  }
+  algSteer->CloseMPOutput();
+  algSteer->Print("stat");
 }
 
 //-----------------------------------------------------------------

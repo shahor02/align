@@ -26,7 +26,11 @@
 #include "AliESDCosmicTrack.h"
 #include "AliESDtrack.h"
 #include "AliESDEvent.h"
+#include "AliRecoParam.h"
 #include <TMath.h>
+#include <TString.h>
+#include <TTree.h>
+#include <TFile.h>
 
 using namespace TMath;
 using namespace AliAlgAux;
@@ -38,33 +42,49 @@ const Char_t* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "
 const Int_t   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
 								   AliGeomManager::kMUON,AliGeomManager::kEMCAL};
 
+const Char_t* AliAlgSteer::fgkStatClName[AliAlgSteer::kNStatCl] = {"Inp: ","Acc: "};
+const Char_t* AliAlgSteer::fgkStatName[AliAlgSteer::kMaxStat] =   
+  {"runs","Ev.Coll", "Ev.Cosm", "Trc.Coll", "Trc.Cosm"};
+
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer()
   :fNDet(0)
   ,fNDOFs(0)
   ,fRunNumber(-1)
-  ,fMPRecord(0)
+  ,fFieldOn(kFALSE)
+  ,fCosmicEvent(kFALSE)
   ,fAlgTrack(0)
   ,fMinDetAcc(0)
+  ,fPtMin(0.3)
+  ,fEtaMax(1.5)
   ,fDOFPars(0)
   ,fRefPoint()
   ,fESDEvent(0)
+  ,fMPRecord(0)
+  ,fMPRecTree(0)
+  ,fMPRecFile(0)
+  ,fMPFileName("mpRecord.root")
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
     fDetectors[i] = 0;
     fDetPos[i] = -1;
   }
+  for (int i=kNCosmLegs;i--;) fESDTrack[i] = 0;
+  memset(fStat,0,kNStatCl*kMaxStat*sizeof(float));
 }
 
 //________________________________________________________________
 AliAlgSteer::~AliAlgSteer()
 {
   // d-tor
-  delete fAlgTrack;
+  if (fMPRecFile) CloseMPOutput();
   delete fMPRecord;
+  //
+  delete fAlgTrack;
   delete[] fDOFPars;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
+  //
 }
 
 //________________________________________________________________
@@ -77,7 +97,6 @@ void AliAlgSteer::InitDetectors()
   done = kTRUE;
   //
   fAlgTrack = new AliAlgTrack();
-  fMPRecord = new AliAlgMPRecord();
   //
   for (int i=0;i<fNDet;i++) fDetectors[i]->InitGeom();
 }
@@ -142,6 +161,9 @@ UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr) const
   // decide if the track should be processed
   AliAlgDet* det = 0;
   UInt_t detAcc = 0;
+  if (fFieldOn && esdTr->Pt()<fPtMin) return kFALSE;
+  if (Abs(esdTr->Eta())>fEtaMax)      return kFALSE;
+  //
   for (int idet=0;idet<kNDetectors;idet++) {
     if (!(det=GetDetectorByDetID(idet))) continue;
     if (!det->AcceptTrack(esdTr)) {
@@ -170,9 +192,42 @@ UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdPairCosm[kNCosmLegs]) cons
 }
 
 //_________________________________________________________
+Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
+{
+  // process event
+  SetESDEvent(esdEv);
+  SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
+  SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  //
+  int accTr = 0;
+  if (IsCosmicEvent()) {
+    fStat[kInpStat][kEventCosm]++;
+    int ntr = esdEv->GetNumberOfCosmicTracks();
+    for (int itr=0;itr<ntr;itr++) {
+      accTr += ProcessTrack(esdEv->GetCosmicTrack(itr));      
+    }
+    if (accTr) fStat[kAccStat][kEventCosm]++;
+  }
+  else {
+    fStat[kInpStat][kEventColl]++;
+    int ntr = esdEv->GetNumberOfTracks();
+    for (int itr=0;itr<ntr;itr++) {
+      accTr += ProcessTrack(esdEv->GetTrack(itr));      
+    }
+    if (accTr) fStat[kAccStat][kEventColl]++;
+  }    
+  //
+  return kTRUE;
+}
+
+//_________________________________________________________
 Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
 {
   // process single track
+  //
+  fStat[kInpStat][kTrackColl]++;
+  fESDTrack[0] = esdTr;
+  fESDTrack[1] = 0;
   //
   int nPnt = 0;
   const AliESDfriendTrack* trF = esdTr->GetFriendTrack();
@@ -205,7 +260,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   //
   fAlgTrack->Set(esdTr->GetX(),esdTr->GetAlpha(),esdTr->GetParameter(),esdTr->GetCovariance());
   fAlgTrack->CopyFrom(esdTr);
-  fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
+  fAlgTrack->SetFieldON( GetFieldOn() );
   fAlgTrack->SortPoints();
   //
   // at this stage the points are sorted from maxX to minX, the latter corresponding to
@@ -227,8 +282,9 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   if (!fAlgTrack->CalcResiduals()) return kFALSE;
   if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
-  fMPRecord->Clear();
-  if (!fMPRecord->FillTrack(fAlgTrack)) return kFALSE;
+  if (!StoreProcessedTrack()) return kFALSE;
+  //
+  fStat[kAccStat][kTrackColl]++;
   //
   return kTRUE;
 }
@@ -238,8 +294,10 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
 {
   // process single cosmic track
   //
+  fStat[kInpStat][kTrackCosm]++;
   int nPnt = 0;
-  const AliESDtrack*        trCosmE[kNCosmLegs]  = {0};
+  fESDTrack[0] = 0;
+  fESDTrack[1] = 0;
   //
   for (int leg=kNCosmLegs;leg--;) {
     const AliESDtrack* esdTr = 
@@ -250,10 +308,10 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
     const AliTrackPointArray* trPoints = trF->GetTrackPointArray();
     if (!trPoints || (nPnt+=trPoints->GetNPoints())<1) return kFALSE;
     //
-    trCosmE[leg] = esdTr;
+    fESDTrack[leg] = esdTr;
   }
   //
-  UInt_t detAcc = AcceptTrack(trCosmE);
+  UInt_t detAcc = AcceptTrack(fESDTrack);
   if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE;
   //
   ResetDetectors();
@@ -274,7 +332,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
       det=GetDetectorByDetID(idet);
       //
       // upper leg points marked as the track goes in inverse direction
-      if (!det->ProcessPoints(trCosmE[leg],fAlgTrack, leg==kCosmUp)) {
+      if (!det->ProcessPoints(fESDTrack[leg],fAlgTrack, leg==kCosmUp)) {
 	if (det->IsObligatory()) return kFALSE;
 	detAccL[leg] &= 0x1<<idet; // did not survive
       }
@@ -304,8 +362,21 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   if (!fAlgTrack->CalcResiduals()) return kFALSE;
   if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
+  if (!StoreProcessedTrack()) return kFALSE;
+  //
+  fStat[kAccStat][kTrackCosm]++;
+  return kTRUE;
+}
+
+//_________________________________________________________
+Bool_t AliAlgSteer::StoreProcessedTrack()
+{
+  // write alignment track
+  if (!fMPRecord) InitMPOutput();
+  //
   fMPRecord->Clear();
   if (!fMPRecord->FillTrack(fAlgTrack)) return kFALSE;
+  fMPRecTree->Fill();
   //
   return kTRUE;
 }
@@ -322,8 +393,10 @@ void AliAlgSteer::SetRunNumber(Int_t run)
 void AliAlgSteer::AcknowledgeNewRun(Int_t run)
 {
   // load needed info for new run
+  if (run==fRunNumber) return;  // nothing to do
   fRunNumber = run;
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
+  fStat[kInpStat][kRun]++;
   //
 }
 
@@ -339,15 +412,32 @@ AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t vid) const
 void AliAlgSteer::Print(const Option_t *opt) const
 {
   // print info
+  TString opts = opt; 
+  opts.ToLower();
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (det) det->Print(opt);
     else printf("Detector:%5s is not defined\n",GetDetNameByDetID(idt));
   }
-  //  
+  //
+  if (opts.Contains("stat")) PrintStatistics();
 }
 
+//________________________________________________________
+void AliAlgSteer::PrintStatistics() const
+{
+  // print processing stat
+  printf("\nProcessing Statistics\n");
+  printf("Type: ");
+  for (int i=0;i<kMaxStat;i++) printf("%s ",fgkStatName[i]); printf("\n");
+  for (int icl=0;icl<kNStatCl;icl++) {
+    printf("%s ",fgkStatClName[icl]);
+    for (int i=0;i<kMaxStat;i++) printf(Form("%%%dd ",(int)strlen(fgkStatName[i])),(int)fStat[icl][i]); printf("\n");
+  }
+}
+
+//________________________________________________________
 void AliAlgSteer::ResetDetectors()
 {
   // reset detectors for next track
@@ -452,3 +542,39 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
   return matp;
 }
 
+//____________________________________________
+void AliAlgSteer::InitMPOutput()
+{
+  // prepare MP record output
+  if (!fMPRecord) fMPRecord = new AliAlgMPRecord();
+  //
+  fMPRecFile = TFile::Open(fMPFileName.Data(),"recreate");
+  if (!fMPRecFile) AliFatalF("Failed to create output file %s",fMPFileName.Data());
+  //
+  fMPRecTree = new TTree("mpTree","MPrecord Tree");
+  fMPRecTree->Branch("mprec","AliAlgMPRecord",&fMPRecord);
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::CloseMPOutput()
+{
+  // close output
+  if (!fMPRecFile) return;
+  fMPRecFile->cd();
+  fMPRecTree->Write();
+  delete fMPRecTree;
+  fMPRecTree = 0;
+  fMPRecFile->Close();
+  delete fMPRecFile;
+  fMPRecFile = 0;
+}
+
+//____________________________________________
+void AliAlgSteer::SetMPRecFileName(const char* name) 
+{
+  // set output file name
+  fMPFileName = name; 
+  if (fMPFileName.IsNull()) fMPFileName = "mpRecord.root"; 
+  //
+}

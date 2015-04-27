@@ -39,8 +39,8 @@ class AliAlgMPRecord : public TObject
   //
   Int_t        fTrackID;         // track in the event
   UInt_t       fTimeStamp;       // event time stamp
-  Short_t      fNResid;          // number of residuals for the track (=2 npoints)
-  Short_t      fNVarLoc;         // number of local variables for the track
+  Int_t        fNResid;          // number of residuals for the track (=2 npoints)
+  Int_t        fNVarLoc;         // number of local variables for the track
   Int_t        fNVarGlo;         // number of global variables defined
   Int_t        fNDLocTot;        // total number of non-zero local derivatives
   Int_t        fNDGloTot;        // total number of non-zero global derivatives
