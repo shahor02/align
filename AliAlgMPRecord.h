@@ -56,8 +56,8 @@ class AliAlgMPRecord : public TObject
   Double32_t*  fDGlo;            //[fNDGloTot] non-0 global derivatives
   //
   // aux info
-  Short_t      fNResidBook;      //! number of slots booked for residuals
-  Short_t      fNDLocTotBook;    //! number of slots booked for local derivatives
+  Int_t        fNResidBook;      //! number of slots booked for residuals
+  Int_t        fNDLocTotBook;    //! number of slots booked for local derivatives
   Int_t        fNDGloTotBook;    //! number of slots booked for global derivatives
   //
   ClassDef(AliAlgMPRecord,1);
