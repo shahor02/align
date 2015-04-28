@@ -29,7 +29,7 @@ AliAlgSteer * algSteer = 0;
 void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
-  LoadEvent(evID);
+  LoadEvent(evID>=0 ? evID : 0);
   esdEv->InitMagneticField();
   int run = esdEv->GetRunNumber();
   int nEv = esdTree->GetEntries();
@@ -123,12 +123,19 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   }
   //
   */
-  for (int iev=0;iev<nEv;iev++) {
+  int evFirst=0,evLast = esdTree->GetEntries()-1;
+  if (evID>0) {
+    evFirst = evID;
+    evLast  = evID;    
+  }
+  for (int iev=evFirst;iev<=evLast;iev++) {
     LoadEvent(iev);
     algSteer->ProcessEvent(esdEv);
   }
   algSteer->CloseMPOutput();
+
   algSteer->Print("stat");
+
 }
 
 //-----------------------------------------------------------------

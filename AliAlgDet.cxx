@@ -325,3 +325,10 @@ void AliAlgDet::SetAddError(double sigy, double sigz)
   //
 }
 
+//____________________________________________
+void AliAlgDet::SetObligatory(Bool_t v)
+{
+  // mark detector presence obligatory in the track
+  fObligatory = v;
+  fAlgSteer->SetObligatoryDetector(GetDetID(),v);
+}

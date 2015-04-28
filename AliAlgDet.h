@@ -70,7 +70,7 @@ class AliAlgDet : public TNamed
   void      SetNPointsSel(Int_t n)                        {fNPointsSel = n;}
   Int_t     GetNPointsSel()                         const {return fNPointsSel;}
   Bool_t    IsObligatory()                          const {return fObligatory;}
-  void      SetObligatory(Bool_t v=kTRUE)                 {fObligatory = v;}
+  void      SetObligatory(Bool_t v=kTRUE);
   //
  protected:
   void     SortSensors();

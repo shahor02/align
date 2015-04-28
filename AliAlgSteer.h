@@ -62,6 +62,11 @@ class AliAlgSteer : public TObject
   void     SetEtaMax(double eta=1.5)                            {fEtaMax = eta;}  
   Int_t    GetMinDetAcc()                                 const {return fMinDetAcc;}
   void     SetMinDetAcc(Int_t n)                                {fMinDetAcc=n;}
+  Bool_t   CheckDetectorPattern(UInt_t patt)              const;
+  void     SetObligatoryDetector(Int_t detID, Bool_t v=kTRUE);
+  void     SetEventSpeciiSelection(UInt_t sel)                  {fSelEventSpecii = sel;}
+  UInt_t   GetEventSpeciiSelection()                      const {return fSelEventSpecii;}
+
   //
   //----------------------------------------
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)&fRefPoint;}
@@ -71,8 +76,8 @@ class AliAlgSteer : public TObject
   Bool_t  ProcessEvent(const AliESDEvent* esdEv); 
   Bool_t  ProcessTrack(const AliESDtrack* esdTr);
   Bool_t  ProcessTrack(const AliESDCosmicTrack* esdCTr);
-  UInt_t  AcceptTrack(const AliESDtrack* esdTr)            const;
-  UInt_t  AcceptTrack(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
+  UInt_t  AcceptTrack(const AliESDtrack* esdTr, Bool_t strict=kTRUE)    const;
+  UInt_t  AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
@@ -110,6 +115,9 @@ class AliAlgSteer : public TObject
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
   //  
   // Track selection
+  UInt_t        fSelEventSpecii;                          // consider only these event specii
+  UInt_t        fObligatoryDetPattern;                    // pattern of obligatory detectors
+  Bool_t        fCosmicSelStrict;                         // if true, each cosmic track leg selected like separate track
   Int_t         fMinDetAcc;                               // min number of detector required in track
   Double_t      fPtMin;                                   // min pT of tracks to consider
   Double_t      fEtaMax;                                  // eta cut on tracks

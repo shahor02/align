@@ -144,10 +144,19 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params)
   int np = GetNPoints();
   //
   // collision track or cosmic lower leg
-  if (!CalcResidDeriv(params,fNeedInv[0],GetInnerPointID(),0)) return kFALSE;
+  if (!CalcResidDeriv(params,fNeedInv[0],GetInnerPointID(),0)) {
+#if DEBUG>3
+    AliWarning("Failed on derivatives calculation 0");
+#endif
+    return kFALSE;
+  }
   //
   if (IsCosmic()) { // cosmic upper leg
-    if (!CalcResidDeriv(params,fNeedInv[1],GetInnerPointID()+1,np-1)) return kFALSE;
+    if (!CalcResidDeriv(params,fNeedInv[1],GetInnerPointID()+1,np-1)) {
+#if DEBUG>3
+      AliWarning("Failed on derivatives calculation 0");
+#endif
+    }
   } 
   //
   SetDerivDone();
@@ -226,7 +235,13 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
     AliAlgPoint* pnt = GetPoint(ip);
     //
     // global derivatives at this point
-    if (pnt->ContainsMeasurement() && !CalcResidDerivGlo(pnt)) return kFALSE; 
+    if (pnt->ContainsMeasurement() && !CalcResidDerivGlo(pnt)) {
+ #if DEBUG>3
+      AliWarningF("Failed on global derivatives calculation at point %d",ip);
+      pnt->Print("meas");
+#endif     
+      return kFALSE; 
+    }
     //
     if (!pnt->ContainsMaterial()) continue;
     //
@@ -367,11 +382,21 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   fChi2 = 0;
   //
   // collision track or cosmic lower leg
-  if (!CalcResiduals(params,fNeedInv[0],GetInnerPointID(),0)) return kFALSE;
+  if (!CalcResiduals(params,fNeedInv[0],GetInnerPointID(),0)) {
+#if DEBUG>3
+    AliWarning("Failed on residuals calculation 0");
+#endif
+    return kFALSE;
+  }
   //
   if (IsCosmic()) { // cosmic upper leg
     fChi2CosmUp = -fChi2;
-    if (!CalcResiduals(params,fNeedInv[1],GetInnerPointID()+1,np-1)) return kFALSE;
+    if (!CalcResiduals(params,fNeedInv[1],GetInnerPointID()+1,np-1)) {
+#if DEBUG>3
+    AliWarning("Failed on residuals calculation 1");
+#endif
+      return kFALSE;
+    }
     fChi2CosmUp += fChi2;
   }
   //
@@ -438,7 +463,9 @@ Bool_t AliAlgTrack::PropagateParamToPoint(AliExternalTrackParam* tr, int nTr, co
   for (int itr=nTr;itr--;) {
     if (!PropagateParamToPoint(tr[itr],pnt)) {
 #if DEBUG>3
-      AliErrorF("Failed on clone %d",itr);
+      AliErrorF("Failed on clone %d propagation",itr);
+      tr[itr].Print();
+      pnt->Print("meas mat");
 #endif
       return kFALSE;
     }
@@ -506,7 +533,10 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   // propagate tracks to the point. If matCor is true, then material corrections will be applied.
   // if matPar pointer is provided, it will be filled by total x2x0 and signed xrho
   if (!tr.Rotate(pnt->GetAlphaSens())) {
-    AliDebug(5,Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
+#if DEBUG>3
+    AliWarning(Form("Failed to rotate to alpha=%f",pnt->GetAlphaSens()));
+    tr.Print();
+#endif
     return kFALSE;
   }
   //
@@ -533,27 +563,33 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
     if (GetFieldON()) {
       if (pnt->GetUseBzOnly()) {
 	if (!tr.PropagateTo(xToGo,AliTrackerBase::GetBz(xyz0))) {
-	  AliDebug(5,Form("Failed to propagate(BZ) to X=%f",xToGo));
+#if DEBUG>3
+	  AliWarningF("Failed to propagate(BZ) to X=%f",xToGo);
+	  tr.Print();
+#endif
 	  return kFALSE;
 	}
       }
       else {
 	AliTrackerBase::GetBxByBz(xyz0,bxyz);
 	if (!tr.PropagateToBxByBz(xToGo,bxyz)) {
-	  AliDebug(5,Form("Failed to propagate(BXYZ) to X=%f",xToGo));
+#if DEBUG>3
+	  AliWarningF("Failed to propagate(BXYZ) to X=%f",xToGo);
+#endif
 	  return kFALSE;
 	}
       }
     }    
     else { // straigth line propagation
       if ( !tr.PropagateTo(xToGo,0) ) {
-	AliDebug(5,Form("Failed to propagate(B=0) to X=%f",xToGo));
+#if DEBUG>3
+	AliWarningF("Failed to propagate(B=0) to X=%f",xToGo);
+#endif
 	return kFALSE;
       }
     }
     //
     if (queryXYZ) {
-      //      printf("-> At %f (%f)\n", tr.GetX(), xToGo);      
       tr.GetXYZ(xyz1);
       if (matCor) {
 	AliTrackerBase::MeanMaterialBudget(xyz0,xyz1,matarr);
@@ -561,11 +597,13 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
         if (alongTrackDir) xrho = -xrho; // if we go along track direction, energy correction is negative
 	x2X0Tot += xx0;
 	xrhoTot += xrho;
-	//if (xx0>1e-5) {
-	//  printf("    MB: {%.2f %.2f %.2f}->{%.2f %.2f %.2f} [%e %e] -> [%e %e]\n",
-	//	 xyz0[0],xyz0[1],xyz0[2], xyz1[0],xyz1[1],xyz1[2],  xx0,xrho, x2X0Tot,xrhoTot);
-	//}
-	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) return kFALSE;
+	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) {
+#if DEBUG>3
+	AliWarningF("Failed on CorrectForMeanMaterial(%f,%f,%f)",xx0,xrho,fMass);
+	tr.Print();
+#endif
+	  return kFALSE;
+	}
       }
       for (int l=3;l--;) xyz0[l] = xyz1[l];
     }
@@ -689,7 +727,8 @@ Bool_t AliAlgTrack::ApplyMatCorr(AliExternalTrackParam* trSet, int ntr, const Do
   for (int itr=ntr;itr--;) {
     if (!ApplyMatCorr(trSet[itr],corr)) {
 #if DEBUG>3
-      AliErrorF("Failed on clone %d",itr);
+      AliErrorF("Failed on clone %d materials",itr);
+      trSet[itr].Print();
 #endif      
       return kFALSE;
     }
@@ -819,13 +858,25 @@ Bool_t AliAlgTrack::IniFit()
   // and from outer point of lower leg to outer point of upper leg for the cosmic track 
   //
   // the fit will always start from the outgoing track in inward direction
-  if (!FitLeg(trc,0,GetInnerPointID(),fNeedInv[0])) return kFALSE; // collision track or cosmic lower leg
+  if (!FitLeg(trc,0,GetInnerPointID(),fNeedInv[0])) {
+#if DEBUG>3
+    AliWarning("Failed FitLeg 0");
+    trc.Print();
+#endif
+    return kFALSE; // collision track or cosmic lower leg
+  }
   //
   //  printf("Lower leg: %d %d\n",0,GetInnerPointID()); trc.Print();
   //
   if (IsCosmic()) {
     AliExternalTrackParam trcU = trc;
-    if (!FitLeg(trcU,GetNPoints()-1,GetInnerPointID()+1,fNeedInv[1])) return kFALSE; //fit upper leg of cosmic track
+    if (!FitLeg(trcU,GetNPoints()-1,GetInnerPointID()+1,fNeedInv[1])) {  //fit upper leg of cosmic track
+#if DEBUG>3
+      AliWarning("Failed FitLeg 0");
+      trc.Print();
+#endif
+      return kFALSE; // collision track or cosmic lower leg
+    }
     //
     // propagate to reference point, which is the inner point of lower leg
     const AliAlgPoint* refP = GetPoint(GetInnerPointID());
@@ -929,8 +980,20 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
     trc.Invert();
     //    printf("After Inv "); trc.Print();
   }
-  if (!trc.RotateParamOnly(p0->GetAlphaSens())) return kFALSE;
-  if (!trc.PropagateParamOnlyTo(p0->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) return kFALSE;
+  if (!trc.RotateParamOnly(p0->GetAlphaSens())) {
+#if DEBUG>3
+    AliWarningF("Failed on RotateParamOnly to %f",p0->GetAlphaSens());
+    trc.Print();
+#endif
+    return kFALSE;
+  }
+  if (!trc.PropagateParamOnlyTo(p0->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) {
+#if DEBUG>3
+    AliWarningF("Failed on PropagateParamOnlyTo to %f",p0->GetXPoint()+kOverShootX);
+    trc.Print();
+#endif
+    return kFALSE;
+  }
   double* cov = (double*)trc.GetCovariance();
   memcpy(cov,kIniErr,15*sizeof(double));
   cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
@@ -953,7 +1016,13 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);
-      if (!trc.Update(yz,errYZ)) return kFALSE;
+      if (!trc.Update(yz,errYZ)) {
+#if DEBUG>3
+	AliWarningF("Failed on Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
+	trc.Print();
+#endif
+	return kFALSE;
+      }
       fChi2 += chi;
     }
   }

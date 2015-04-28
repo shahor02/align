@@ -54,6 +54,9 @@ AliAlgSteer::AliAlgSteer()
   ,fFieldOn(kFALSE)
   ,fCosmicEvent(kFALSE)
   ,fAlgTrack(0)
+  ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult)
+  ,fObligatoryDetPattern(0)
+  ,fCosmicSelStrict(kFALSE)
   ,fMinDetAcc(0)
   ,fPtMin(0.3)
   ,fEtaMax(1.5)
@@ -154,39 +157,50 @@ void AliAlgSteer::AddDetector(AliAlgDet* det)
   AddDetector(det->GetDetID(), det);
 }
 
+//_________________________________________________________
+Bool_t AliAlgSteer::CheckDetectorPattern(UInt_t patt) const 
+{
+  //validate detector pattern
+  return (patt&fObligatoryDetPattern)==fObligatoryDetPattern && NumberOfBitsSet(patt)>=fMinDetAcc;
+}
 
 //_________________________________________________________
-UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr) const
+UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr, Bool_t strict) const
 {
   // decide if the track should be processed
   AliAlgDet* det = 0;
   UInt_t detAcc = 0;
-  if (fFieldOn && esdTr->Pt()<fPtMin) return kFALSE;
-  if (Abs(esdTr->Eta())>fEtaMax)      return kFALSE;
+  if (fFieldOn && esdTr->Pt()<fPtMin) return 0;
+  if (Abs(esdTr->Eta())>fEtaMax)      return 0;
   //
   for (int idet=0;idet<kNDetectors;idet++) {
     if (!(det=GetDetectorByDetID(idet))) continue;
     if (!det->AcceptTrack(esdTr)) {
-      if (det->IsObligatory()) return 0;
+      if (strict && det->IsObligatory()) return 0;
       else continue;
     }
     //
     detAcc |= 0x1<<idet;
   }
+  if (NumberOfBitsSet(detAcc)<fMinDetAcc) return 0;
   return detAcc;
   //
 }
 
 //_________________________________________________________
-UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdPairCosm[kNCosmLegs]) const
+UInt_t AliAlgSteer::AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const
 {
   // decide if the pair of tracks making cosmic track should be processed
-  UInt_t detAcc = 0;
+  UInt_t detAcc=0,detAccLeg;
   for (int i=kNCosmLegs;i--;) {
-    UInt_t nd = AcceptTrack(esdPairCosm[i]);
-    if (!nd) return 0;
-    detAcc |= nd;
+    detAccLeg = AcceptTrack(esdPairCosm[i],fCosmicSelStrict); // missing obligatory detectors in one leg might be allowed
+    if (!detAccLeg) return 0;
+    detAcc |= detAccLeg;
   }
+  if (fCosmicSelStrict) return detAcc;
+  //
+  // for non-stric selection check convolution of detector presence
+  if (!CheckDetectorPattern(detAcc)) return 0;
   return detAcc;
   //
 }
@@ -195,9 +209,14 @@ UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdPairCosm[kNCosmLegs]) cons
 Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 {
   // process event
+  AliInfoF("Processing event %d of ev.specie %d",esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie());
+  if (!(esdEv->GetEventSpecie()&fSelEventSpecii)) {
+    AliInfoF("Reject: specie does not match, allowed %0x",fSelEventSpecii);
+    return kFALSE;
+  }
   SetESDEvent(esdEv);
-  SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   //
   int accTr = 0;
   if (IsCosmicEvent()) {
@@ -236,7 +255,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   if (!trPoints || (nPnt=trPoints->GetNPoints())<1) return kFALSE;
   //
   UInt_t detAcc = AcceptTrack(esdTr);
-  if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE;
+  if (!detAcc) return kFALSE;
   //
   ResetDetectors();
   fAlgTrack->Clear();
@@ -252,7 +271,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     if (!(detAcc&(0x1<<idet))) continue;
     det=GetDetectorByDetID(idet);
     if (!det->ProcessPoints(esdTr, fAlgTrack)) {
-      detAcc &= 0x1<<idet; // did not survive
+      detAcc &= ~(0x1<<idet); // did not survive, suppress detector in the track
       if (det->IsObligatory()) return kFALSE;
     }
     if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE; // abandon track
@@ -311,8 +330,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
     fESDTrack[leg] = esdTr;
   }
   //
-  UInt_t detAcc = AcceptTrack(fESDTrack);
-  if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE;
+  UInt_t detAcc = AcceptTrackCosmic(fESDTrack);
+  if (!detAcc) return kFALSE;
   //
   ResetDetectors();
   fAlgTrack->Clear();
@@ -325,20 +344,23 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   fAlgTrack->AddPoint(&fRefPoint); // reference point which the track will refer to
   //
   AliAlgDet* det = 0;
-  UInt_t detAccL[2] = {detAcc,detAcc};
+  UInt_t detAccLeg[2] = {detAcc,detAcc};
   for (int leg=kNCosmLegs;leg--;) {
     for (int idet=0;idet<kNDetectors;idet++) {
-      if (!(detAccL[leg]&(0x1<<idet))) continue;
-      det=GetDetectorByDetID(idet);
+      if (!(detAccLeg[leg]&(0x1<<idet))) continue;
+      det = GetDetectorByDetID(idet);
       //
       // upper leg points marked as the track goes in inverse direction
       if (!det->ProcessPoints(fESDTrack[leg],fAlgTrack, leg==kCosmUp)) {
-	if (det->IsObligatory()) return kFALSE;
-	detAccL[leg] &= 0x1<<idet; // did not survive
+	if (fCosmicSelStrict && det->IsObligatory()) return kFALSE;
+	detAccLeg[leg] &= ~(0x1<<idet); // did not survive, suppress detector
       }
-      if (NumberOfBitsSet(detAccL[leg])<fMinDetAcc) return kFALSE; // abandon track
+      if (NumberOfBitsSet(detAccLeg[leg])<fMinDetAcc) return kFALSE; // abandon track
     }
   }
+  // last check on legs-combined patter
+  if (!CheckDetectorPattern(detAccLeg[0]&detAccLeg[1])) return kFALSE;
+  //
   fAlgTrack->CopyFrom(cosmTr);
   fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
   fAlgTrack->SortPoints();
@@ -568,6 +590,8 @@ void AliAlgSteer::CloseMPOutput()
   fMPRecFile->Close();
   delete fMPRecFile;
   fMPRecFile = 0;
+  delete fMPRecord;
+  fMPRecord = 0;
 }
 
 //____________________________________________
@@ -576,5 +600,19 @@ void AliAlgSteer::SetMPRecFileName(const char* name)
   // set output file name
   fMPFileName = name; 
   if (fMPFileName.IsNull()) fMPFileName = "mpRecord.root"; 
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
+{
+  // mark detector presence obligatory in the track
+  AliAlgDet* det = GetDetectorByDetID(detID);
+  if (!det) {
+    AliErrorF("Detector %d is not defined",detID);
+  }
+  if (v) fObligatoryDetPattern |=  0x1<<v;
+  else   fObligatoryDetPattern &=~(0x1<<v);
+  if (det->IsObligatory()!=v) det->SetObligatory(v);
   //
 }
