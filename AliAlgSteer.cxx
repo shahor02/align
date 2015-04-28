@@ -211,7 +211,7 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   // process event
   AliInfoF("Processing event %d of ev.specie %d",esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie());
   if (!(esdEv->GetEventSpecie()&fSelEventSpecii)) {
-    AliInfoF("Reject: specie does not match, allowed %0x",fSelEventSpecii);
+    AliInfoF("Reject: specie does not match, allowed 0x%0x",fSelEventSpecii);
     return kFALSE;
   }
   SetESDEvent(esdEv);
