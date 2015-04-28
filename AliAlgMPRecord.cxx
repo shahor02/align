@@ -57,12 +57,11 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
     AliError("Track derivatives are not yet evaluated");
     return kFALSE;
   }
-
   fNVarLoc = trc->GetNLocPar();    // number of local degrees of freedom in the track
   fNResid = 0;
   fNDLocTot = 0;
   fNDGloTot = 0;
-
+  SetCosmic(trc->IsCosmic());
   // 1) check sizes for buffers, expand if needed
   int np = trc->GetNPoints();
   int nres  = 0;
@@ -196,6 +195,8 @@ void AliAlgMPRecord::Resize(Int_t nresid, Int_t nloc, Int_t nglo)
 void AliAlgMPRecord::Clear(const Option_t *)
 {
   // reset record
+  TObject::Clear();
+  ResetBit(0xffffffff);
   fNResid = 0;
   fNVarLoc = 0;
   fNVarGlo = 0;

@@ -7,26 +7,30 @@ class AliAlgTrack;
 class AliAlgMPRecord : public TObject
 {
  public:
+  enum {kCosmicBit=BIT(14)};
+  //
   AliAlgMPRecord();
   virtual ~AliAlgMPRecord();
   //
-  Int_t        GetRun()         const {return GetUniqueID();}
-  void         SetRun(Int_t r)        {SetUniqueID(r);}
-  UInt_t       GetTimeStamp()   const {return fTimeStamp;}
-  void         SetTimeStamp(UInt_t t) {fTimeStamp = t;}
-  Int_t        GetTrackID()     const {return fTrackID;}
-  void         SetTrackID(UInt_t t)   {fTrackID = t;}
+  Int_t        GetRun()                const {return GetUniqueID();}
+  void         SetRun(Int_t r)               {SetUniqueID(r);}
+  UInt_t       GetTimeStamp()          const {return fTimeStamp;}
+  void         SetTimeStamp(UInt_t t)        {fTimeStamp = t;}
+  UInt_t       GetTrackID()            const {return fTrackID;}
+  void         SetTrackID(UInt_t t)          {fTrackID = t;}
+  Bool_t       IsCosmic()              const {return TestBit(kCosmicBit);}
+  void         SetCosmic(Bool_t v=kTRUE)     {SetBit(kCosmicBit);}
   //
-  Int_t        GetNVarGlo()     const {return fNVarGlo;}
-  void         SetNVarGlo(int n)      {fNVarGlo = n;}
+  Int_t        GetNVarGlo()            const {return fNVarGlo;}
+  void         SetNVarGlo(int n)             {fNVarGlo = n;}
   //
-  Int_t        GetNResid()      const {return fNResid;}
-  Int_t        GetNVarLoc()     const {return fNVarLoc;}
+  Int_t        GetNResid()             const {return fNResid;}
+  Int_t        GetNVarLoc()            const {return fNVarLoc;}
   //
-  Int_t        GetNDLoc(int id) const {return fNDLoc[id];}
-  Int_t        GetNDGlo(int id) const {return fNDGlo[id];}
-  Double_t     GetResid(int id) const {return fResid[id];}
-  Double_t     GetResErr(int id) const {return fResErr[id];}
+  Int_t        GetNDLoc(int id)        const {return fNDLoc[id];}
+  Int_t        GetNDGlo(int id)        const {return fNDGlo[id];}
+  Double_t     GetResid(int id)        const {return fResid[id];}
+  Double_t     GetResErr(int id)       const {return fResErr[id];}
   //
   //
   Bool_t       FillTrack(const AliAlgTrack* trc);
@@ -37,7 +41,7 @@ class AliAlgMPRecord : public TObject
   virtual void Print(const Option_t *opt="") const;
  protected:
   //
-  Int_t        fTrackID;         // track in the event
+  UInt_t       fTrackID;         // track in the event
   UInt_t       fTimeStamp;       // event time stamp
   Int_t        fNResid;          // number of residuals for the track (=2 npoints)
   Int_t        fNVarLoc;         // number of local variables for the track

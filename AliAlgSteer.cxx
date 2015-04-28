@@ -26,6 +26,7 @@
 #include "AliESDCosmicTrack.h"
 #include "AliESDtrack.h"
 #include "AliESDEvent.h"
+#include "AliESDVertex.h"
 #include "AliRecoParam.h"
 #include <TMath.h>
 #include <TString.h>
@@ -60,9 +61,13 @@ AliAlgSteer::AliAlgSteer()
   ,fMinDetAcc(0)
   ,fPtMin(0.3)
   ,fEtaMax(1.5)
+  ,fVtxMinCont(-1)
+  ,fVtxMaxCont(-1)
+  ,fVtxMinContCS(10)
   ,fDOFPars(0)
   ,fRefPoint()
   ,fESDEvent(0)
+  ,fVertex(0)
   ,fMPRecord(0)
   ,fMPRecTree(0)
   ,fMPRecFile(0)
@@ -214,9 +219,11 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
     AliInfoF("Reject: specie does not match, allowed 0x%0x",fSelEventSpecii);
     return kFALSE;
   }
+  //
   SetESDEvent(esdEv);
   SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
+  if (!IsCosmicEvent() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
   //
   int accTr = 0;
   if (IsCosmicEvent()) {
@@ -305,6 +312,31 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   //
   fStat[kAccStat][kTrackColl]++;
   //
+  return kTRUE;
+}
+
+//_________________________________________________________
+Bool_t AliAlgSteer::CheckSetVertex(const AliESDVertex *vtx)
+{ 
+  // vertex selection/constraint check
+  if (!vtx) {
+    fVertex = 0;
+    return kTRUE;
+  }
+  int ncont = vtx->GetNContributors();
+  if (fVtxMinCont>0 && fVtxMinCont>ncont) {
+#if DEBUG>2    
+    AliInfoF("Rejecting event with %d vertex contributors (min %d asked)",ncont,fVtxMinCont);
+#endif
+    return kFALSE;
+  }
+  if (fVtxMaxCont>0 && ncont>fVtxMaxCont) {
+#if DEBUG>2    
+    AliInfoF("Rejecting event with %d vertex contributors (max %d asked)",ncont,fVtxMaxCont);
+#endif
+    return kFALSE;
+  }
+  fVertex = (ncont>=fVtxMinContCS) ? vtx : 0; // use vertex as a constraint
   return kTRUE;
 }
 
@@ -398,6 +430,11 @@ Bool_t AliAlgSteer::StoreProcessedTrack()
   //
   fMPRecord->Clear();
   if (!fMPRecord->FillTrack(fAlgTrack)) return kFALSE;
+  fMPRecord->SetRun(fRunNumber);
+  fMPRecord->SetTimeStamp(fESDEvent->GetTimeStamp());
+  UInt_t tID = 0xffff & UInt_t(fESDTrack[0]->GetID());
+  if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
+  fMPRecord->SetTrackID(tID);
   fMPRecTree->Fill();
   //
   return kTRUE;

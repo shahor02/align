@@ -13,10 +13,12 @@
 class AliESDEvent;
 class AliESDtrack;
 class AliESDCosmicTrack;
+class AliESDVertex;
 class AliAlgDet;
 class AliAlgMPRecord;
 class TTree;
 class TFile;
+
 
 
 /*--------------------------------------------------------
@@ -62,22 +64,32 @@ class AliAlgSteer : public TObject
   void     SetEtaMax(double eta=1.5)                            {fEtaMax = eta;}  
   Int_t    GetMinDetAcc()                                 const {return fMinDetAcc;}
   void     SetMinDetAcc(Int_t n)                                {fMinDetAcc=n;}
+  Int_t    GetVtxMinCont()                                const {return fVtxMinCont;}
+  void     SetVtxMinCont(int n)                                 {fVtxMinCont = n;}
+  Int_t    GetVtxMaxCont()                                const {return fVtxMaxCont;}
+  void     SetVtxMaxCont(int n)                                 {fVtxMaxCont = n;}
+  Int_t    GetVtxMinContCS()                              const {return fVtxMinContCS;}
+  void     SetVtxMinContCS(int n)                               {fVtxMinContCS = n;}
+  //
   Bool_t   CheckDetectorPattern(UInt_t patt)              const;
   void     SetObligatoryDetector(Int_t detID, Bool_t v=kTRUE);
   void     SetEventSpeciiSelection(UInt_t sel)                  {fSelEventSpecii = sel;}
   UInt_t   GetEventSpeciiSelection()                      const {return fSelEventSpecii;}
-
+  //
+  void     SetVertex(const AliESDVertex* v)                     {fVertex = v;}
+  const AliESDVertex* GetVertex()                         const {return fVertex;}
   //
   //----------------------------------------
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)&fRefPoint;}
   //
   AliAlgMPRecord* GetMPRecord()                           const {return (AliAlgMPRecord*)fMPRecord;}
   AliAlgTrack* GetAlgTrack()                              const {return (AliAlgTrack*)fAlgTrack;}
-  Bool_t  ProcessEvent(const AliESDEvent* esdEv); 
-  Bool_t  ProcessTrack(const AliESDtrack* esdTr);
-  Bool_t  ProcessTrack(const AliESDCosmicTrack* esdCTr);
-  UInt_t  AcceptTrack(const AliESDtrack* esdTr, Bool_t strict=kTRUE)    const;
-  UInt_t  AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
+  Bool_t     ProcessEvent(const AliESDEvent* esdEv); 
+  Bool_t     ProcessTrack(const AliESDtrack* esdTr);
+  Bool_t     ProcessTrack(const AliESDCosmicTrack* esdCTr);
+  UInt_t     AcceptTrack(const AliESDtrack* esdTr, Bool_t strict=kTRUE)    const;
+  UInt_t     AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
+  Bool_t     CheckSetVertex(const AliESDVertex* vtx);
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
@@ -121,6 +133,9 @@ class AliAlgSteer : public TObject
   Int_t         fMinDetAcc;                               // min number of detector required in track
   Double_t      fPtMin;                                   // min pT of tracks to consider
   Double_t      fEtaMax;                                  // eta cut on tracks
+  Int_t         fVtxMinCont;                              // require min number of contributors in Vtx
+  Int_t         fVtxMaxCont;                              // require max number of contributors in Vtx  
+  Int_t         fVtxMinContCS;                            // min number of contributors to use as constraint
   //
   Double_t*     fDOFPars;                                 //[fNDOFs] parameters for free DOFs
   //
@@ -128,6 +143,7 @@ class AliAlgSteer : public TObject
   //
   const AliESDEvent* fESDEvent;                           //! externally set event
   const AliESDtrack* fESDTrack[kNCosmLegs];               //! externally set ESD tracks
+  const AliESDVertex* fVertex;                            //! event vertex
   //
   // statistics
   Float_t fStat[kNStatCl][kMaxStat];                      // processing statistics

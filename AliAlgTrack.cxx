@@ -58,6 +58,7 @@ AliAlgTrack::~AliAlgTrack()
 void AliAlgTrack::Clear(Option_t *)
 {
   // reset the track
+  TObject::Clear();
   ResetBit(0xffffffff);
   fPoints.Clear();
   fChi2 = fChi2CosmUp = 0;
