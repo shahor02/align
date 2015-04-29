@@ -69,7 +69,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
   int nglod = 0;
   for (int ip=np;ip--;) {
     AliAlgPoint* pnt = trc->GetPoint(ip);
-    int ngl = pnt->GetNGloDOFs();
+    int ngl = pnt->GetNGloDOFs();       // number of DOF's this point depends on
     if (pnt->ContainsMeasurement()) {
       nres    += 2;                     // every point has 2 residuals
       nlocd   += fNVarLoc+fNVarLoc;     // each residual has max fNVarLoc local derivatives

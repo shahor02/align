@@ -64,7 +64,8 @@ AliAlgSteer::AliAlgSteer()
   ,fVtxMinCont(-1)
   ,fVtxMaxCont(-1)
   ,fVtxMinContCS(10)
-  ,fDOFPars(0)
+  ,fGloParVal(0)
+  ,fGloParErr(0)
   ,fRefPoint()
   ,fESDEvent(0)
   ,fVertex(0)
@@ -90,7 +91,8 @@ AliAlgSteer::~AliAlgSteer()
   delete fMPRecord;
   //
   delete fAlgTrack;
-  delete[] fDOFPars;
+  delete[] fGloParVal;
+  delete[] fGloParErr;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
   //
 }
@@ -106,7 +108,22 @@ void AliAlgSteer::InitDetectors()
   //
   fAlgTrack = new AliAlgTrack();
   //
-  for (int i=0;i<fNDet;i++) fDetectors[i]->InitGeom();
+  int dofCnt = 0;
+  for (int i=0;i<fNDet;i++) dofCnt += fDetectors[i]->InitGeom();
+  if (!dofCnt) AliFatal("No DOFs found");
+  //
+  fGloParVal = new Float_t[dofCnt];
+  fGloParErr = new Float_t[dofCnt];
+  memset(fGloParVal,0,dofCnt*sizeof(Float_t));
+  memset(fGloParErr,0,dofCnt*sizeof(Float_t));
+  AliInfoF("Booked %d global parameters",dofCnt);
+  //
+  fNDOFs = 0;
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (det) fNDOFs += det->AssignDOFs();
+  }
+  
 }
 
 //________________________________________________________________
@@ -118,15 +135,7 @@ void AliAlgSteer::InitDOFs()
   if (done) return;
   done = kTRUE;
   //
-  fNDOFs = 0;
-  for (int i=0;i<fNDet;i++) {
-    fDetectors[i]->InitDOFs();
-    fNDOFs += fDetectors[i]->GetNDOFs();
-  }
-  if (fNDOFs) {
-    fDOFPars = new Double_t[fNDOFs];
-    memset(fDOFPars,0,fNDOFs*sizeof(double));
-  }
+  for (int i=0;i<fNDet;i++) fDetectors[i]->InitDOFs();
   //
 }
 

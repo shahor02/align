@@ -44,12 +44,13 @@ class AliAlgDet : public TNamed
   AliAlgVol*  GetVolume(Int_t id)               const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
   AliAlgVol*  GetVolume(const char* symname)    const {return (AliAlgVol*)fVolumes.FindObject(symname);}
   //
-  virtual void InitGeom();
-  virtual void InitDOFs();
-  virtual void AddVolume(AliAlgVol* vol);
-  virtual void DefineVolumes();
-  virtual void DefineMatrices();
-  virtual void Print(const Option_t *opt="")    const;
+  virtual Int_t InitGeom();
+  virtual Int_t AssignDOFs();
+  virtual void  InitDOFs();
+  virtual void  AddVolume(AliAlgVol* vol);
+  virtual void  DefineVolumes();
+  virtual void  DefineMatrices();
+  virtual void  Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
   virtual Bool_t AcceptTrack(const AliESDtrack* trc) const = 0;

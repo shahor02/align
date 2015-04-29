@@ -38,7 +38,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fVarFrame(kTRA)
   ,fX(0)
   ,fAlp(0)
-  ,fNDOFTot(0)
+  ,fNDOFs(0)
   ,fDOF(0)
   ,fNDOFGeomFree(0)
   ,fNDOFFree(0)
@@ -47,11 +47,9 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fChildren(0)
   //
   ,fNProcPoints(0)
-  ,fFirstParOffs(-1)
-  ,fParOffs(0)
+  ,fFirstParGloID(-1)
   ,fParVals(0)
   ,fParErrs(0)
-  ,fParCstr(0)
   //
   ,fMatL2G()
   ,fMatL2GOrig()
@@ -59,7 +57,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
 {
   // def c-tor
   if (symname) { // real volumes have at least geometric degrees of freedom
-    SetNDOFTot(kNDOFGeom);
+    SetNDOFs(kNDOFGeom);
   }
   SetFreeDOFPattern(fgDefGeomFree);
 }
@@ -68,10 +66,6 @@ AliAlgVol::AliAlgVol(const char* symname) :
 AliAlgVol::~AliAlgVol()
 {
   // d-tor
-  delete[] fParOffs;
-  delete[] fParVals;
-  delete[] fParErrs;
-  delete[] fParCstr;
   delete fChildren;
 }
 
@@ -167,8 +161,8 @@ void AliAlgVol::Print(const Option_t *opt) const
   opts.ToLower();
   printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f\n",
 	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp);
-  printf("     DOFs: Tot: %d Free: %d (offs: %5d) Geom: %d {",fNDOFTot,fNDOFFree,fFirstParOffs,fNDOFGeomFree);
-  for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOFGeom(DOFGeom_t(i)) ? 1:0); 
+  printf("     DOFs: Tot: %d Free: %d (offs: %5d) Geom: %d {",fNDOFs,fNDOFFree,fFirstParGloID,fNDOFGeomFree);
+  for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame\n",fgkFrameName[fVarFrame]);
   //
   if (opts.Contains("mat")) { // print matrices
@@ -271,54 +265,45 @@ void AliAlgVol::SetTrackingFrame()
 }
 
 //__________________________________________________________________
-void AliAlgVol::InitDOFs(Int_t &cntDOFs)
+void AliAlgVol::AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs)
 {
-  // initialize degrees of freedom, assign offset of the DOFS of this volume in 
-  // global array of DOFs
+  // Assigns offset of the DOFS of this volume in global array of DOFs, attaches arrays to volumes
   //
-  if (GetInitDOFsDone()) return;
-  SetFirstParOffs(cntDOFs);
-  // index allowed DOFs
-  fNDOFFree = fNDOFGeomFree = 0;
-  for (int i=0;i<kNDOFGeom;i++) { // start with standard DOF geoms
-    fParOffs[i] = -1;
-    if (!IsFreeDOFGeom(DOFGeom_t(i))) continue;
-    fParOffs[i] = fNDOFGeomFree++;
-  }
-  fNDOFFree += fNDOFGeomFree;
-  // TODO loop over other DOFs
+  fParVals = pars + cntDOFs;
+  fParErrs = errs + cntDOFs;
+  SetFirstParGloID(cntDOFs);
+  cntDOFs += fNDOFs; // increment total DOFs count
   //
-  cntDOFs += fNDOFFree; // increment total DOFs count
-  //
-  // go over childs
-  //
-  int nch = GetNChildren();
-  for (int ich=0;ich<nch;ich++) {
-    AliAlgVol* ch = GetChild(ich);
-    if (!ch->GetInitDOFsDone()) ch->InitDOFs(cntDOFs);
-  }
-  //
-  SetInitDOFsDone();
+  int nch = GetNChildren();   // go over childs
+  for (int ich=0;ich<nch;ich++) GetChild(ich)->AssignDOFs(cntDOFs,pars,errs);
   //
   return;
 }
 
 //__________________________________________________________________
-void AliAlgVol::SetNDOFTot(Int_t n)
+void AliAlgVol::InitDOFs()
+{
+  // initialize degrees of freedom
+  //
+  if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
+  fNDOFFree = fNDOFGeomFree = 0;
+  //
+  for (int i=0;i<fNDOFs;i++) { // start with standard DOF geoms
+    if (!IsFreeDOF(i)) continue;
+    fNDOFFree++;
+    if (i<kNDOFGeom) fNDOFGeomFree++;
+  }
+   
+  SetInitDOFsDone();
+  //
+}
+
+//__________________________________________________________________
+void AliAlgVol::SetNDOFs(Int_t n)
 {
   // book global degrees of freedom
   if (n<kNDOFGeom) n = kNDOFGeom;
-  fNDOFTot = n;
-  fParOffs = new Char_t[fNDOFTot];
-  fParVals = new Float_t[fNDOFTot];
-  fParErrs = new Float_t[fNDOFTot];
-  fParCstr = new Float_t[fNDOFTot];
-  for (int i=fNDOFTot;i--;) {
-    fParOffs[i] = -1;
-    fParVals[i] = 0;
-    fParErrs[i] = 0;
-    fParCstr[i] = 0;
-  }
+  fNDOFs = n;
 }
 
 //__________________________________________________________________
@@ -330,4 +315,11 @@ void AliAlgVol::AddChild(AliAlgVol* ch)
     fChildren->SetOwner(kFALSE);
   }
   fChildren->AddLast(ch);
+}
+
+//__________________________________________________________________
+void AliAlgVol::SetParVals(Double_t *vl,Int_t npar)
+{
+  // set parameters
+  for (int i=npar;i--;) fParVals[i] = vl[i];
 }

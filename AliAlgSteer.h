@@ -80,6 +80,9 @@ class AliAlgSteer : public TObject
   const AliESDVertex* GetVertex()                         const {return fVertex;}
   //
   //----------------------------------------
+  Float_t*   GetGloParVal()                               const {return (Float_t*)fGloParVal;}
+  Float_t*   GetGloParErr()                               const {return (Float_t*)fGloParErr;}
+  //
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)&fRefPoint;}
   //
   AliAlgMPRecord* GetMPRecord()                           const {return (AliAlgMPRecord*)fMPRecord;}
@@ -97,8 +100,8 @@ class AliAlgSteer : public TObject
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
   // output related
-  void SetMPRecFileName(const char* name="mpRecord.root");
-  const char* GetMPRecFileName()                          const {return fMPFileName.Data();}
+  void   SetMPRecFileName(const char* name="mpRecord.root");
+  const  char* GetMPRecFileName()                          const {return fMPFileName.Data();}
   void   CloseMPOutput();
   void   InitMPOutput();
   Bool_t StoreProcessedTrack();
@@ -137,7 +140,8 @@ class AliAlgSteer : public TObject
   Int_t         fVtxMaxCont;                              // require max number of contributors in Vtx  
   Int_t         fVtxMinContCS;                            // min number of contributors to use as constraint
   //
-  Double_t*     fDOFPars;                                 //[fNDOFs] parameters for free DOFs
+  Float_t*      fGloParVal;                               //[fNDOFs] parameters for free DOFs
+  Float_t*      fGloParErr;                               //[fNDOFs] parameters for free DOFs
   //
   AliAlgPoint   fRefPoint;                                //! reference point for track definition
   //

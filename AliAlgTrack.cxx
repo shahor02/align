@@ -340,7 +340,7 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
     CheckExpandDerGloBuffer(fNGloPar+nfree);  // if needed, expand derivatives buffer
     //
     for (int ip=0;ip<AliAlgVol::kNDOFGeom;ip++) { // we need only free parameters
-      if (!vol->IsFreeDOFGeom(AliAlgVol::DOFGeom_t(ip))) continue;
+      if (!vol->IsFreeDOF(ip)) continue;
       double* dXYZ = &derGeom[ip*3];   // tracking XYZ derivatives over this parameter
       // residual is defined as diagonalized track_estimate - measured Y,Z in tracking frame
       // where the track is evaluated at measured X! 
@@ -353,7 +353,7 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
 				dXYZ[AliAlgPoint::kX]*slpZ - dXYZ[AliAlgPoint::kZ],
 				fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
       // and register global ID of varied parameter
-      fGloParIDA[fNGloPar] = vol->GetParGloOffsNC(ip);
+      fGloParIDA[fNGloPar] = vol->GetParGloID(ip);
       fNGloPar++;
     }
     //

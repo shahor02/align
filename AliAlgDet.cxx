@@ -247,33 +247,56 @@ void AliAlgDet::SortSensors()
 }
 
 //_________________________________________________________
-void AliAlgDet::InitGeom()
+Int_t AliAlgDet::InitGeom()
 {
-  // define hiearchy, initialize matrices
-  if (GetInitGeomDone()) return;
+  // define hiearchy, initialize matrices, return number of global parameters
+  if (GetInitGeomDone()) return 0;
   //
   DefineVolumes();
   SortSensors();    // VolID's must be in increasing order
   DefineMatrices();
   //
+  // calculate number of global parameters
+  int nvol = GetNVolumes();
+  fNDOFs = 0;
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    fNDOFs += vol->GetNDOFs();
+  }
+  //
   SetInitGeomDone();
+  return fNDOFs;
+}
+
+//_________________________________________________________
+Int_t AliAlgDet::AssignDOFs()
+{
+  // assign DOFs IDs, parameters
+  //
+  int gloCount0(fAlgSteer->GetNDOFs()), gloCount(fAlgSteer->GetNDOFs());
+  Float_t* pars = fAlgSteer->GetGloParVal(); 
+  Float_t* errs = fAlgSteer->GetGloParErr(); 
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    // call init for root level volumes, they will take care of their children
+    if (!vol->GetParent()) vol->AssignDOFs(gloCount,pars,errs);
+  }
+  //
+  if (fNDOFs != gloCount-gloCount0) AliFatalF("Mismatch between declared %d and initialized %d DOFs for %s",
+					      fNDOFs,gloCount-gloCount0,GetName());
+  
+  return fNDOFs;
 }
 
 //_________________________________________________________
 void AliAlgDet::InitDOFs()
 {
   // initialize free parameters
-  if (GetInitDOFsDone()) return;
+  if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
   //
-  int gloCount0(fAlgSteer->GetNDOFs()), gloCount(fAlgSteer->GetNDOFs());
   int nvol = GetNVolumes();
-  for (int iv=0;iv<nvol;iv++) {
-    AliAlgVol *vol = GetVolume(iv);
-    // call init for root level volumes, they will take care of their children
-    if (!vol->GetParent() && !vol->GetInitDOFsDone()) vol->InitDOFs(gloCount);
-  }
-  //
-  fNDOFs = gloCount-gloCount0;
+  for (int iv=0;iv<nvol;iv++) GetVolume(iv)->InitDOFs();
   //
   SetInitDOFsDone();
   return;
