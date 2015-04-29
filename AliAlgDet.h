@@ -3,6 +3,7 @@
 
 #include <TNamed.h>
 #include <TObjArray.h>
+#include <stdio.h>
 class AliESDtrack;
 class AliAlgTrack;
 class AliAlgPoint;
@@ -72,6 +73,8 @@ class AliAlgDet : public TNamed
   Int_t     GetNPointsSel()                         const {return fNPointsSel;}
   Bool_t    IsObligatory()                          const {return fObligatory;}
   void      SetObligatory(Bool_t v=kTRUE);
+  //
+  void      WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
   //
  protected:
   void     SortSensors();

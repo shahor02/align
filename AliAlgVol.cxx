@@ -26,6 +26,7 @@
 ClassImp(AliAlgVol)
 
 using namespace TMath;
+using namespace AliAlgAux;
 
 const char* AliAlgVol::fgkFrameName[AliAlgVol::kNVarFrames] = {"LOC","TRA"};
 UInt_t      AliAlgVol::fgDefGeomFree = 
@@ -285,16 +286,25 @@ void AliAlgVol::InitDOFs()
 {
   // initialize degrees of freedom
   //
+  // Do we need this strict condition?
   if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
-  fNDOFFree = fNDOFGeomFree = 0;
+  for (int i=0;i<fNDOFs;i++) if (fParErrs[i]<0 && IsZeroAbs(fParVals[i])) FixDOF(i);
+  CalcFree();
   //
-  for (int i=0;i<fNDOFs;i++) { // start with standard DOF geoms
+  SetInitDOFsDone();
+  //
+}
+
+//__________________________________________________________________
+void AliAlgVol::CalcFree()
+{
+  // calculate free dofs
+  fNDOFFree = fNDOFGeomFree = 0;
+  for (int i=0;i<fNDOFs;i++) {
     if (!IsFreeDOF(i)) continue;
     fNDOFFree++;
     if (i<kNDOFGeom) fNDOFGeomFree++;
   }
-   
-  SetInitDOFsDone();
   //
 }
 
@@ -318,8 +328,68 @@ void AliAlgVol::AddChild(AliAlgVol* ch)
 }
 
 //__________________________________________________________________
-void AliAlgVol::SetParVals(Double_t *vl,Int_t npar)
+void AliAlgVol::SetParVals(Int_t npar,Double_t *vl,Double_t *er)
 {
   // set parameters
-  for (int i=npar;i--;) fParVals[i] = vl[i];
+  if (npar>fNDOFs) AliFatalF("Volume %s has %d dofs",GetName(),fNDOFs);
+  for (int i=0;i<npar;i++) {
+    fParVals[i] = vl[i];
+    fParErrs[i] = er ? er[i] : 0;
+  }
+}
+
+//__________________________________________________________________
+Bool_t AliAlgVol::IsCondDOF(Int_t i) const
+{
+  // is DOF free and conditioned?
+  return IsFreeDOF(i) && (!IsZeroAbs(GetParVal(i)) || !IsZeroAbs(GetParErr(i)));
+}
+
+
+//______________________________________________________
+void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
+{
+  // contribute to params template file for PEDE
+  enum {kOff,kOn};
+  enum {kKeyParam,kKeyConstr,kNKeys};
+  const char* comment[2] = {"  ","! "};
+  const char* key[kNKeys] = {"parameter","constraint"};
+  TString opts = opt;
+  opts.ToLower();
+  Bool_t showDef = opts.Contains("d"); // show free DOF even if not preconditioned
+  Bool_t showFix = opts.Contains("f"); // show DOF even if fixed
+  Bool_t showNam = opts.Contains("n"); // show volume name even if no nothing else is prinable
+  //
+  // is there something to print ?
+  int nCond(0),nFix(0),nDef(0);
+  for (int i=0;i<fNDOFs;i++) {
+    if      (!IsFreeDOF(i)) nFix++;
+    else if (IsCondDOF(i))  nCond++;
+    else                    nDef++;
+  }  
+  //
+  int cmt = nCond>0 ? kOff:kOn; // do we comment the "parameter" keyword for this volume
+  if (!nFix) showFix = kFALSE;
+  if (!nDef) showDef = kFALSE;
+  //
+  if (nCond || showDef || showFix || showNam) 
+    fprintf(flOut,"%s%s %s\t\tDOF/Free: %d/%d (%s) %s\n",comment[cmt],key[kKeyParam],comment[kOn],
+	    GetNDOFs(),GetNDOFFree(),fgkFrameName[fVarFrame],GetName());
+  //
+  if (nCond || showDef || showFix) {
+    for (int i=0;i<fNDOFs;i++) {
+      cmt = kOn;
+      if      (IsCondDOF(i)) cmt = kOff;  // free-conditioned : MUST print
+      else if (!IsFreeDOF(i)) {if (!showFix) continue;} // Fixed: print commented if asked
+      else if (!showDef) continue;  // free-unconditioned: print commented if asked
+      //
+      fprintf(flOut,"%s %6d %+e %+e\t! %s p%d\n",comment[cmt],GetParGloID(i),GetParVal(i),GetParErr(i),
+	      IsFreeDOF(i) ? "  ":"FX",i);
+    }
+    fprintf(flOut,"\n");
+  }
+  // children volume
+  int nch = GetNChildren();
+  for (int ich=nch;ich--;) GetChild(ich)->WritePedeParamFile(flOut,opt);
+  //
 }

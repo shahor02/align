@@ -36,9 +36,11 @@ class AliAlgVol : public TNamed
   Bool_t     IsFrameTRA()                        const {return fVarFrame == kTRA;}
   Bool_t     IsFrameLOC()                        const {return fVarFrame == kLOC;}
   //
-  void       SetFreeDOF(Int_t dof)                     {fDOF |= 0x1<<dof;}
-  void       SetFreeDOFPattern(UInt_t pat)             {fDOF = pat;}
+  void       SetFreeDOF(Int_t dof)                     {fDOF |= 0x1<<dof; CalcFree();}
+  void       FixDOF(Int_t dof)                         {fDOF &=~(0x1<<dof); CalcFree();}
+  void       SetFreeDOFPattern(UInt_t pat)             {fDOF = pat; CalcFree();}
   Bool_t     IsFreeDOF(Int_t dof)                const {return (fDOF&(0x1<<dof))!=0;}
+  Bool_t     IsCondDOF(Int_t dof)                const;
   UInt_t     GetFreeDOFPattern()                 const {return fDOF;}
   UInt_t     GetFreeDOFGeomPattern()             const {return fDOF&kAllGeomDOF;}
   //
@@ -61,7 +63,7 @@ class AliAlgVol : public TNamed
   Double_t   GetParVal(int par)                  const {return fParVals[par];}
   Double_t   GetParErr(int par)                  const {return fParErrs[par];}
   //
-  void       SetParVals(Double_t *vl,Int_t npar);          
+  void       SetParVals(Int_t npar,Double_t *vl,Double_t *er);
   void       SetParVal(Int_t par,Double_t v=0)          {fParVals[par] = v;}
   void       SetParErr(Int_t par,Double_t e=0)          {fParErrs[par] = e;}
   //
@@ -105,12 +107,14 @@ class AliAlgVol : public TNamed
   virtual Bool_t IsSensor()                   const {return kFALSE;}
   //
   virtual void   Print(const Option_t *opt="")  const;
+  virtual void   WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
   //
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}
   //
  protected:
   void       SetNDOFs(Int_t n=kNDOFGeom);
+  void       CalcFree();
   //
  protected:
   //

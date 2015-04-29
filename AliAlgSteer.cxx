@@ -32,6 +32,7 @@
 #include <TString.h>
 #include <TTree.h>
 #include <TFile.h>
+#include <stdio.h>
 
 using namespace TMath;
 using namespace AliAlgAux;
@@ -72,7 +73,8 @@ AliAlgSteer::AliAlgSteer()
   ,fMPRecord(0)
   ,fMPRecTree(0)
   ,fMPRecFile(0)
-  ,fMPFileName("mpRecord.root")
+  ,fMPRecFileName("mpRecord.root")
+  ,fMPParFileName("mpParam.txt")
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -482,6 +484,9 @@ void AliAlgSteer::Print(const Option_t *opt) const
   // print info
   TString opts = opt; 
   opts.ToLower();
+  printf("File for MP Records:\t%s\n",fMPRecFileName.Data());
+  printf("File for MP Params: \t%s\n",fMPParFileName.Data());
+  printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
@@ -616,8 +621,8 @@ void AliAlgSteer::InitMPOutput()
   // prepare MP record output
   if (!fMPRecord) fMPRecord = new AliAlgMPRecord();
   //
-  fMPRecFile = TFile::Open(fMPFileName.Data(),"recreate");
-  if (!fMPRecFile) AliFatalF("Failed to create output file %s",fMPFileName.Data());
+  fMPRecFile = TFile::Open(fMPRecFileName.Data(),"recreate");
+  if (!fMPRecFile) AliFatalF("Failed to create output file %s",fMPRecFileName.Data());
   //
   fMPRecTree = new TTree("mpTree","MPrecord Tree");
   fMPRecTree->Branch("mprec","AliAlgMPRecord",&fMPRecord);
@@ -644,8 +649,17 @@ void AliAlgSteer::CloseMPOutput()
 void AliAlgSteer::SetMPRecFileName(const char* name) 
 {
   // set output file name
-  fMPFileName = name; 
-  if (fMPFileName.IsNull()) fMPFileName = "mpRecord.root"; 
+  fMPRecFileName = name; 
+  if (fMPRecFileName.IsNull()) fMPRecFileName = "mpRecord.root"; 
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::SetMPParFileName(const char* name) 
+{
+  // set output file name
+  fMPParFileName = name; 
+  if (fMPParFileName.IsNull()) fMPParFileName = "mpParam.txt"; 
   //
 }
 
@@ -662,3 +676,28 @@ void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
   if (det->IsObligatory()!=v) det->SetObligatory(v);
   //
 }
+
+//********************* interaction with PEDE **********************
+
+//______________________________________________________
+void AliAlgSteer::GenPedeParamFile(const Option_t *opt) const
+{
+  // produce steering file template for PEDE
+  //
+  TString opts = opt;
+  opts.ToLower();
+  AliInfoF("Generating MP2 parameters template file %s",fMPParFileName.Data());
+  //
+  FILE* flOut = fopen (fMPParFileName.Data(),"w+");
+  //
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (!det) continue;
+    det->WritePedeParamFile(flOut,opt);
+    //
+    
+  }
+  //
+  fclose(flOut);
+}
+

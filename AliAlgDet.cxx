@@ -355,3 +355,18 @@ void AliAlgDet::SetObligatory(Bool_t v)
   fObligatory = v;
   fAlgSteer->SetObligatoryDetector(GetDetID(),v);
 }
+
+//______________________________________________________
+void AliAlgDet::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
+{
+  // contribute to params template file for PEDE
+  fprintf(flOut,"\n!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
+  //
+  // parameters
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {  // call for root level volumes, they will take care of their children
+    AliAlgVol *vol = GetVolume(iv);
+    if (!vol->GetParent()) vol->WritePedeParamFile(flOut,opt);
+  }
+  //
+}

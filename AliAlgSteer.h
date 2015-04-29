@@ -101,12 +101,15 @@ class AliAlgSteer : public TObject
   //----------------------------------------
   // output related
   void   SetMPRecFileName(const char* name="mpRecord.root");
-  const  char* GetMPRecFileName()                          const {return fMPFileName.Data();}
+  void   SetMPParFileName(const char* name="mpParam.txt");
+  const  char* GetMPRecFileName()                          const {return fMPRecFileName.Data();}
+  const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
   void   CloseMPOutput();
   void   InitMPOutput();
   Bool_t StoreProcessedTrack();
   void   PrintStatistics() const;
   //
+  void   GenPedeParamFile(const Option_t *opt="") const;
   //
   virtual void Print(const Option_t *opt="")              const;
   //
@@ -157,7 +160,8 @@ class AliAlgSteer : public TObject
   AliAlgMPRecord* fMPRecord;                              // MP record 
   TTree*          fMPRecTree;                             //! tree to store MP record
   TFile*          fMPRecFile;                             //! file to store MP record tree
-  TString         fMPFileName;                            //  file name for output
+  TString         fMPRecFileName;                         //  file name for binary records output
+  TString         fMPParFileName;                         //  file name for MP steering params
   //
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           //  detector layers for which we don't need module matrices
