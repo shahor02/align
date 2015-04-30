@@ -25,7 +25,6 @@ AliAlgSteer * algSteer = 0;
 
 //void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
 //void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-
 void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
@@ -48,7 +47,7 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
-  algSteer->AddDetector(AliAlgSteer::kTPC);
+  //  algSteer->AddDetector(AliAlgSteer::kTPC);
   algSteer->AddDetector(AliAlgSteer::kTRD);
   algSteer->AddDetector(AliAlgSteer::kTOF);
   //
@@ -108,6 +107,8 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   algSteer->SetMinDetAcc(2);
   //
   algSteer->AcknowledgeNewRun(run);
+  algSteer->SetMPOutType(AliAlgSteer::kMilleMPRec);
+  //algSteer->SetMPOutType(AliAlgSteer::kMille);
   //----------------------------------------------------------------
   /*
   PrintTracks();
@@ -132,7 +133,8 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
     LoadEvent(iev);
     algSteer->ProcessEvent(esdEv);
   }
-  algSteer->CloseMPOutput();
+  algSteer->CloseMPRecOutput();
+  algSteer->CloseMilleOutput();
 
   algSteer->Print("stat");
 

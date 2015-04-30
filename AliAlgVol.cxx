@@ -390,6 +390,6 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   }
   // children volume
   int nch = GetNChildren();
-  for (int ich=nch;ich--;) GetChild(ich)->WritePedeParamFile(flOut,opt);
+  for (int ich=0;ich<nch;ich++) GetChild(ich)->WritePedeParamFile(flOut,opt);
   //
 }

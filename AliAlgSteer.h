@@ -9,6 +9,8 @@
 #include <TMatrixDSym.h>
 #include <TVectorD.h>
 #include <TString.h>
+#include <TArrayF.h>
+#include <TArrayI.h>
 
 class AliESDEvent;
 class AliESDtrack;
@@ -18,7 +20,8 @@ class AliAlgDet;
 class AliAlgMPRecord;
 class TTree;
 class TFile;
-
+//
+class Mille;
 
 
 /*--------------------------------------------------------
@@ -34,6 +37,7 @@ class AliAlgSteer : public TObject
   enum {kCosmLow,kCosmUp,kNCosmLegs};
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
+  enum MPOut_t {kMille,kMPRec,kMilleMPRec};
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
@@ -100,12 +104,18 @@ class AliAlgSteer : public TObject
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
   // output related
-  void   SetMPRecFileName(const char* name="mpRecord.root");
+  Bool_t FillMPRecData();
+  Bool_t FillMilleData();
+  Int_t  GetMPOutType()                                   const {return fMPOutType;}
+  void   SetMPOutType(MPOut_t t)                                {fMPOutType = t;}
+  void   SetMPDatFileName(const char* name="mpData");
   void   SetMPParFileName(const char* name="mpParam.txt");
-  const  char* GetMPRecFileName()                          const {return fMPRecFileName.Data();}
+  const  char* GetMPDatFileName()                          const {return fMPDatFileName.Data();}
   const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
-  void   CloseMPOutput();
-  void   InitMPOutput();
+  void   CloseMPRecOutput();
+  void   CloseMilleOutput();
+  void   InitMPRecOutput();
+  void   InitMIlleOutput();
   Bool_t StoreProcessedTrack();
   void   PrintStatistics() const;
   //
@@ -157,15 +167,19 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkStatClName[kNStatCl];           // stat classes names
   static const Char_t* fgkStatName[kMaxStat];             // stat type names  
   //
+  MPOut_t         fMPOutType;                             // Format to store MP data
+  Mille*          fMille;                                 // Mille interface
   AliAlgMPRecord* fMPRecord;                              // MP record 
   TTree*          fMPRecTree;                             //! tree to store MP record
   TFile*          fMPRecFile;                             //! file to store MP record tree
-  TString         fMPRecFileName;                         //  file name for binary records output
+  TString         fMPDatFileName;                         //  file name for records binary data output
   TString         fMPParFileName;                         //  file name for MP steering params
+  TArrayF         fMilleDBuffer;                          //! buffer for Mille Derivatives output
+  TArrayI         fMilleIBuffer;                          //! buffer for Mille Indecis output
   //
-  //
-  static const Int_t   fgkSkipLayers[kNLrSkip];           //  detector layers for which we don't need module matrices
+  static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors
+  static const Char_t* fgkMPDataExt[kMilleMPRec];         // extensions for MP2 binary data 
   //
   ClassDef(AliAlgSteer,1)
 };

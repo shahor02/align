@@ -103,7 +103,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	const double* deriv  = trc->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams_loc
 	int nnon0 = 0;
 	for (int j=0;j<nParETP;j++) {       // derivatives over reference track parameters
-	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;
+	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDLoc[fNDLocTot] = deriv[j];  // store non-0 derivative
 	  fIDLoc[fNDLocTot] = j;          // and variable id
@@ -112,7 +112,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	int lp0 = pnt->GetMinLocVarID();    // point may depend on material variables starting from this one
 	int lp1 = pnt->GetMaxLocVarID();    // and up to this one (exclusive)
 	for (int j=lp0;j<lp1;j++) {       // derivatives over material variables
-	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;
+	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDLoc[fNDLocTot] = deriv[j];  // store non-0 derivative
 	  fIDLoc[fNDLocTot] = j;          // and variable id
@@ -126,7 +126,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	deriv = trc->GetDResDGlo(idim, gloOffs);
 	const int* gloIDP = gloParID + gloOffs;
 	for (int j=0;j<nDGlo;j++) {
-	  if (SmallerAbs(deriv[j],kAlmostZeroD)) continue;
+	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDGlo[ fNDGloTot] = deriv[j];        // value of derivative
 	  fIDGlo[fNDGloTot] = gloIDP[j];       // global DOF ID
@@ -156,6 +156,10 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
     }
   }  
   //
+  if (!fNDGloTot) {
+    AliInfo("Track does not depend on free global parameters, discard");
+    return kFALSE;
+  }
   return kTRUE;
 }
 

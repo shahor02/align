@@ -28,6 +28,7 @@
 #include "AliESDEvent.h"
 #include "AliESDVertex.h"
 #include "AliRecoParam.h"
+#include "Mille.h"
 #include <TMath.h>
 #include <TString.h>
 #include <TTree.h>
@@ -39,7 +40,7 @@ using namespace AliAlgAux;
 
 ClassImp(AliAlgSteer)
 
-
+const Char_t* AliAlgSteer::fgkMPDataExt[AliAlgSteer::kMilleMPRec] = {".mille",".root"};
 const Char_t* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
 const Int_t   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
 								   AliGeomManager::kMUON,AliGeomManager::kEMCAL};
@@ -70,11 +71,15 @@ AliAlgSteer::AliAlgSteer()
   ,fRefPoint()
   ,fESDEvent(0)
   ,fVertex(0)
+  ,fMPOutType(kMille)
+  ,fMille(0)
   ,fMPRecord(0)
   ,fMPRecTree(0)
   ,fMPRecFile(0)
-  ,fMPRecFileName("mpRecord.root")
+  ,fMPDatFileName("mpData")
   ,fMPParFileName("mpParam.txt")
+  ,fMilleDBuffer()
+  ,fMilleIBuffer()
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -89,8 +94,8 @@ AliAlgSteer::AliAlgSteer()
 AliAlgSteer::~AliAlgSteer()
 {
   // d-tor
-  if (fMPRecFile) CloseMPOutput();
-  delete fMPRecord;
+  if (fMPRecFile) CloseMPRecOutput();
+  if (fMille)     CloseMilleOutput();
   //
   delete fAlgTrack;
   delete[] fGloParVal;
@@ -437,7 +442,104 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
 Bool_t AliAlgSteer::StoreProcessedTrack()
 {
   // write alignment track
-  if (!fMPRecord) InitMPOutput();
+  Bool_t res = kTRUE;
+  if ((fMPOutType==kMille)||(fMPOutType==kMilleMPRec)) res &= FillMilleData();
+  if ((fMPOutType==kMPRec)||(fMPOutType==kMilleMPRec)) res &= FillMPRecData();
+  //
+  return res;
+}
+
+//_________________________________________________________
+Bool_t AliAlgSteer::FillMilleData()
+{
+  // store MP2 in Mille format
+  if (!fMille) {
+    TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt[kMille]);
+    fMille = new Mille(mo.Data());
+    if (!fMille) AliFatalF("Failed to create output file %s",mo.Data());
+  }
+  //
+  if (!fAlgTrack->GetDerivDone()) {
+    AliError("Track derivatives are not yet evaluated");
+    return kFALSE;
+  }
+  int np(fAlgTrack->GetNPoints()),nDGloTot(0); // total number global derivatives stored
+  int nParETP(fAlgTrack->GetNLocExtPar()); // numnber of local parameters for reference track param
+  int nVarLoc(fAlgTrack->GetNLocPar());    // number of local degrees of freedom in the track
+  float* buffDL(0),*buffDG(0);               // faster acces arrays
+  int *buffI(0);
+  //
+  const int* gloParID(fAlgTrack->GetGloParID()); // IDs of global DOFs this track depends on
+  for (int ip=0;ip<np;ip++) {
+    AliAlgPoint* pnt = fAlgTrack->GetPoint(ip);
+    if (pnt->ContainsMeasurement()) {
+      int gloOffs = pnt->GetDGloOffs(); // 1st entry of global derivatives for this point
+      int nDGlo   = pnt->GetNGloDOFs(); // number of global derivatives (number of DOFs it depends on)
+      // check buffer sizes
+      {
+	if (fMilleDBuffer.GetSize()<nVarLoc+nDGlo) fMilleDBuffer.Set(100+nVarLoc+nDGlo);
+	if (fMilleIBuffer.GetSize()<nDGlo)         fMilleIBuffer.Set(100+nDGlo);
+	buffDL = fMilleDBuffer.GetArray(); // faster acces
+	buffDG = buffDL + nVarLoc;         // faster acces	
+	buffI  = fMilleIBuffer.GetArray(); // faster acces
+      }
+      // local der. array cannot be 0-suppressed by Mille construction, need to reset all to 0
+      //
+      for (int idim=0;idim<2;idim++) { // 2 dimensional orthogonal measurement
+	memset(buffDL,0,nVarLoc*sizeof(float));
+	const double* deriv  = fAlgTrack->GetDResDLoc(idim,ip);  // array of Dresidual/Dparams_loc
+	// derivatives over reference track parameters
+	for (int j=0;j<nParETP;j++) buffDL[j] = (IsZeroAbs(deriv[j])) ? 0:deriv[j];
+	//
+	// point may depend on material variables within this limits
+	int lp0 = pnt->GetMinLocVarID(), lp1 = pnt->GetMaxLocVarID();
+	for (int j=lp0;j<lp1;j++)   buffDL[j] = (IsZeroAbs(deriv[j])) ? 0:deriv[j];
+	//
+	// derivatives over global params: this array can be 0-suppressed, no need to reset
+	int nGlo(0);
+	deriv = fAlgTrack->GetDResDGlo(idim, gloOffs);
+	const int* gloIDP(gloParID + gloOffs);
+	for (int j=0;j<nDGlo;j++) {
+	  if (IsZeroAbs(deriv[j])) {
+	    buffDG[nGlo]  = deriv[j];        // value of derivative
+	    buffI[nGlo++] = gloIDP[j];       // global DOF ID
+	  }
+	}
+	fMille->mille(nVarLoc,buffDL, nGlo,buffDG, buffI, 
+		      fAlgTrack->GetResidual(idim,ip),Sqrt(pnt->GetErrDiag(idim)));
+	nDGloTot += nGlo;
+	//
+      }
+    }
+    if (pnt->ContainsMaterial()) {     // material point can add 4 or 5 otrhogonal pseudo-measurements
+      memset(buffDL,0,nVarLoc*sizeof(float));      
+      int nmatpar = pnt->GetNMatPar();  // residuals (correction expectation value)
+      const float* expMatCorr = pnt->GetMatCorrExp(); // expected corrections (diagonalized)
+      const float* expMatCov  = pnt->GetMatCorrCov(); // their diagonalized error matrix
+      int offs  = pnt->GetMaxLocVarID() - nmatpar;    // start of material variables
+      // here all derivatives are 1 = dx/dx
+      for (int j=0,j1=j+offs;j<nmatpar;j++) { // mat. "measurements" don't depend on global params
+	buffDL[j1] = 1.0;                     // only 1 non-0 derivative	
+	fMille->mille(nVarLoc,buffDL,0,buffDG,buffI,expMatCorr[j],Sqrt(expMatCov[j]));
+	buffDL[j1] = 0.0;                     // reset buffer
+      }
+    } // material "measurement"
+  } // loop over points
+  //
+  if (!nDGloTot) {
+    AliInfo("Track does not depend on free global parameters, discard");
+    fMille->kill();
+    return kFALSE;
+  }
+  fMille->end(); // store the record
+  return kTRUE;
+}
+
+//_________________________________________________________
+Bool_t AliAlgSteer::FillMPRecData()
+{
+  // store MP2 in MPRecord format
+  if (!fMPRecord) InitMPRecOutput();
   //
   fMPRecord->Clear();
   if (!fMPRecord->FillTrack(fAlgTrack)) return kFALSE;
@@ -447,7 +549,6 @@ Bool_t AliAlgSteer::StoreProcessedTrack()
   if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
   fMPRecord->SetTrackID(tID);
   fMPRecTree->Fill();
-  //
   return kTRUE;
 }
 
@@ -484,8 +585,11 @@ void AliAlgSteer::Print(const Option_t *opt) const
   // print info
   TString opts = opt; 
   opts.ToLower();
-  printf("File for MP Records:\t%s\n",fMPRecFileName.Data());
-  printf("File for MP Params: \t%s\n",fMPParFileName.Data());
+  printf("MPData output :\t");
+  if ((fMPOutType==kMille)||(fMPOutType==kMilleMPRec)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt[kMille]);
+  if ((fMPOutType==kMPRec)||(fMPOutType==kMilleMPRec)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt[kMPRec]);
+  printf("\n");
+  printf("MP Params     :\t%s\n",fMPParFileName.Data());
   printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
@@ -616,13 +720,14 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
 }
 
 //____________________________________________
-void AliAlgSteer::InitMPOutput()
+void AliAlgSteer::InitMPRecOutput()
 {
   // prepare MP record output
   if (!fMPRecord) fMPRecord = new AliAlgMPRecord();
   //
-  fMPRecFile = TFile::Open(fMPRecFileName.Data(),"recreate");
-  if (!fMPRecFile) AliFatalF("Failed to create output file %s",fMPRecFileName.Data());
+  TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt[kMPRec]);
+  fMPRecFile = TFile::Open(mo.Data(),"recreate");
+  if (!fMPRecFile) AliFatalF("Failed to create output file %s",mo.Data());
   //
   fMPRecTree = new TTree("mpTree","MPrecord Tree");
   fMPRecTree->Branch("mprec","AliAlgMPRecord",&fMPRecord);
@@ -630,7 +735,7 @@ void AliAlgSteer::InitMPOutput()
 }
 
 //____________________________________________
-void AliAlgSteer::CloseMPOutput()
+void AliAlgSteer::CloseMPRecOutput()
 {
   // close output
   if (!fMPRecFile) return;
@@ -646,11 +751,25 @@ void AliAlgSteer::CloseMPOutput()
 }
 
 //____________________________________________
-void AliAlgSteer::SetMPRecFileName(const char* name) 
+void AliAlgSteer::CloseMilleOutput()
+{
+  // close output
+  delete fMille;
+  fMille = 0;
+}
+
+//____________________________________________
+void AliAlgSteer::SetMPDatFileName(const char* name) 
 {
   // set output file name
-  fMPRecFileName = name; 
-  if (fMPRecFileName.IsNull()) fMPRecFileName = "mpRecord.root"; 
+  fMPDatFileName = name;
+  // strip root or mille extensions, they will be added automatically later
+  if      (fMPDatFileName.EndsWith(fgkMPDataExt[kMille])) 
+    fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(fgkMPDataExt[kMille]));
+  else if (fMPDatFileName.EndsWith(fgkMPDataExt[kMPRec])) 
+      fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(fgkMPDataExt[kMPRec]));
+  //
+  if (fMPDatFileName.IsNull()) fMPDatFileName = "mpData"; 
   //
 }
 
