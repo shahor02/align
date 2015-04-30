@@ -76,10 +76,10 @@ AliAlgSteer::AliAlgSteer()
   ,fMPRecord(0)
   ,fMPRecTree(0)
   ,fMPRecFile(0)
-  ,fMPDatFileName("mpData")
-  ,fMPParFileName("mpParam.txt")
   ,fMilleDBuffer()
   ,fMilleIBuffer()
+  ,fMPDatFileName("mpData")
+  ,fMPParFileName("mpParam.txt")
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {

@@ -168,14 +168,14 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkStatName[kMaxStat];             // stat type names  
   //
   MPOut_t         fMPOutType;                             // Format to store MP data
-  Mille*          fMille;                                 // Mille interface
-  AliAlgMPRecord* fMPRecord;                              // MP record 
+  Mille*          fMille;                                 //! Mille interface
+  AliAlgMPRecord* fMPRecord;                              //! MP record 
   TTree*          fMPRecTree;                             //! tree to store MP record
   TFile*          fMPRecFile;                             //! file to store MP record tree
-  TString         fMPDatFileName;                         //  file name for records binary data output
-  TString         fMPParFileName;                         //  file name for MP steering params
   TArrayF         fMilleDBuffer;                          //! buffer for Mille Derivatives output
   TArrayI         fMilleIBuffer;                          //! buffer for Mille Indecis output
+  TString         fMPDatFileName;                         //  file name for records binary data output
+  TString         fMPParFileName;                         //  file name for MP steering params
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors
