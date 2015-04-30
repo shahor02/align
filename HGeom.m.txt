@@ -1,0 +1,241 @@
+Definition of TGeoHMatrix
+In[50]:=
+RM[phi_,tht_,psi_,x_,y_,z_]:= {
+      {Cos[tht]Cos[phi],-Cos[tht]Sin[phi],Sin[tht] ,0},
+      {Sin[psi]Sin[tht]Cos[phi]+Cos[psi] Sin[phi],-Sin[psi]Sin[tht]Sin[phi]+
+          Cos[psi]Cos[phi],-Cos[tht]Sin[psi],0},
+      {-Cos[psi]Sin[tht]Cos[phi]+Sin[psi]Sin[phi],
+        Cos[psi]Sin[tht]Sin[phi]+Sin[psi]Cos[phi],Cos[tht]Cos[psi],0},
+      {x,y,z,1}
+      };
+Definition of TGeoHMatrix multiplication: ML * MR
+In[51]:=
+MPRD[ML_,MR_] := {
+    {ML[[1,1]]*MR[[1,1]]+ML[[1,2]]*MR[[2,1]]+ML[[1,3]]*MR[[3,1]],
+      ML[[1,1]]*MR[[1,2]]+ML[[1,2]]*MR[[2,2]]+ML[[1,3]]*MR[[3,2]],
+      ML[[1,1]]*MR[[1,3]]+ML[[1,2]]*MR[[2,3]]+ML[[1,3]]*MR[[3,3]], 0},
+    {ML[[2,1]]*MR[[1,1]]+ML[[2,2]]*MR[[2,1]]+ML[[2,3]]*MR[[3,1]],
+      ML[[2,1]]*MR[[1,2]]+ML[[2,2]]*MR[[2,2]]+ML[[2,3]]*MR[[3,2]],
+      ML[[2,1]]*MR[[1,3]]+ML[[2,2]]*MR[[2,3]]+ML[[2,3]]*MR[[3,3]], 0},
+    {ML[[3,1]]*MR[[1,1]]+ML[[3,2]]*MR[[2,1]]+ML[[3,3]]*MR[[3,1]],
+      ML[[3,1]]*MR[[1,2]]+ML[[3,2]]*MR[[2,2]]+ML[[3,3]]*MR[[3,2]],
+      ML[[3,1]]*MR[[1,3]]+ML[[3,2]]*MR[[2,3]]+ML[[3,3]]*MR[[3,3]], 0},
+    {ML[[4,1]]+ML[[1,1]]*MR[[4,1]]+ML[[1,2]]*MR[[4,2]]+ML[[1,3]]*MR[[4,3]],
+      ML[[4,2]]+ML[[2,1]]*MR[[4,1]]+ML[[2,2]]*MR[[4,2]]+ML[[2,3]]*MR[[4,3]],
+      ML[[4,3]]+ML[[3,1]]*MR[[4,1]]+ML[[3,2]]*MR[[4,2]]+ML[[3,3]]*MR[[4,3]],
+      1}
+    };
+Unity matrix
+In[52]:=
+U = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+Transformation TGeoHMatrix matrices, usually we use RI = Inverse[R]
+In[53]:=
+R = {{rd[0],rd[1],rd[2],0},{rd[3],rd[4],rd[5],0},{rd[6],rd[7],rd[8],0},{td[0],
+        td[1],td[2],1}};
+RI = {{ri[0],ri[1],ri[2],0},{ri[3],ri[4],ri[5],0},{ri[6],ri[7],ri[8],
+        0},{ti[0],ti[1],ti[2],1}};
+Input parameters defining delta TGeoHMatrix : alignment increment. We assume that the parameters are so small\[LineSeparator]that cos(x)->1 and sin(x)->x approximation is valid
+In[55]:=
+tau = RM[dphi,dtht,dpsi,dtx,dty,dtz];
+rule1 = {Cos[dphi]\[Rule]1,Cos[dpsi]\[Rule]1,Cos[dtht]\[Rule]1, 
+    Sin[dphi]\[Rule]dphi,Sin[dpsi]\[Rule]dpsi,Sin[dtht]\[Rule]dtht};
+rule2 = {dphi*dpsi\[Rule]0,dpsi*dtht\[Rule]0,dphi*dtht\[Rule]0};
+tauS = tau /. rule1 /. rule2;
+We need to compute transformation of delta matrix (tau) from its frame to another frame (vectors trasform as V = R*v) and take its\[LineSeparator]component linear in tau input paramets. The final aim is to have the sum of transformations of child volumes to be unity matrix in\[LineSeparator]their parent’s frame, i.e. \[CapitalSigma] \!\(TraditionalForm\`R\_i\)\[Tau] \!\(TraditionalForm\`RInv\_i\) = I, hence we can require  \[CapitalSigma] \!\(TraditionalForm\`R\_i\)(\[Tau]-I) \!\(TraditionalForm\`RInv\_i\) = 0.
+In[59]:=
+tauSU = tauS - U;
+In[60]:=
+TAUU = MPRD[R,MPRD[tauSU,RI]]
+Out[60]=
+{{rd[2] (-dtht ri[0]+dpsi ri[3])+rd[1] (dphi ri[0]-dpsi ri[6])+
+      rd[0] (-dphi ri[3]+dtht ri[6]),
+    rd[2] (-dtht ri[1]+dpsi ri[4])+rd[1] (dphi ri[1]-dpsi ri[7])+
+      rd[0] (-dphi ri[4]+dtht ri[7]),
+    rd[2] (-dtht ri[2]+dpsi ri[5])+rd[1] (dphi ri[2]-dpsi ri[8])+
+      rd[0] (-dphi ri[5]+dtht ri[8]),
+    0},{rd[5] (-dtht ri[0]+dpsi ri[3])+rd[4] (dphi ri[0]-dpsi ri[6])+
+      rd[3] (-dphi ri[3]+dtht ri[6]),
+    rd[5] (-dtht ri[1]+dpsi ri[4])+rd[4] (dphi ri[1]-dpsi ri[7])+
+      rd[3] (-dphi ri[4]+dtht ri[7]),
+    rd[5] (-dtht ri[2]+dpsi ri[5])+rd[4] (dphi ri[2]-dpsi ri[8])+
+      rd[3] (-dphi ri[5]+dtht ri[8]),
+    0},{rd[8] (-dtht ri[0]+dpsi ri[3])+rd[7] (dphi ri[0]-dpsi ri[6])+
+      rd[6] (-dphi ri[3]+dtht ri[6]),
+    rd[8] (-dtht ri[1]+dpsi ri[4])+rd[7] (dphi ri[1]-dpsi ri[7])+
+      rd[6] (-dphi ri[4]+dtht ri[7]),
+    rd[8] (-dtht ri[2]+dpsi ri[5])+rd[7] (dphi ri[2]-dpsi ri[8])+
+      rd[6] (-dphi ri[5]+dtht ri[8]),
+    0},{td[0]+rd[2] (dtz-dtht ti[0]+dpsi ti[1])+
+      rd[1] (dty+dphi ti[0]-dpsi ti[2])+rd[0] (dtx-dphi ti[1]+dtht ti[2]),
+    td[1]+rd[5] (dtz-dtht ti[0]+dpsi ti[1])+rd[4] (dty+dphi ti[0]-dpsi ti[2])+
+      rd[3] (dtx-dphi ti[1]+dtht ti[2]),
+    td[2]+rd[8] (dtz-dtht ti[0]+dpsi ti[1])+rd[7] (dty+dphi ti[0]-dpsi ti[2])+
+      rd[6] (dtx-dphi ti[1]+dtht ti[2]),1}}
+In[61]:=
+MatrixForm[TAUU]
+Out[61]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {\(rd[2]\ \((\(-dtht\)\ ri[0] + dpsi\ ri[3])\) + 
+              rd[1]\ \((dphi\ ri[0] - dpsi\ ri[6])\) + 
+              rd[0]\ \((\(-dphi\)\ ri[3] + dtht\ ri[6])\)\), \(rd[
+                  2]\ \((\(-dtht\)\ ri[1] + dpsi\ ri[4])\) + 
+              rd[1]\ \((dphi\ ri[1] - dpsi\ ri[7])\) + 
+              rd[0]\ \((\(-dphi\)\ ri[4] + dtht\ ri[7])\)\), \(rd[
+                  2]\ \((\(-dtht\)\ ri[2] + dpsi\ ri[5])\) + 
+              rd[1]\ \((dphi\ ri[2] - dpsi\ ri[8])\) + 
+              rd[0]\ \((\(-dphi\)\ ri[5] + dtht\ ri[8])\)\), "0"},
+          {\(rd[5]\ \((\(-dtht\)\ ri[0] + dpsi\ ri[3])\) + 
+              rd[4]\ \((dphi\ ri[0] - dpsi\ ri[6])\) + 
+              rd[3]\ \((\(-dphi\)\ ri[3] + dtht\ ri[6])\)\), \(rd[
+                  5]\ \((\(-dtht\)\ ri[1] + dpsi\ ri[4])\) + 
+              rd[4]\ \((dphi\ ri[1] - dpsi\ ri[7])\) + 
+              rd[3]\ \((\(-dphi\)\ ri[4] + dtht\ ri[7])\)\), \(rd[
+                  5]\ \((\(-dtht\)\ ri[2] + dpsi\ ri[5])\) + 
+              rd[4]\ \((dphi\ ri[2] - dpsi\ ri[8])\) + 
+              rd[3]\ \((\(-dphi\)\ ri[5] + dtht\ ri[8])\)\), "0"},
+          {\(rd[8]\ \((\(-dtht\)\ ri[0] + dpsi\ ri[3])\) + 
+              rd[7]\ \((dphi\ ri[0] - dpsi\ ri[6])\) + 
+              rd[6]\ \((\(-dphi\)\ ri[3] + dtht\ ri[6])\)\), \(rd[
+                  8]\ \((\(-dtht\)\ ri[1] + dpsi\ ri[4])\) + 
+              rd[7]\ \((dphi\ ri[1] - dpsi\ ri[7])\) + 
+              rd[6]\ \((\(-dphi\)\ ri[4] + dtht\ ri[7])\)\), \(rd[
+                  8]\ \((\(-dtht\)\ ri[2] + dpsi\ ri[5])\) + 
+              rd[7]\ \((dphi\ ri[2] - dpsi\ ri[8])\) + 
+              rd[6]\ \((\(-dphi\)\ ri[5] + dtht\ ri[8])\)\), "0"},
+          {\(td[0] + rd[2]\ \((dtz - dtht\ ti[0] + dpsi\ ti[1])\) + 
+              rd[1]\ \((dty + dphi\ ti[0] - dpsi\ ti[2])\) + 
+              rd[0]\ \((dtx - dphi\ ti[1] + dtht\ ti[2])\)\), \(td[1] + 
+              rd[5]\ \((dtz - dtht\ ti[0] + dpsi\ ti[1])\) + 
+              rd[4]\ \((dty + dphi\ ti[0] - dpsi\ ti[2])\) + 
+              rd[3]\ \((dtx - dphi\ ti[1] + dtht\ ti[2])\)\), \(td[2] + 
+              rd[8]\ \((dtz - dtht\ ti[0] + dpsi\ ti[1])\) + 
+              rd[7]\ \((dty + dphi\ ti[0] - dpsi\ ti[2])\) + 
+              rd[6]\ \((dtx - dphi\ ti[1] + dtht\ ti[2])\)\), "1"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[62]:=
+MatrixForm[D[TAUU,dphi]]
+Out[62]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {\(rd[1]\ ri[0] - rd[0]\ ri[3]\), \(rd[1]\ ri[1] - 
+              rd[0]\ ri[4]\), \(rd[1]\ ri[2] - rd[0]\ ri[5]\), "0"},
+          {\(rd[4]\ ri[0] - rd[3]\ ri[3]\), \(rd[4]\ ri[1] - 
+              rd[3]\ ri[4]\), \(rd[4]\ ri[2] - rd[3]\ ri[5]\), "0"},
+          {\(rd[7]\ ri[0] - rd[6]\ ri[3]\), \(rd[7]\ ri[1] - 
+              rd[6]\ ri[4]\), \(rd[7]\ ri[2] - rd[6]\ ri[5]\), "0"},
+          {\(rd[1]\ ti[0] - rd[0]\ ti[1]\), \(rd[4]\ ti[0] - 
+              rd[3]\ ti[1]\), \(rd[7]\ ti[0] - rd[6]\ ti[1]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[63]:=
+MatrixForm[D[TAUU,dpsi]]
+Out[63]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {\(rd[2]\ ri[3] - rd[1]\ ri[6]\), \(rd[2]\ ri[4] - 
+              rd[1]\ ri[7]\), \(rd[2]\ ri[5] - rd[1]\ ri[8]\), "0"},
+          {\(rd[5]\ ri[3] - rd[4]\ ri[6]\), \(rd[5]\ ri[4] - 
+              rd[4]\ ri[7]\), \(rd[5]\ ri[5] - rd[4]\ ri[8]\), "0"},
+          {\(rd[8]\ ri[3] - rd[7]\ ri[6]\), \(rd[8]\ ri[4] - 
+              rd[7]\ ri[7]\), \(rd[8]\ ri[5] - rd[7]\ ri[8]\), "0"},
+          {\(rd[2]\ ti[1] - rd[1]\ ti[2]\), \(rd[5]\ ti[1] - 
+              rd[4]\ ti[2]\), \(rd[8]\ ti[1] - rd[7]\ ti[2]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[64]:=
+MatrixForm[D[TAUU,dtht]]
+Out[64]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {\(\(-rd[2]\)\ ri[0] + rd[0]\ ri[6]\), \(\(-rd[2]\)\ ri[1] + 
+              rd[0]\ ri[7]\), \(\(-rd[2]\)\ ri[2] + rd[0]\ ri[8]\), "0"},
+          {\(\(-rd[5]\)\ ri[0] + rd[3]\ ri[6]\), \(\(-rd[5]\)\ ri[1] + 
+              rd[3]\ ri[7]\), \(\(-rd[5]\)\ ri[2] + rd[3]\ ri[8]\), "0"},
+          {\(\(-rd[8]\)\ ri[0] + rd[6]\ ri[6]\), \(\(-rd[8]\)\ ri[1] + 
+              rd[6]\ ri[7]\), \(\(-rd[8]\)\ ri[2] + rd[6]\ ri[8]\), "0"},
+          {\(\(-rd[2]\)\ ti[0] + rd[0]\ ti[2]\), \(\(-rd[5]\)\ ti[0] + 
+              rd[3]\ ti[2]\), \(\(-rd[8]\)\ ti[0] + rd[6]\ ti[2]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[65]:=
+MatrixForm[D[TAUU,dtx]]
+Out[65]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {\(rd[0]\), \(rd[3]\), \(rd[6]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[66]:=
+MatrixForm[D[TAUU,dty]]
+Out[66]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {\(rd[1]\), \(rd[4]\), \(rd[7]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[67]:=
+MatrixForm[D[TAUU,dtz]]
+Out[67]//MatrixForm=
+\!\(\*
+  TagBox[
+    RowBox[{"(", "\[NoBreak]", GridBox[{
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {"0", "0", "0", "0"},
+          {\(rd[2]\), \(rd[5]\), \(rd[8]\), "0"}
+          }], "\[NoBreak]", ")"}],
+    Function[ BoxForm`e$, 
+      MatrixForm[ BoxForm`e$]]]\)
+In[68]:=
+TextForm[D[TAUU,dphi]]
+Out[68]//TextForm=
+{{rd[1] ri[0] - rd[0] ri[3], rd[1] ri[1] - rd[0] ri[4], rd[1] ri[2] - rd[0] ri[5], 0}, 
+   {rd[4] ri[0] - rd[3] ri[3], rd[4] ri[1] - rd[3] ri[4], rd[4] ri[2] - rd[3] ri[5], 0}, 
+   {rd[7] ri[0] - rd[6] ri[3], rd[7] ri[1] - rd[6] ri[4], rd[7] ri[2] - rd[6] ri[5], 0}, 
+   {rd[1] ti[0] - rd[0] ti[1], rd[4] ti[0] - rd[3] ti[1], rd[7] ti[0] - rd[6] ti[1], 0}}
+In[69]:=
+TextForm[D[TAUU,dtht]]
+Out[69]//TextForm=
+{{-(rd[2] ri[0]) + rd[0] ri[6], -(rd[2] ri[1]) + rd[0] ri[7], -(rd[2] ri[2]) + rd[0] ri[8], 0}, 
+   {-(rd[5] ri[0]) + rd[3] ri[6], -(rd[5] ri[1]) + rd[3] ri[7], -(rd[5] ri[2]) + rd[3] ri[8], 0}, 
+   {-(rd[8] ri[0]) + rd[6] ri[6], -(rd[8] ri[1]) + rd[6] ri[7], -(rd[8] ri[2]) + rd[6] ri[8], 0}, 
+   {-(rd[2] ti[0]) + rd[0] ti[2], -(rd[5] ti[0]) + rd[3] ti[2], -(rd[8] ti[0]) + rd[6] ti[2], 0}}
+In[70]:=
+TextForm[D[TAUU,dpsi]]
+Out[70]//TextForm=
+{{rd[2] ri[3] - rd[1] ri[6], rd[2] ri[4] - rd[1] ri[7], rd[2] ri[5] - rd[1] ri[8], 0}, 
+   {rd[5] ri[3] - rd[4] ri[6], rd[5] ri[4] - rd[4] ri[7], rd[5] ri[5] - rd[4] ri[8], 0}, 
+   {rd[8] ri[3] - rd[7] ri[6], rd[8] ri[4] - rd[7] ri[7], rd[8] ri[5] - rd[7] ri[8], 0}, 
+   {rd[2] ti[1] - rd[1] ti[2], rd[5] ti[1] - rd[4] ti[2], rd[8] ti[1] - rd[7] ti[2], 0}}
+In[71]:=
+TextForm[D[TAUU,dtx]]
+Out[71]//TextForm=
+{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {rd[0], rd[3], rd[6], 0}}
+In[72]:=
+TextForm[D[TAUU,dty]]
+Out[72]//TextForm=
+{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {rd[1], rd[4], rd[7], 0}}
+In[73]:=
+TextForm[D[TAUU,dtz]]
+Out[73]//TextForm=
+{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {rd[2], rd[5], rd[8], 0}}
