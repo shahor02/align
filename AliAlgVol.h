@@ -22,6 +22,7 @@ class AliAlgVol : public TNamed
   enum {kNDOFMax=32};
   enum Frame_t {kLOC,kTRA,kNVarFrames};  // variation frames defined
   enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15)};
+  enum {kDefChildConstr=0xff};
   //
   AliAlgVol(const char* symname=0);
   virtual ~AliAlgVol();
@@ -43,6 +44,13 @@ class AliAlgVol : public TNamed
   Bool_t     IsCondDOF(Int_t dof)                const;
   UInt_t     GetFreeDOFPattern()                 const {return fDOF;}
   UInt_t     GetFreeDOFGeomPattern()             const {return fDOF&kAllGeomDOF;}
+  //
+  Bool_t     IsChildrenDOFConstrained(Int_t dof) const {return fConstrChild&0x1<<dof;}
+  UChar_t    GetChildrenConstrainPattern()       const {return fConstrChild;}
+  void       ContrainChildrenDOF(Int_t dof)            {fConstrChild |= 0x1<<dof;}
+  void       UContrainChildrenDOF(Int_t dof)           {fConstrChild &=~(0x1<<dof);}
+  void       SetChildrenConstrainPattern(UInt_t pat)   {fConstrChild = pat;}
+  Bool_t     HasChildrenConstraint()             const {return  fConstrChild;}
   //
   AliAlgVol* GetParent()                         const {return fParent;}
   void       SetParent(AliAlgVol* par)                 {fParent = par; if (par) par->AddChild(this);}
@@ -98,6 +106,8 @@ class AliAlgVol : public TNamed
   void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   //
+  void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const;
+  //
   void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
   Bool_t  GetSkip()                           const {return TestBit(kSkipBit);}
   //
@@ -108,6 +118,7 @@ class AliAlgVol : public TNamed
   //
   virtual void   Print(const Option_t *opt="")  const;
   virtual void   WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
+  virtual void   WriteChildrenConstraints(FILE* flOut) const;
   //
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}
@@ -126,6 +137,7 @@ class AliAlgVol : public TNamed
   UInt_t     fDOF;                    // bitpattern degrees of freedom
   Char_t     fNDOFGeomFree;           // number of free geom degrees of freedom
   Char_t     fNDOFFree;               // number of all free degrees of freedom
+  UChar_t    fConstrChild;            // bitpattern for constraints on children corrections
   //
   AliAlgVol* fParent;                 // parent volume
   TObjArray* fChildren;               // array of childrens
@@ -139,6 +151,7 @@ class AliAlgVol : public TNamed
   TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal
   TGeoHMatrix fMatT2L;            // tracking to local matrix
   //
+  static const char* fgkDOFName[kNDOFGeom];
   static const char* fgkFrameName[kNVarFrames];
   static UInt_t      fgDefGeomFree;
   //

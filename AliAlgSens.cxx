@@ -30,6 +30,7 @@ AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid)
   // def c-tor
   SetVolID(vid);
   fAddError[0] = fAddError[1] = 0;
+  fConstrChild = 0; // sensors don't have children
 }
 
 //_________________________________________________________

@@ -29,9 +29,12 @@ using namespace TMath;
 using namespace AliAlgAux;
 
 const char* AliAlgVol::fgkFrameName[AliAlgVol::kNVarFrames] = {"LOC","TRA"};
+//
 UInt_t      AliAlgVol::fgDefGeomFree = 
   BIT(AliAlgVol::kDOFTX)|BIT(AliAlgVol::kDOFTY)|BIT(AliAlgVol::kDOFTZ)|
   BIT(AliAlgVol::kDOFPH)|BIT(AliAlgVol::kDOFTH)|BIT(AliAlgVol::kDOFPS);
+//
+const char* AliAlgVol::fgkDOFName[AliAlgVol::kNDOFGeom]={"TX","TY","TZ","PSI","THT","PHI"};
 
 //_________________________________________________________
 AliAlgVol::AliAlgVol(const char* symname) :
@@ -43,6 +46,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fDOF(0)
   ,fNDOFGeomFree(0)
   ,fNDOFFree(0)
+  ,fConstrChild(kDefChildConstr)
   //
   ,fParent(0)
   ,fChildren(0)
@@ -164,7 +168,13 @@ void AliAlgVol::Print(const Option_t *opt) const
 	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp);
   printf("     DOFs: Tot: %d Free: %d (offs: %5d) Geom: %d {",fNDOFs,fNDOFFree,fFirstParGloID,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
-  printf("} in %s frame\n",fgkFrameName[fVarFrame]);
+  printf("} in %s frame.",fgkFrameName[fVarFrame]);
+  if (GetNChildren()) {
+    printf(" Children constraints: {");
+    for (int i=0;i<kNDOFGeom;i++) printf("%d",IsChildrenDOFConstrained(i) ? 1:0); 
+    printf("}");
+  }
+  printf("\n");
   //
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
@@ -345,15 +355,13 @@ Bool_t AliAlgVol::IsCondDOF(Int_t i) const
   return IsFreeDOF(i) && (!IsZeroAbs(GetParVal(i)) || !IsZeroAbs(GetParErr(i)));
 }
 
-
 //______________________________________________________
 void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
 {
   // contribute to params template file for PEDE
   enum {kOff,kOn};
-  enum {kKeyParam,kKeyConstr,kNKeys};
   const char* comment[2] = {"  ","! "};
-  const char* key[kNKeys] = {"parameter","constraint"};
+  const char* kKeyParam = "parameter";
   TString opts = opt;
   opts.ToLower();
   Bool_t showDef = opts.Contains("d"); // show free DOF even if not preconditioned
@@ -373,7 +381,7 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   if (!nDef) showDef = kFALSE;
   //
   if (nCond || showDef || showFix || showNam) 
-    fprintf(flOut,"%s%s %s\t\tDOF/Free: %d/%d (%s) %s\n",comment[cmt],key[kKeyParam],comment[kOn],
+    fprintf(flOut,"%s%s %s\t\tDOF/Free: %d/%d (%s) %s\n",comment[cmt],kKeyParam,comment[kOn],
 	    GetNDOFs(),GetNDOFFree(),fgkFrameName[fVarFrame],GetName());
   //
   if (nCond || showDef || showFix) {
@@ -390,6 +398,111 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   }
   // children volume
   int nch = GetNChildren();
+  if (nch && HasChildrenConstraint()) WriteChildrenConstraints(flOut);
+  //
   for (int ich=0;ich<nch;ich++) GetChild(ich)->WritePedeParamFile(flOut,opt);
   //
+}
+
+
+//______________________________________________________
+void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
+{
+  // write for PEDE eventual constraints on children movement in parent frame
+  //
+  enum {kOff,kOn};
+  const char* comment[2] = {"  ","! "};
+  const char* kKeyConstr = "constraint";
+  //
+  int nch = GetNChildren();
+  float *cstrArr = new float[nch*kNDOFGeom*kNDOFGeom];
+  // we need for each children the matrix for vector transformation from children frame 
+  // (in which its DOFs are defined, LOC or TRA) to this parent variation frame
+  // matRel = mPar^-1*mChild
+  TGeoHMatrix mPar;
+  if (IsFrameTRA()) GetMatrixT2G(mPar); // tracking to global
+  else              mPar = GetMatrixL2G(); // local to global
+  mPar = mPar.Inverse();
+  //
+  float *jac = cstrArr;
+  for (int ich=0;ich<nch;ich++) {
+    AliAlgVol* child = GetChild(ich);
+    TGeoHMatrix matRel;
+    if (child->IsFrameTRA()) child->GetMatrixT2G(matRel); // tracking to global
+    else                     matRel = child->GetMatrixL2G(); // local to global
+    matRel.MultiplyLeft(&mPar);
+    //
+    ConstrCoefGeom(matRel,jac);
+    // TODO: analize constraints/DOFs
+    jac += kNDOFGeom*kNDOFGeom; // matrix for next slot
+  }
+  //
+  for (int ics=0;ics<kNDOFGeom;ics++) {
+    if (!IsChildrenDOFConstrained(ics)) continue;
+    fprintf(flOut,"\n%s%s\t%e\t%s %s on nodes of %s\n",comment[kOff],kKeyConstr,0.0,comment[kOn],fgkDOFName[ics],GetName());
+    for (int ich=0;ich<nch;ich++) { // contribution from this children DOFs to constraint 
+      AliAlgVol* child = GetChild(ich);
+      for (int ip=0;ip<kNDOFGeom;ip++) {
+	jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
+	double jv = jac[ics*kNDOFGeom+ip];
+	if (!IsZeroAbs(jv)) fprintf(flOut,"%6d %+.3e\t",child->GetParGloID(ip),jv);
+      } // loop over DOF's of children contributing to this constraint
+      fprintf(flOut,"%s from %s\n",comment[kOn],child->GetName());
+    } // loop over children
+  } // loop over constraints in parent volume
+  //
+  delete[] cstrArr;
+}
+
+//_________________________________________________________________
+void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const
+{
+  // If the transformation R brings the vector from "local" frame to "master" frame as V=R*v
+  // then application of the small LOCAL correction tau to vector v is equivalent to
+  // aplication of correction TAU in MASTER framce V' = R*tau*v = TAU*R*v
+  // with TAU = R*tau*R^-1
+  // Constraining the LOCAL modifications of child volumes to have 0 total movement in their parent
+  // frame is equivalent to request that sum of all TAU matrices is unity matrix, or TAU-I = 0.
+  //
+  // This routine calculates derivatives of the TAU-I matrix over local corrections x,y,z, psi,tht,phi
+  // defining matrix TAU. In small corrections approximation the constraint is equivalent to
+  // Sum_over_child_volumes{ [dTAU/dParam]_ij * deltaParam } = 0
+  // for all elements ij of derivative matrices. Since only 6 out of 16 matrix params are independent,
+  // we request the constraint only for  [30](X), [31](Y), [32](Z), [12](psi), [02](tht), [01](phi)
+  // Choice defined by convention of AliAlgObg::Angles2Matrix (need elements ~ linear in corrections)
+  //
+  TGeoHMatrix matRI = matRD.Inverse();
+  const int ij[kNDOFGeom][2] = {{3,0},{3,1},{3,2},{1,2},{0,2},{0,1}};
+  //
+  const double *rd=matRD.GetRotationMatrix(),*ri=matRI.GetRotationMatrix();  
+  const double *td=matRD.GetTranslation(),   *ti=matRI.GetTranslation();
+  //
+  double dDPar[kNDOFGeom][4][4] = {
+    // dDX[4][4] 
+    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{rd[0],rd[3],rd[6],0}},
+    // dDY[4][4]
+    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{rd[1],rd[4],rd[7],0}},
+    // dDZ[4][4]
+    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{rd[2],rd[5],rd[8],0}},
+    // dDPSI[4][4]
+    {{rd[2]*ri[3]-rd[1]*ri[6],rd[2]*ri[4]-rd[1]*ri[7],rd[2]*ri[5]-rd[1]*ri[8],0},
+     {rd[5]*ri[3]-rd[4]*ri[6],rd[5]*ri[4]-rd[4]*ri[7],rd[5]*ri[5]-rd[4]*ri[8],0},
+     {rd[8]*ri[3]-rd[7]*ri[6],rd[8]*ri[4]-rd[7]*ri[7],rd[8]*ri[5]-rd[7]*ri[8],0},
+     {rd[2]*ti[1]-rd[1]*ti[2],rd[5]*ti[1]-rd[4]*ti[2],rd[8]*ti[1]-rd[7]*ti[2],0}},
+    // dDTHT[4][4]
+    {{rd[0]*ri[6]-rd[2]*ri[0], rd[0]*ri[7]-rd[2]*ri[1], rd[0]*ri[8]-rd[2]*ri[2],0},
+     {rd[3]*ri[6]-rd[5]*ri[0], rd[3]*ri[7]-rd[5]*ri[1], rd[3]*ri[8]-rd[5]*ri[2],0},
+     {rd[6]*ri[6]-rd[8]*ri[0], rd[6]*ri[7]-rd[8]*ri[1], rd[6]*ri[8]-rd[8]*ri[2],0},
+     {rd[0]*ti[2]-rd[2]*ti[0], rd[3]*ti[2]-rd[5]*ti[0], rd[6]*ti[2]-rd[8]*ti[0],0}},
+    // dDPHI[4][4]
+    {{rd[1]*ri[0]-rd[0]*ri[3],rd[1]*ri[1]-rd[0]*ri[4],rd[1]*ri[2]-rd[0]*ri[5],0},
+     {rd[4]*ri[0]-rd[3]*ri[3],rd[4]*ri[1]-rd[3]*ri[4],rd[4]*ri[2]-rd[3]*ri[5],0},
+     {rd[7]*ri[0]-rd[6]*ri[3],rd[7]*ri[1]-rd[6]*ri[4],rd[7]*ri[2]-rd[6]*ri[5],0},
+     {rd[1]*ti[0]-rd[0]*ti[1],rd[4]*ti[0]-rd[3]*ti[1],rd[7]*ti[0]-rd[6]*ti[1],0}},
+  };
+  //
+  for (int cs=0;cs<kNDOFGeom;cs++) {
+    int i=ij[cs][0],j=ij[cs][1];
+    for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = dDPar[ip][i][j]; // [cs][ip]
+  }
 }
