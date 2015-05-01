@@ -862,9 +862,11 @@ Bool_t AliAlgSteer::AddVertexConstraint()
   // usually translation from GLO to TRA frame should go via matrix T2G
   // but for the VertexSensor Local and Global are the same frames
   fVtxSens->GetMatrixT2L().MasterToLocal(xyz,xyzT);
+  fRefPoint->SetAlphaSens(fVtxSens->GetAlpTracking());
   fRefPoint->SetXYZTracking(xyzT);
   fRefPoint->SetYZErrTracking(c);
   fRefPoint->SetContainsMeasurement(kTRUE);
+  fRefPoint->Init();
   //
   return kTRUE;
 }
