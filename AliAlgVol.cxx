@@ -164,8 +164,8 @@ void AliAlgVol::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f\n",
-	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp);
+  printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f | Used Points: %d\n",
+	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp,fNProcPoints);
   printf("     DOFs: Tot: %d Free: %d (offs: %5d) Geom: %d {",fNDOFs,fNDOFFree,fFirstParGloID,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame.",fgkFrameName[fVarFrame]);
@@ -356,6 +356,19 @@ Bool_t AliAlgVol::IsCondDOF(Int_t i) const
 }
 
 //______________________________________________________
+Int_t AliAlgVol::FinalizeStat()
+{
+  // finalize statistics on processed points
+  if (IsSensor()) return fNProcPoints;
+  fNProcPoints = 0;
+  for (int ich=GetNChildren();ich--;) {
+    AliAlgVol* child = GetChild(ich);
+    fNProcPoints += child->FinalizeStat();
+  }
+  return fNProcPoints;
+}
+
+//______________________________________________________
 void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
 {
   // contribute to params template file for PEDE
@@ -404,7 +417,6 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   //
 }
 
-
 //______________________________________________________
 void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
 {
@@ -431,9 +443,7 @@ void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
     if (child->IsFrameTRA()) child->GetMatrixT2G(matRel); // tracking to global
     else                     matRel = child->GetMatrixL2G(); // local to global
     matRel.MultiplyLeft(&mPar);
-    //
     ConstrCoefGeom(matRel,jac);
-    // TODO: analize constraints/DOFs
     jac += kNDOFGeom*kNDOFGeom; // matrix for next slot
   }
   //
@@ -442,10 +452,10 @@ void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
     fprintf(flOut,"\n%s%s\t%e\t%s %s on nodes of %s\n",comment[kOff],kKeyConstr,0.0,comment[kOn],fgkDOFName[ics],GetName());
     for (int ich=0;ich<nch;ich++) { // contribution from this children DOFs to constraint 
       AliAlgVol* child = GetChild(ich);
+      jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
       for (int ip=0;ip<kNDOFGeom;ip++) {
-	jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
 	double jv = jac[ics*kNDOFGeom+ip];
-	if (!IsZeroAbs(jv)) fprintf(flOut,"%6d %+.3e\t",child->GetParGloID(ip),jv);
+	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)) fprintf(flOut,"%6d %+.3e\t",child->GetParGloID(ip),jv);
       } // loop over DOF's of children contributing to this constraint
       fprintf(flOut,"%s from %s\n",comment[kOn],child->GetName());
     } // loop over children
@@ -474,8 +484,11 @@ void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom]
   TGeoHMatrix matRI = matRD.Inverse();
   const int ij[kNDOFGeom][2] = {{3,0},{3,1},{3,2},{1,2},{0,2},{0,1}};
   //
-  const double *rd=matRD.GetRotationMatrix(),*ri=matRI.GetRotationMatrix();  
-  const double *td=matRD.GetTranslation(),   *ti=matRI.GetTranslation();
+  const double *rd=matRD.GetRotationMatrix(), *ri=matRI.GetRotationMatrix();  
+  const double /**td=matRD.GetTranslation(),*/*ti=matRI.GetTranslation();
+  //
+  // the angles are in degrees, while we use sinX->X approximation...
+  const double cf[kNDOFGeom] = {1,1,1,DegToRad(),DegToRad(),DegToRad()};
   //
   double dDPar[kNDOFGeom][4][4] = {
     // dDX[4][4] 
@@ -503,6 +516,6 @@ void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom]
   //
   for (int cs=0;cs<kNDOFGeom;cs++) {
     int i=ij[cs][0],j=ij[cs][1];
-    for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = dDPar[ip][i][j]; // [cs][ip]
+    for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = dDPar[ip][i][j]*cf[ip]; // [cs][ip]
   }
 }

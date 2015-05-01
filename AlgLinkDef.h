@@ -20,5 +20,6 @@
 #pragma link C++ class AliAlgSteer+;
 #pragma link C++ class AliAlgTrack+;
 #pragma link C++ class AliAlgVol+;
+#pragma link C++ class AliAlgVtx+;
 
 #endif

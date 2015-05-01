@@ -27,6 +27,8 @@ class AliAlgSens : public AliAlgVol
   Int_t GetInternalID()                         const  {return fIntID;}
   void  SetInternalID(Int_t v)                         {fIntID = v;}
   //
+  void  IncrementStat()                                {fNProcPoints++;}
+  //
   // derivatives calculation
   virtual void DPosTraDParGeom(const double *tra, double* deriv,const AliAlgVol* parent=0) const;
   //

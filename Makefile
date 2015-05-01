@@ -11,7 +11,7 @@ SRC = 	AliAlgAux.cxx AliAlgDetTPC.cxx AliAlgSens.cxx AliAlgSensTRD.cxx  \
 	AliAlgDet.cxx AliAlgDetTRD.cxx AliAlgSensITS.cxx \
 	AliAlgSteer.cxx AliAlgDetITS.cxx  AliAlgMPRecord.cxx  AliAlgSensTOF.cxx \
 	AliAlgTrack.cxx AliAlgDetTOF.cxx  AliAlgPoint.cxx AliAlgSensTPC.cxx \
-	AliAlgVol.cxx \
+	AliAlgVol.cxx AliAlgVtx.cxx \
 	Mille.cxx
 
 

@@ -4,9 +4,9 @@
 #include <TObject.h>
 #include <TMatrixD.h>
 #include <TVectorD.h>
+#include "AliAlgSens.h"
 
 class AliExternalTrackParam;
-class AliAlgSens;
 
 class AliAlgPoint : public TObject
 {
@@ -16,6 +16,7 @@ class AliAlgPoint : public TObject
 	,kVaryELossBit=BIT(16)   // ELoss variation allowed
 	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
 	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
+	,kStatOK=BIT(19)         // point is accounted in global statistics
   };
   enum {kParY = 0                           // track parameters
 	,kParZ
@@ -52,6 +53,7 @@ class AliAlgPoint : public TObject
   Bool_t     GetELossVaried()         const {return TestBit(kVaryELossBit);}
   Bool_t     GetUseBzOnly()           const {return TestBit(kUseBzOnly);}
   Bool_t     IsInvDir()               const {return TestBit(kInvDir);}
+  Bool_t     IsStatOK()               const {return TestBit(kStatOK);}
   //
   Double_t   GetXTimesRho()          const {return fXTimesRho;}
   Double_t   GetX2X0()               const {return fX2X0;}
@@ -68,6 +70,7 @@ class AliAlgPoint : public TObject
   void       SetContainsMeasurement(Bool_t v=kTRUE)   {SetBit(kMeasurementBit,v);}
   void       SetUseBzOnly(Bool_t v=kTRUE)             {SetBit(kUseBzOnly,v);}
   void       SetInvDir(Bool_t v=kTRUE)                {SetBit(kInvDir,v);}
+  void       SetStatOK(Bool_t v=kTRUE)                {SetBit(kStatOK,v);}
   //
   void       GetResidualsDiag(const double* pos, double &resU, double &resV) const;
   void       DiagonalizeResiduals(double rY, double rZ, double &resU, double &resV) const;
@@ -111,6 +114,8 @@ class AliAlgPoint : public TObject
   Int_t      GetDGloOffs()                  const {return fDGloOffs;}
   void       SetNGloDOFs(int n)                   {fNGloDOFs = n;}
   void       SetDGloOffs(int n)                   {fDGloOffs = n;}
+  //
+  void       IncrementStat();
   //
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
@@ -190,6 +195,14 @@ inline void AliAlgPoint::GetResidualsDiag(const double* pos, double &resU, doubl
   // of the track in the standard tracking frame
   DiagonalizeResiduals(pos[0]-fXYZTracking[1],pos[1]-fXYZTracking[2],resU,resV);
   //
+}
+
+//__________________________________________________________________
+inline void AliAlgPoint::IncrementStat() 
+{
+  // increment statistics for detectors this point depends on
+  fSensor->IncrementStat();
+  SetStatOK();
 }
 
 

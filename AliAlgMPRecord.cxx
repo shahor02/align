@@ -91,6 +91,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
     if (pnt->ContainsMeasurement()) {
       int gloOffs = pnt->GetDGloOffs(); // 1st entry of global derivatives for this point
       int nDGlo   = pnt->GetNGloDOFs(); // number of global derivatives (number of DOFs it depends on)
+      if (!pnt->IsStatOK()) pnt->IncrementStat();
       //
       for (int idim=0;idim<2;idim++) { // 2 dimensional orthogonal measurement
 	fNDGlo[fNResid] = 0;

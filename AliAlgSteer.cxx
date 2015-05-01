@@ -16,11 +16,13 @@
 #include "AliAlgSteer.h"
 #include "AliLog.h"
 #include "AliAlgAux.h"
+#include "AliAlgPoint.h"
 #include "AliAlgDet.h"
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
+#include "AliAlgVtx.h"
 #include "AliAlgMPRecord.h"
 #include "AliTrackerBase.h"
 #include "AliESDCosmicTrack.h"
@@ -57,6 +59,7 @@ AliAlgSteer::AliAlgSteer()
   ,fFieldOn(kFALSE)
   ,fCosmicEvent(kFALSE)
   ,fAlgTrack(0)
+  ,fVtxSens(0)
   ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult)
   ,fObligatoryDetPattern(0)
   ,fCosmicSelStrict(kFALSE)
@@ -65,10 +68,14 @@ AliAlgSteer::AliAlgSteer()
   ,fEtaMax(1.5)
   ,fVtxMinCont(-1)
   ,fVtxMaxCont(-1)
-  ,fVtxMinContCS(10)
+  ,fVtxMinContVC(10)
+  ,fMinITSClforVC(3)
+  ,fITSPattforVC(kSPDAny)
+  ,fMaxChi2forVC(10)
+   //
   ,fGloParVal(0)
   ,fGloParErr(0)
-  ,fRefPoint()
+  ,fRefPoint(0)
   ,fESDEvent(0)
   ,fVertex(0)
   ,fMPOutType(kMille)
@@ -88,6 +95,8 @@ AliAlgSteer::AliAlgSteer()
   }
   for (int i=kNCosmLegs;i--;) fESDTrack[i] = 0;
   memset(fStat,0,kNStatCl*kMaxStat*sizeof(float));
+  fMaxDCAforVC[0] = 0.1;
+  fMaxDCAforVC[1] = 0.6;
 }
 
 //________________________________________________________________
@@ -101,6 +110,8 @@ AliAlgSteer::~AliAlgSteer()
   delete[] fGloParVal;
   delete[] fGloParErr;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
+  delete fVtxSens;
+  delete fRefPoint;
   //
 }
 
@@ -130,7 +141,14 @@ void AliAlgSteer::InitDetectors()
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (det) fNDOFs += det->AssignDOFs();
   }
-  
+  // special fake sensor for vertex constraint point
+  fVtxSens = new AliAlgVtx();
+  fVtxSens->PrepareMatrixL2G();
+  fVtxSens->PrepareMatrixL2GOrig();
+  //
+  fRefPoint = new AliAlgPoint();
+  fRefPoint->SetSensor(fVtxSens);
+  //
 }
 
 //________________________________________________________________
@@ -284,11 +302,6 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   fAlgTrack->Clear();
   //
   // process the track points for each detector, 
-  // fill needed points (tracking frame) in the fAlgTrack
-  fRefPoint.SetContainsMeasurement(kFALSE);
-  fRefPoint.SetContainsMaterial(kFALSE);  
-  fAlgTrack->AddPoint(&fRefPoint); // reference point which the track will refer to
-  //
   AliAlgDet* det = 0;
   for (int idet=0;idet<kNDetectors;idet++) {
     if (!(detAcc&(0x1<<idet))) continue;
@@ -299,6 +312,11 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     }
     if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE; // abandon track
   }
+  //
+  // fill needed points (tracking frame) in the fAlgTrack
+  fRefPoint->SetContainsMeasurement(kFALSE);
+  fRefPoint->SetContainsMaterial(kFALSE);
+  fAlgTrack->AddPoint(fRefPoint); // reference point which the track will refer to
   //
   fAlgTrack->Set(esdTr->GetX(),esdTr->GetAlpha(),esdTr->GetParameter(),esdTr->GetCovariance());
   fAlgTrack->CopyFrom(esdTr);
@@ -315,7 +333,11 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     fAlgTrack->Print("p meas");
     AliFatal("AliAlgTrack->GetInnerPointID() cannot be 0");
   }
-  fRefPoint.SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
+  // do we want to add the vertex as a measured point ?
+  if (!AddVertexConstraint()) { // no constrain, just reference point w/o measurement
+    fRefPoint->SetXYZTracking(0,0,0);
+    fRefPoint->SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
+  }
   //
   if (!fAlgTrack->IniFit()) return kFALSE;
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
@@ -352,7 +374,7 @@ Bool_t AliAlgSteer::CheckSetVertex(const AliESDVertex *vtx)
 #endif
     return kFALSE;
   }
-  fVertex = (ncont>=fVtxMinContCS) ? vtx : 0; // use vertex as a constraint
+  fVertex = (ncont>=fVtxMinContVC) ? vtx : 0; // use vertex as a constraint
   return kTRUE;
 }
 
@@ -387,9 +409,9 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   //
   // process the track points for each detector, 
   // fill needed points (tracking frame) in the fAlgTrack
-  fRefPoint.SetContainsMeasurement(kFALSE);
-  fRefPoint.SetContainsMaterial(kFALSE);  
-  fAlgTrack->AddPoint(&fRefPoint); // reference point which the track will refer to
+  fRefPoint->SetContainsMeasurement(kFALSE);
+  fRefPoint->SetContainsMaterial(kFALSE);  
+  fAlgTrack->AddPoint(fRefPoint); // reference point which the track will refer to
   //
   AliAlgDet* det = 0;
   UInt_t detAccLeg[2] = {detAcc,detAcc};
@@ -423,7 +445,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
     fAlgTrack->Print("p meas");
     AliFatal("AliAlgTrack->GetInnerPointID() cannot be 0");
   }
-  fRefPoint.SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
+  fRefPoint->SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
   // 
   if (!fAlgTrack->IniFit()) return kFALSE;
   //
@@ -795,6 +817,59 @@ void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
   if (det->IsObligatory()!=v) det->SetObligatory(v);
   //
 }
+
+//____________________________________________
+Bool_t AliAlgSteer::AddVertexConstraint()
+{
+  // if vertex is set and if particle is primary, add vertex as a meared point
+  //
+  const AliESDtrack* esdTr = fESDTrack[0];
+  if (!fVertex || !esdTr) return kFALSE;
+  //
+  if (esdTr->GetNcls(0)<fMinITSClforVC) return kFALSE; // not enough its clusters
+  switch (fITSPattforVC) {
+  case kSPDBoth: 
+    if (!esdTr->HasPointOnITSLayer(0) || !esdTr->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  case kSPDAny:
+    if (!esdTr->HasPointOnITSLayer(0) && !esdTr->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  case kSPD0:
+    if (!esdTr->HasPointOnITSLayer(0)) return kFALSE;
+    break;
+  case kSPD1:    
+    if (!esdTr->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  default: break;
+  }
+  //
+  AliExternalTrackParam trc = *esdTr;
+  Double_t dz[2],dzCov[3];
+  if (!trc.PropagateToDCA(fVertex,AliTrackerBase::GetBz(),2*fMaxDCAforVC[0],dz,dzCov)) return kFALSE;
+  //
+  // check if primary candidate
+  if (Abs(dz[0])>fMaxDCAforVC[0] || Abs(dz[1])>fMaxDCAforVC[1]) return kFALSE;
+  Double_t covar[6]; fVertex->GetCovMatrix(covar);
+  Double_t p[2] = {trc.GetParameter()[0]-dz[0],trc.GetParameter()[1]-dz[1]};
+  Double_t c[3] = {0.5*(covar[0]+covar[2]),0.,covar[5]};
+  Double_t chi2 = trc.GetPredictedChi2(p,c);
+  if (chi2>fMaxChi2forVC) return kFALSE;
+  //
+  // assing measured vertex rotated to VtxSens frame as reference point
+  double xyz[3],xyzT[3]; 
+  fVertex->GetXYZ(xyz);
+  fVtxSens->SetAlpha(trc.GetAlpha());
+  // usually translation from GLO to TRA frame should go via matrix T2G
+  // but for the VertexSensor Local and Global are the same frames
+  fVtxSens->GetMatrixT2L().MasterToLocal(xyz,xyzT);
+  fRefPoint->SetXYZTracking(xyzT);
+  fRefPoint->SetYZErrTracking(c);
+  fRefPoint->SetContainsMeasurement(kTRUE);
+  //
+  return kTRUE;
+}
+
+
 
 //********************* interaction with PEDE **********************
 

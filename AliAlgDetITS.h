@@ -16,9 +16,9 @@ class AliAlgDetITS : public AliAlgDet
 
   void   SetAddErrorLr(int ilr, double sigY, double sigZ);
   void   SetSkipLr(int ilr);
-
+  //
  protected:
-
+  //
   ClassDef(AliAlgDetITS,1);
 };
 

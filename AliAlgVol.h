@@ -64,8 +64,7 @@ class AliAlgVol : public TNamed
   Double_t GetAlpTracking()                      const {return fAlp;}
   //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
-  void       IncNProcessedPoints(Int_t step=1)         {fNProcPoints += step;}
-  void       SetNProcessedPoints(Int_t v)              {fNProcPoints = v;}
+  Int_t      FinalizeStat();
   //
   Float_t*   GetParVals()                        const {return fParVals;}
   Double_t   GetParVal(int par)                  const {return fParVals[par];}
@@ -158,11 +157,13 @@ class AliAlgVol : public TNamed
   ClassDef(AliAlgVol,1)
 };
 
+//___________________________________________________________
 inline void AliAlgVol::GetMatrixT2G(TGeoHMatrix& m) const
 {
   // compute tracking to global matrix, i.e. glo = T2G*tra = L2G*loc = L2G*T2L*tra
   m = GetMatrixL2G();
   m *= GetMatrixT2L();
 }
+
 
 #endif

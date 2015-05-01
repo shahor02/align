@@ -3,7 +3,6 @@
 
 #include "AliGeomManager.h"
 #include "AliAlgTrack.h"
-#include "AliAlgPoint.h"
 #include "AliSymMatrix.h"
 
 #include <TMatrixDSym.h>
@@ -17,6 +16,8 @@ class AliESDtrack;
 class AliESDCosmicTrack;
 class AliESDVertex;
 class AliAlgDet;
+class AliAlgVtx;
+class AliAlgPoint;
 class AliAlgMPRecord;
 class TTree;
 class TFile;
@@ -37,7 +38,9 @@ class AliAlgSteer : public TObject
   enum {kCosmLow,kCosmUp,kNCosmLegs};
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
+  enum {kSPDNoSel,kSPDBoth,kSPDAny,kSPD0,kSPD1};
   enum MPOut_t {kMille,kMPRec,kMilleMPRec};
+
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
@@ -72,8 +75,18 @@ class AliAlgSteer : public TObject
   void     SetVtxMinCont(int n)                                 {fVtxMinCont = n;}
   Int_t    GetVtxMaxCont()                                const {return fVtxMaxCont;}
   void     SetVtxMaxCont(int n)                                 {fVtxMaxCont = n;}
-  Int_t    GetVtxMinContCS()                              const {return fVtxMinContCS;}
-  void     SetVtxMinContCS(int n)                               {fVtxMinContCS = n;}
+  Int_t    GetVtxMinContVC()                              const {return fVtxMinContVC;}
+  void     SetVtxMinContVC(int n)                               {fVtxMinContVC = n;}
+  //
+  Int_t    GetMinITSClforVC()                             const {return fMinITSClforVC;}
+  void     SetMinITSClforVC(int n)                              {fMinITSClforVC = n;}
+  Int_t    GetITSPattforVC()                              const {return fITSPattforVC;}
+  void     SetITSPattforVC(int p)                               {fITSPattforVC=p;}
+  Double_t GetMaxDCARforVC()                              const {return fMaxDCAforVC[0];}
+  Double_t GetMaxDCAZforVC()                              const {return fMaxDCAforVC[1];}
+  void     SetMaxDCAforVC(double dr,double dz)                  {fMaxDCAforVC[0]=dr; fMaxDCAforVC[1]=dz;}
+  Double_t GetMaxChi2forVC()                              const {return fMaxChi2forVC;}
+  void     SetMaxChi2forVC(double chi2)                         {fMaxChi2forVC = chi2;}
   //
   Bool_t   CheckDetectorPattern(UInt_t patt)              const;
   void     SetObligatoryDetector(Int_t detID, Bool_t v=kTRUE);
@@ -87,7 +100,7 @@ class AliAlgSteer : public TObject
   Float_t*   GetGloParVal()                               const {return (Float_t*)fGloParVal;}
   Float_t*   GetGloParErr()                               const {return (Float_t*)fGloParErr;}
   //
-  AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)&fRefPoint;}
+  AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)fRefPoint;}
   //
   AliAlgMPRecord* GetMPRecord()                           const {return (AliAlgMPRecord*)fMPRecord;}
   AliAlgTrack* GetAlgTrack()                              const {return (AliAlgTrack*)fAlgTrack;}
@@ -97,9 +110,12 @@ class AliAlgSteer : public TObject
   UInt_t     AcceptTrack(const AliESDtrack* esdTr, Bool_t strict=kTRUE)    const;
   UInt_t     AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
   Bool_t     CheckSetVertex(const AliESDVertex* vtx);
+  Bool_t     AddVertexConstraint();
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;
+  AliAlgVtx* GetVertexSensor()                            const {return fVtxSens;}
+  //
   void       ResetDetectors();
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
@@ -141,6 +157,8 @@ class AliAlgSteer : public TObject
   AliAlgTrack*  fAlgTrack;                                // current alignment track 
   AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
+  AliAlgVtx*    fVtxSens;                                 // fake sensor for the vertex
+  //
   //  
   // Track selection
   UInt_t        fSelEventSpecii;                          // consider only these event specii
@@ -151,12 +169,18 @@ class AliAlgSteer : public TObject
   Double_t      fEtaMax;                                  // eta cut on tracks
   Int_t         fVtxMinCont;                              // require min number of contributors in Vtx
   Int_t         fVtxMaxCont;                              // require max number of contributors in Vtx  
-  Int_t         fVtxMinContCS;                            // min number of contributors to use as constraint
+  Int_t         fVtxMinContVC;                            // min number of contributors to use as constraint
+  //
+  Int_t         fMinITSClforVC;                           // use vertex constraint for tracks with enough points
+  Int_t         fITSPattforVC;                            // optional request on ITS hits to allow vertex constraint
+  Double_t      fMaxDCAforVC[2];                          // DCA cut in R,Z to allow vertex constraint
+  Double_t      fMaxChi2forVC;                            // track-vertex chi2 cut to allow vertex constraint
+  //
   //
   Float_t*      fGloParVal;                               //[fNDOFs] parameters for free DOFs
   Float_t*      fGloParErr;                               //[fNDOFs] parameters for free DOFs
   //
-  AliAlgPoint   fRefPoint;                                //! reference point for track definition
+  AliAlgPoint*   fRefPoint;                               // reference point for track definition
   //
   const AliESDEvent* fESDEvent;                           //! externally set event
   const AliESDtrack* fESDTrack[kNCosmLegs];               //! externally set ESD tracks

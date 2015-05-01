@@ -38,6 +38,7 @@ AliAlgSens::~AliAlgSens()
 {
   // d-tor
 }
+
 /*
 //__________________________________________________________________???
 void AliAlgSens::GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const
@@ -333,9 +334,9 @@ void AliAlgSens::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f | Err: %.4e %.4e\n",
+  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f | Err: %.4e %.4e | Used Points: %d\n",
 	 CountParents(), GetSymName(), GetVolID(), GetInternalID(),fX, fAlp, 
-	 fAddError[0],fAddError[1]);
+	 fAddError[0],fAddError[1],fNProcPoints);
   printf("     DOFs: Tot: %d (offs: %5d) Free: %d  Geom: %d {",fNDOFs,fFirstParGloID,fNDOFFree,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame\n",fgkFrameName[fVarFrame]);
