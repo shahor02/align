@@ -30,6 +30,8 @@
 #include "AliESDEvent.h"
 #include "AliESDVertex.h"
 #include "AliRecoParam.h"
+#include "AliCDBRunRange.h"
+#include "AliCDBManager.h"
 #include "Mille.h"
 #include <TMath.h>
 #include <TString.h>
@@ -87,6 +89,10 @@ AliAlgSteer::AliAlgSteer()
   ,fMilleIBuffer()
   ,fMPDatFileName("mpData")
   ,fMPParFileName("mpParam.txt")
+  //
+  ,fOutCDBPath("local://outOCDB")
+  ,fOutCDBComment("AliAlgSteer")
+  ,fOutCDBResponsible("")
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -97,6 +103,7 @@ AliAlgSteer::AliAlgSteer()
   memset(fStat,0,kNStatCl*kMaxStat*sizeof(float));
   fMaxDCAforVC[0] = 0.1;
   fMaxDCAforVC[1] = 0.6;
+  SetOutCDBRunRange();
 }
 
 //________________________________________________________________
@@ -805,6 +812,15 @@ void AliAlgSteer::SetMPParFileName(const char* name)
 }
 
 //____________________________________________
+void AliAlgSteer::SetOutCDBPath(const char* name)
+{
+  // set output storage name
+  fOutCDBPath = name; 
+  if (fOutCDBPath.IsNull()) fOutCDBPath = "local://outOCDB"; 
+  //
+}
+
+//____________________________________________
 void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
 {
   // mark detector presence obligatory in the track
@@ -871,7 +887,29 @@ Bool_t AliAlgSteer::AddVertexConstraint()
   return kTRUE;
 }
 
+//______________________________________________________
+void AliAlgSteer::WriteCalibrationResults() const
+{
+  // writes output calibration
+  AliCDBManager* man = AliCDBManager::Instance();
+  if (man->IsDefaultStorageSet()) man->UnsetDefaultStorage();
+  man->SetDefaultStorage(fOutCDBPath.Data());
+  //
+  AliAlgDet* det;
+  for (int idet=0;idet<kNDetectors;idet++) {
+    if (!(det=GetDetectorByDetID(idet))) continue;
+    det->WriteCalibrationResults();
+  }
+  //
+}
 
+//______________________________________________________
+void AliAlgSteer::SetOutCDBRunRange(int rmin,int rmax)
+{
+  // set output run range
+  fOutCDBRunRange[0] = rmin >=0 ? rmin : 0;
+  fOutCDBRunRange[1] = rmax>fOutCDBRunRange[0] ? rmax : AliCDBRunRange::Infinity();  
+}
 
 //********************* interaction with PEDE **********************
 
@@ -891,7 +929,6 @@ void AliAlgSteer::GenPedeParamFile(const Option_t *opt) const
     if (!det) continue;
     det->WritePedeParamFile(flOut,opt);
     //
-    
   }
   //
   fclose(flOut);

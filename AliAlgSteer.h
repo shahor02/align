@@ -120,14 +120,26 @@ class AliAlgSteer : public TObject
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
   // output related
-  Bool_t FillMPRecData();
-  Bool_t FillMilleData();
-  Int_t  GetMPOutType()                                   const {return fMPOutType;}
-  void   SetMPOutType(MPOut_t t)                                {fMPOutType = t;}
   void   SetMPDatFileName(const char* name="mpData");
   void   SetMPParFileName(const char* name="mpParam.txt");
+  void   SetOutCDBPath(const char* name="local://outOCDB");
+  void   SetOutCDBComment(const char* cm=0)                     {fOutCDBComment = cm;}
+  void   SetOutCDBResponsible(const char* v=0)                  {fOutCDBResponsible = v;}
+  void   SetOutCDBRunRange(int rmin=0,int rmax=999999999);
+  Int_t* GetOutCDBRunRange() const {return (int*)fOutCDBRunRange;}
+  Int_t  GetOutCDBRunMin()   const {return fOutCDBRunRange[0];}
+  Int_t  GetOutCDBRunMax()   const {return fOutCDBRunRange[1];}
+  void   WriteCalibrationResults()                         const;
+  const  char* GetOutCDBComment()                          const {return fOutCDBComment.Data();}
+  const  char* GetOutCDBResponsible()                      const {return fOutCDBResponsible.Data();}
+  const  char* GetOutCDBPath()                             const {return fOutCDBPath.Data();}
   const  char* GetMPDatFileName()                          const {return fMPDatFileName.Data();}
   const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
+  //
+  Bool_t FillMPRecData();
+  Bool_t FillMilleData();
+  Int_t  GetMPOutType()                                    const {return fMPOutType;}
+  void   SetMPOutType(MPOut_t t)                                 {fMPOutType = t;}
   void   CloseMPRecOutput();
   void   CloseMilleOutput();
   void   InitMPRecOutput();
@@ -135,11 +147,11 @@ class AliAlgSteer : public TObject
   Bool_t StoreProcessedTrack();
   void   PrintStatistics() const;
   //
-  void   GenPedeParamFile(const Option_t *opt="") const;
+  void   GenPedeParamFile(const Option_t *opt="")         const;
   //
   virtual void Print(const Option_t *opt="")              const;
   //
-  static Char_t* GetDetNameByDetID(Int_t id)                    {return (Char_t*)fgkDetectorName[id];}
+  static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
   //
   AliSymMatrix* BuildMatrix(TVectorD &vec);
   Bool_t        TestLocalSolution();
@@ -200,6 +212,12 @@ class AliAlgSteer : public TObject
   TArrayI         fMilleIBuffer;                          //! buffer for Mille Indecis output
   TString         fMPDatFileName;                         //  file name for records binary data output
   TString         fMPParFileName;                         //  file name for MP steering params
+  //
+  TString         fOutCDBPath;                            // output OCDB path
+  TString         fOutCDBComment;                         // optional comment to add to output cdb objects
+  TString         fOutCDBResponsible;                     // optional responsible for output metadata
+  Int_t           fOutCDBRunRange[2];                     // run range for output storage
+
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors

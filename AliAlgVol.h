@@ -29,6 +29,10 @@ class AliAlgVol : public TNamed
   //
   const char* GetSymName()                       const {return GetName();}
   //
+  Int_t      GetVolID()                          const {return (Int_t)GetUniqueID();}
+  void       SetVolID(Int_t v)                         {SetUniqueID(v);}
+  //
+  //
   void       AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs);
   void       InitDOFs();
   //
@@ -111,6 +115,7 @@ class AliAlgVol : public TNamed
   void CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const;
   void CreatePreLocDeltaMatrix(TGeoHMatrix &deltaM) const;
   void CreateAlignmenMatrix(TGeoHMatrix& alg) const;
+  void CreateAlignmentObjects(TClonesArray* arr) const;
   //
   void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const;
   //

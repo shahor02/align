@@ -102,6 +102,7 @@
 #include "AliAlgAux.h"
 #include "AliLog.h"
 #include <TString.h>
+#include <TClonesArray.h>
 #include <TGeoManager.h>
 #include <TGeoPhysicalNode.h>
 
@@ -143,6 +144,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fMatT2L()
 {
   // def c-tor
+  SetVolID(0); // volumes have no VID, unless it is sensor
   if (symname) { // real volumes have at least geometric degrees of freedom
     SetNDOFs(kNDOFGeom);
   }
@@ -742,5 +744,18 @@ void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
   alg *= matX;
   alg *= delGloPre;
   alg *= matX.Inverse();
+  //
+}
+
+//_________________________________________________________________
+void AliAlgVol::CreateAlignmentObjects(TClonesArray* arr) const
+{
+  // add to supplied array alignment object for itself and children
+  TClonesArray& parr = *arr;
+  TGeoHMatrix algM;
+  CreateAlignmenMatrix(algM);
+  new(parr[parr.GetEntriesFast()]) AliAlignObjParams(GetName(),GetVolID(),algM,kTRUE);
+  int nch = GetNChildren();
+  for (int ich=0;ich<nch;ich++) GetChild(ich)->CreateAlignmentObjects(arr);
   //
 }

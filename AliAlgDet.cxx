@@ -6,7 +6,9 @@
 #include "AliAlgTrack.h"
 #include "AliLog.h"
 #include "AliGeomManager.h"
-
+#include "AliCDBManager.h"
+#include "AliCDBMetaData.h"
+#include "AliCDBId.h"
 #include <TString.h>
 
 ClassImp(AliAlgDet)
@@ -369,4 +371,37 @@ void AliAlgDet::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
     if (!vol->GetParent()) vol->WritePedeParamFile(flOut,opt);
   }
   //
+}
+
+//______________________________________________________
+void AliAlgDet::WriteCalibrationResults() const
+{
+  // store calibration results
+  WriteAlignmentResults();
+  // 
+  // eventually we may write other calibrations
+}
+
+//______________________________________________________
+void AliAlgDet::WriteAlignmentResults() const
+{
+  // store updated alignment
+  TClonesArray* arr = new TClonesArray("AliAlignObjParams",10);
+  //
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    // call only for top level objects, they will take care of children
+    if (!vol->GetParent()) vol->CreateAlignmentObjects(arr);
+  }
+  //
+  AliCDBManager* man = AliCDBManager::Instance();
+  AliCDBMetaData* md = new AliCDBMetaData();
+  md->SetResponsible(fAlgSteer->GetOutCDBResponsible());
+  md->SetComment(fAlgSteer->GetOutCDBResponsible());
+  //
+  AliCDBId id(Form("%s/Align/Data",GetName()),fAlgSteer->GetOutCDBRunMin(),fAlgSteer->GetOutCDBRunMax());
+  man->Put(arr,id,md); 
+  //
+  delete arr;
 }

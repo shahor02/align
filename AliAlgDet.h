@@ -75,6 +75,8 @@ class AliAlgDet : public TNamed
   void      SetObligatory(Bool_t v=kTRUE);
   //
   void      WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
+  void      WriteCalibrationResults()               const;
+  void      WriteAlignmentResults()                 const;
   //
  protected:
   void     SortSensors();
