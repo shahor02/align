@@ -13,6 +13,61 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
+/*
+  Alignment formalism:
+  
+  Vector l in the local frame of the volume_j (assuming hierarchy of nested volumes 0...J 
+  from most coarse to the end volume) is transformed to master frame vector
+  g = G_j*l_j
+  Matrix G_j is Local2Global matrix (L2G in the code). If the volume has a parent 
+  volume j-1, the global vector g can be transformed to the local volume of j-1 as
+  l_{j-1} = G^-1_{j-1}* g
+  Hence, the transormation from volume j to j-1 is 
+  l_{j-1} = G^-1_{j-1}*G_j l_j = R_j*l_j
+
+  The alignment corrections in general can be defined either as a 
+
+  1) local delta:   l'_j = delta_j * l_j
+  hence g'  = G_j * delta_j = G'_j*l_j 
+  2) global Delta:  g' = Delta_j * G_j * l_j = G'_j*l_j 
+  
+  Hence Delta and delta are linked as 
+  Delta_j = G_j delta_j G^-1_j
+  delta_j = G^-1_j Delta_j G_j
+
+  In case the whole chain of nested volumes is aligned, the corrections pile-up as:
+
+  G_0*delta_0 ... G^-1_{j-2}*G_{j-1}*delta_{j-1}*G^-1_{j-1}*G_j*delta_j =
+  Delta_0 * Delta_1 ... Delta_{j-1}*Delta_{j}... * G_j
+  = Delta_0*G_{0}*G^-1_{0}*Delta_1*G_1*...G^-1_{j-1}*Delta_{j-1}*G_j
+
+  By convention, aliroot aligment framework stores global Deltas !
+
+  ---------------------------------
+
+  This alignment framework internally allows to find geometry corrections either in the
+  volume LOCAL frame or in its TRACKING frame. The latter is defined for sensors as
+  lab frame, rotated by the angle alpha in such a way that the X axis is normal to the
+  sensor plane (note, that for ITS the rotated X axis origin is also moved to the sensor)
+  For the non-sensor volumes the TRACKING frame is defined by rotation of the lab frame
+  with the alpha angle = average angle of centers of its children, seen from the origin.
+
+  The TRACKING and IDEAL LOCAL (before misalignment) frames are related by the 
+  tracking-to-local matrix (T2L in the code), i.e. the vectors in local and tracking frames
+  are related as 
+  l = T2L * t
+
+  The alignment can be done using both frames for different volumes of the same geometry
+  branch. 
+  The alignments deltas in local and tracking frames are related as:
+
+  l' = T2L * delta_t * t 
+  l' = delta_l * T2L * t
+  -> delta_l = T2L * delta_t * T2L^-1
+
+ */
+
+
 #include "AliAlgVol.h"
 #include "AliAlgSens.h"
 #include "AliAlignObjParams.h"
@@ -78,7 +133,7 @@ AliAlgVol::~AliAlgVol()
 void AliAlgVol::Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta) const
 {
   // prepare delta matrix for the volume from its
-  // local delta vector (TGeoMatrix convension): dx,dy,dz,phi,theta,psi
+  // local delta vector (AliAlignObj convension): dx,dy,dz,,theta,psi,phi
   const double *tr=&delta[0],*rt=&delta[3]; // translation(cm) and rotation(degree) 
   AliAlignObjParams tempAlignObj;
   tempAlignObj.SetRotation(rt[0],rt[1],rt[2]);
