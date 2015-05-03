@@ -39,40 +39,6 @@ AliAlgSens::~AliAlgSens()
   // d-tor
 }
 
-/*
-//__________________________________________________________________???
-void AliAlgSens::GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const
-{
-  // prepare delta matrix for the sensitive volume from delta vector
-  // of tracking frame: shift by dx,dy,dz THEN rotation by phi,theta,psi
-  // Note that this is opposite to TGeo convention (1st rotation then translation)
-  //
-  // RS: do we need to shift by fX ? 
-  const double *tr=&delta[0],*rt=&delta[3]; // translation(cm) and rotation(degree) 
-  TGeoHMatrix trM;
-  TGeoRotation rtM;
-  deltaM.Clear();
-  deltaM.SetTranslation(tr);
-  //  deltaM.SetDx(delta[0]+fX);
-  //  deltaM.SetDy(delta[1]);
-  //  deltaM.SetDy(delta[2]);
-  rtM.SetAngles(rt[0],rt[1],rt[2]);
-  deltaM.MultiplyLeft(&rtM);
-  //  
-}
-
-//_________________________________________________________???
-void AliAlgSens::DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const
-{
-  // convert delta matrix for tracking frame (obtained by GetDeltaMatrixTra)
-  // to delta matrix in local frame (like the one from Delta2Matrix)
-  deltaLoc = deltaTra;
-  deltaLoc.MultiplyLeft(&fMatT2L);
-  deltaLoc.Multiply(&fMatT2L.Inverse());
-  //  
-}
-*/
-
 //_________________________________________________________
 void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv) const
 {

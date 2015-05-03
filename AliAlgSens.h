@@ -39,9 +39,6 @@ class AliAlgSens : public AliAlgVol
   //
   void GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;
-
-  // void GetDeltaMatrixTra(TGeoHMatrix& deltaM, const Double_t *delta) const; ??
-  //  void DeltaTra2DeltaLoc(const TGeoHMatrix& deltaTra, TGeoHMatrix& deltaLoc) const; ??
   //
   void            SetAddError(double y, double z)            {fAddError[0]=y;fAddError[1]=z;}
   const Double_t* GetAddError()                        const {return fAddError;} 

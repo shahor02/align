@@ -60,8 +60,8 @@ class AliAlgVol : public TNamed
   AliAlgVol* GetChild(int i)                     const {return fChildren ? (AliAlgVol*)fChildren->UncheckedAt(i):0;}
   virtual void AddChild(AliAlgVol* ch);
   //
-  Double_t GetXTracking()                        const {return fX;}
-  Double_t GetAlpTracking()                      const {return fAlp;}
+  Double_t   GetXTracking()                      const {return fX;}
+  Double_t   GetAlpTracking()                    const {return fAlp;}
   //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
   Int_t      FinalizeStat();
@@ -105,6 +105,13 @@ class AliAlgVol : public TNamed
   void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   void GetDeltaT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta, const TGeoHMatrix& relMat) const;
   //
+  // creation of global matrices for storage
+  void CreateGloDeltaMatrix(TGeoHMatrix& deltaM) const;
+  void CreateLocDeltaMatrix(TGeoHMatrix& deltaM) const;
+  void CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const;
+  void CreatePreLocDeltaMatrix(TGeoHMatrix &deltaM) const;
+  void CreateAlignmenMatrix(TGeoHMatrix& alg) const;
+  //
   void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const;
   //
   void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
@@ -143,8 +150,8 @@ class AliAlgVol : public TNamed
   //
   Int_t      fNProcPoints;            // n of processed points
   Int_t      fFirstParGloID;          // ID of the 1st parameter in the global results array
-  Float_t*   fParVals;                //[fNDOFs]  values of the fitted params
-  Float_t*   fParErrs;                //[fNDOFs]  errors of the fitted params
+  Float_t*   fParVals;                // values of the fitted params
+  Float_t*   fParErrs;                // errors of the fitted params
   //
   TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
   TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal

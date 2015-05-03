@@ -601,3 +601,146 @@ void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom]
     for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = dDPar[ip][i][j]*cf[ip]; // [cs][ip]
   }
 }
+
+//_________________________________________________________________
+void AliAlgVol::CreateGloDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create global matrix deltaM from fParVals array containing corrections.
+  // This deltaM does not account for eventual prealignment
+  // Volume knows if its variation was done in TRA or LOC frame
+  //
+  // deltaM = Z * deltaL * Z^-1 
+  // where deltaL is local correction matrix and Z is matrix defined as 
+  // Z = [ Prod_{k=0}^{j-1} G_k * deltaL_k * G^-1_k ] * G_j
+  // with j=being the level of the volume in the hierarchy
+  //
+  CreateLocDeltaMatrix(deltaM);
+  TGeoHMatrix zMat = GetMatrixL2G();
+  const AliAlgVol* par = this;
+  while( (par=par->GetParent()) ) {
+    TGeoHMatrix locP;
+    par->CreateLocDeltaMatrix(locP);
+    locP.MultiplyLeft( &par->GetMatrixL2G() );
+    locP.Multiply( &par->GetMatrixL2G().Inverse() );
+    zMat.MultiplyLeft( &locP );
+  }
+  deltaM.MultiplyLeft( &zMat );
+  deltaM.Multiply( &zMat.Inverse() );
+  //
+}
+
+//_________________________________________________________________
+void AliAlgVol::CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create prealignment global matrix deltaM from prealigned G and 
+  // original GO local-to-global matrices
+  //
+  // From G_j = Delta_j * Delta_{j-1} ... Delta_0 * GO_j
+  // where Delta_j is global prealignment matrix for volume at level j
+  // we get by induction
+  // Delta_j = G_j * GO^-1_j * GO_{j-1} * G^-1_{j-1}
+  //
+  deltaM = GetMatrixL2G();
+  deltaM *= GetMatrixL2GOrig().Inverse();
+  const AliAlgVol* par = GetParent();
+  if (par) {
+    deltaM *= par->GetMatrixL2GOrig();
+    deltaM *= par->GetMatrixL2G().Inverse();
+  }
+  //
+}
+
+/*
+  // this is an alternative lengthy way !
+//_________________________________________________________________
+void AliAlgVol::CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create prealignment global matrix deltaM from prealigned G and 
+  // original GO local-to-global matrices
+  //
+  // From G_j = Delta_j * Delta_{j-1} ... Delta_0 * GO_j
+  // where Delta_j is global prealignment matrix for volume at level j
+  // we get by induction
+  // Delta_j = G_j * GO^-1_j * GO_{j-1} * G^-1_{j-1}
+  //
+  CreatePreLocDeltaMatrix(deltaM);
+  TGeoHMatrix zMat = GetMatrixL2GOrig();
+  const AliAlgVol* par = this;
+  while( (par=par->GetParent()) ) {
+    TGeoHMatrix locP;
+    par->CreatePreLocDeltaMatrix(locP);
+    locP.MultiplyLeft( &par->GetMatrixL2GOrig() );
+    locP.Multiply( &par->GetMatrixL2GOrig().Inverse() );
+    zMat.MultiplyLeft( &locP );
+  }
+  deltaM.MultiplyLeft( &zMat );
+  deltaM.Multiply( &zMat.Inverse() );
+  //
+}
+*/
+
+//_________________________________________________________________
+void AliAlgVol::CreatePreLocDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create prealignment local matrix deltaM from prealigned G and 
+  // original GO local-to-global matrices
+  //
+  // From G_j = GO_0 * delta_0 * GO^-1_0 * GO_1 * delta_1 ... GO^-1_{j-1}*GO_{j}*delta_j
+  // where delta_j is local prealignment matrix for volume at level j
+  // we get by induction
+  // delta_j = GO^-1_j * GO_{j-1} * G^-1_{j-1} * G^_{j}
+  //
+  const AliAlgVol* par = GetParent();
+  deltaM = GetMatrixL2GOrig().Inverse();
+  if (par) {
+    deltaM *= par->GetMatrixL2GOrig();
+    deltaM *= par->GetMatrixL2G().Inverse();    
+  }
+  deltaM *= GetMatrixL2G();
+  //
+}
+
+//_________________________________________________________________
+void AliAlgVol::CreateLocDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create local matrix deltaM from fParVals array containing corrections.
+  // This deltaM does not account for eventual prealignment
+  // Volume knows if its variation was done in TRA or LOC frame
+  double corr[kNDOFGeom];
+  for (int i=kNDOFGeom;i--;) corr[i] = fParVals[i]; // we need doubles
+  Delta2Matrix(deltaM,corr);
+  if (IsFrameTRA()) { // we need corrections in local frame!
+    // l' = T2L * delta_t * t = T2L * delta_t * T2L^-1 * l = delta_l * l
+    // -> delta_l = T2L * delta_t * T2L^-1
+    deltaM.Multiply( &GetMatrixT2L().Inverse() );
+    deltaM.MultiplyLeft( &GetMatrixT2L() );
+  }
+  //
+}
+
+//_________________________________________________________________
+void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
+{
+  // create final alignment matrix, accounting for eventual prealignment
+  //
+  // deltaGlo_j * X_{j-1} * PdeltaGlo_j * X^-1_{j-1}
+  // 
+  // where deltaGlo_j is global alignment matrix for this volume at level j
+  // of herarchy, obtained from CreateGloDeltaMatrix.
+  // PdeltaGlo_j is prealignment global matrix and 
+  // X_i = deltaGlo_i * deltaGlo_{i-1} .. deltaGle_0
+  //
+  TGeoHMatrix delGloPre,matX;
+  CreateGloDeltaMatrix(alg);
+  CreatePreGloDeltaMatrix(delGloPre);
+  const AliAlgVol* par = this;
+  while( (par=par->GetParent()) ) {
+    TGeoHMatrix parDelGlo;
+    par->CreateGloDeltaMatrix(parDelGlo);
+    matX *= parDelGlo;
+  }
+  alg *= matX;
+  alg *= delGloPre;
+  alg *= matX.Inverse();
+  //
+}
