@@ -38,10 +38,37 @@
   In case the whole chain of nested volumes is aligned, the corrections pile-up as:
 
   G_0*delta_0 ... G^-1_{j-2}*G_{j-1}*delta_{j-1}*G^-1_{j-1}*G_j*delta_j =
-  Delta_0 * Delta_1 ... Delta_{j-1}*Delta_{j}... * G_j
+  Delta_j * Delta_{j-1} ... Delta_{1}*Delta_{0}... * G_j
   = Delta_0*G_{0}*G^-1_{0}*Delta_1*G_1*...G^-1_{j-1}*Delta_{j-1}*G_j
 
+  -> Delta_j = G'_j * G^-1_j * G_{j-1} * G'^-1_{i-1} 
+  where G and G' are modified and original L2G matrices
+
+  From this by induction one gets relation between local and global deltas:
+
+  Delta_j = Z_j * delta_j * Z^-1_j
+
+  where Z_j = [ Prod_{k=0}^{j-1} (G_k * delta_k * G^-1_k) ] * G_j
+
   By convention, aliroot aligment framework stores global Deltas !
+
+  In case the geometry was already prealigned by PDelta_j matrices, the result
+  of the new incremental alignment Delta_j must be combined with PDelta_j to 
+  resulting matrix TDelta_j before writing new alignment object.
+
+  Derivation: if G_j and IG_j and final and ideal L2G matrices for level j, then 
+
+  G_j = TDelta_j * TDelta_{j-1} ... TDelta_0 * IG_j
+  =     (Delta_j * Delta_{j-1} ... Delta_0)  * (PDelta_j * PDelta_{j-1} ... PDelta_0) * IG_j
+
+  Hence:
+  TDelta_j = [Prod_{i=j}^0 Delta_i ] * [Prod_{k=j}^0 PDelta_k ] * [Prod_{l=0}^{j-1} TDelta_l]
+
+  By induction we get combination rule:
+
+  TDelta_j = Delta_j * X_{j-1} * PDelta_j * X^-1_{j-1}
+  
+  where X_i = Delta_i * Delta_{i-1} ... Delta_0
 
   ---------------------------------
 
