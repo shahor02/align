@@ -80,6 +80,7 @@ AliAlgSteer::AliAlgSteer()
   ,fGloParVal(0)
   ,fGloParErr(0)
   ,fRefPoint(0)
+  ,fESDTree(0)
   ,fESDEvent(0)
   ,fVertex(0)
   ,fMPOutType(kMille)
@@ -610,14 +611,32 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
 {
   // load needed info for new run
   if (run==fRunNumber) return;  // nothing to do
+  if (fRunNumber>0) fStat[kAccStat][kRun]++;
   fRunNumber = run;
   AliInfoF("Processing new run %d",fRunNumber);
+  //
+  if (fUseRecoOCDB) {
+    LoadRecoTimeOCDB();
+
+  }
+
   //
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
   //
   fStat[kInpStat][kRun]++;
   //
 }
+
+//_________________________________________________________
+Bool_t AliAlgSteer::LoadRecoTimeOCDB
+{
+  // load OCDB used for the reconstruction of data being processed
+  if (!fESDtree) {
+    AliFatal("Cannot load Reco-Time OCDB since the ESDtree is not set");
+  }
+
+}
+
 
 //_________________________________________________________
 AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t vid) const

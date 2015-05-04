@@ -60,6 +60,8 @@ class AliAlgSteer : public TObject
   void     SetCosmicEvent(Bool_t v=kTRUE) {fCosmicEvent = v;}
   Float_t  GetStat(int cls, int tp)                       const {return fStat[cls][tp];}
   //
+  void     SetESDTree(const TTree* tr)                          {fESDTree = tr;}
+  const    TTree* GetESDTree()                            const {return fESDTree;}
   void     SetESDEvent(const AliESDEvent* ev)                   {fESDEvent = ev;}
   const    AliESDEvent* GetESDEvent()                     const {return fESDEvent;}
   void     SetESDtrack(const AliESDtrack* tr, int i=0)          {fESDTrack[i] = tr;}
@@ -200,6 +202,7 @@ class AliAlgSteer : public TObject
   //
   AliAlgPoint*   fRefPoint;                               // reference point for track definition
   //
+  const TTree*       fESDTree;                            //! externally set esdTree, needed to access UserInfo list
   const AliESDEvent* fESDEvent;                           //! externally set event
   const AliESDtrack* fESDTrack[kNCosmLegs];               //! externally set ESD tracks
   const AliESDVertex* fVertex;                            //! event vertex
