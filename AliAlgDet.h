@@ -21,10 +21,11 @@ class AliAlgDet : public TNamed
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
   virtual ~AliAlgDet();
-  Int_t   GetDetID()                             const {return GetUniqueID();}
+  Int_t   GetDetID()                            const {return GetUniqueID();}
   void    SetDetID(UInt_t tp);
   //
-  void    AcknowledgeNewRun(Int_t run);
+  virtual void  CacheReferenceOCDB();
+  virtual void  AcknowledgeNewRun(Int_t run);
   //
   Int_t   VolID2SID(Int_t vid)                  const;
   Int_t   SID2VolID(Int_t sid)                  const {return sid<GetNSensors() ? fSID2VolID[sid] : -1;} //todo

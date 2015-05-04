@@ -89,11 +89,13 @@ class AliAlgVol : public TNamed
   virtual void   SetTrackingFrame();
   //
   const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
-  const TGeoHMatrix&  GetMatrixL2GOrig()         const {return fMatL2GOrig;}
+  const TGeoHMatrix&  GetMatrixL2GIdeal()        const {return fMatL2GIdeal;}
+  const TGeoHMatrix&  GetMatrixL2GReco()         const {return fMatL2GReco;}
   void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
-  void  SetMatrixL2GOrig(const TGeoHMatrix& m)         {fMatL2GOrig = m;}
-  virtual void   PrepareMatrixL2G();
-  virtual void   PrepareMatrixL2GOrig();
+  void  SetMatrixL2GIdeal(const TGeoHMatrix& m)        {fMatL2GIdeal = m;}
+  void  SetMatrixL2GReco(const TGeoHMatrix& m)         {fMatL2GReco = m;}
+  virtual void   PrepareMatrixL2G(Bool_t reco=kFALSE);
+  virtual void   PrepareMatrixL2GIdeal();
   //
   void  GetMatrixT2G(TGeoHMatrix& m)             const;
   //
@@ -158,9 +160,10 @@ class AliAlgVol : public TNamed
   Float_t*   fParVals;                // values of the fitted params
   Float_t*   fParErrs;                // errors of the fitted params
   //
-  TGeoHMatrix fMatL2G;            // local to global matrix, including current alignment
-  TGeoHMatrix fMatL2GOrig;        // local to global matrix, ideal
-  TGeoHMatrix fMatT2L;            // tracking to local matrix
+  TGeoHMatrix fMatL2GReco;            // local to global matrix used for reco of data being processed
+  TGeoHMatrix fMatL2G;                // local to global matrix, including current alignment
+  TGeoHMatrix fMatL2GIdeal;           // local to global matrix, ideal
+  TGeoHMatrix fMatT2L;                // tracking to local matrix
   //
   static const char* fgkDOFName[kNDOFGeom];
   static const char* fgkFrameName[kNVarFrames];

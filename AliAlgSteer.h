@@ -44,6 +44,7 @@ class AliAlgSteer : public TObject
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
+  void     LoadRefOCDB();
   void     InitDetectors();
   void     InitDOFs();  
   //
@@ -149,6 +150,11 @@ class AliAlgSteer : public TObject
   //
   void   GenPedeParamFile(const Option_t *opt="")         const;
   //
+  //----------------------------------------
+  void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
+  const  char* GetRefOCDBConfigMacro()                    const {return fRefOCDBConf.Data();}
+  Int_t  GetRefOCDBLoaded()                               const {return fRefOCDBLoaded;}
+  //
   virtual void Print(const Option_t *opt="")              const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
@@ -203,6 +209,7 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkStatClName[kNStatCl];           // stat classes names
   static const Char_t* fgkStatName[kMaxStat];             // stat type names  
   //
+  // output related
   MPOut_t         fMPOutType;                             // Format to store MP data
   Mille*          fMille;                                 //! Mille interface
   AliAlgMPRecord* fMPRecord;                              //! MP record 
@@ -217,7 +224,10 @@ class AliAlgSteer : public TObject
   TString         fOutCDBComment;                         // optional comment to add to output cdb objects
   TString         fOutCDBResponsible;                     // optional responsible for output metadata
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
-
+  //
+  // input related
+  TString         fRefOCDBConf;                           // optional macro name for prealignment OCDB setup
+  Int_t           fRefOCDBLoaded;                         // flag/counter for ref.OCDB loading
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors

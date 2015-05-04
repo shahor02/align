@@ -288,7 +288,7 @@ void AliAlgSens::SetTrackingFrame()
   if (r>1) tra[0] = r;
   //
   t2l.LocalToMaster(tra,loc);
-  GetMatrixL2GOrig().LocalToMaster(loc,glo);
+  GetMatrixL2GIdeal().LocalToMaster(loc,glo);
   fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
   fAlp = ATan2(glo[1],glo[0]);
   AliAlgAux::BringToPiPM(fAlp);
@@ -309,7 +309,7 @@ void AliAlgSens::Print(const Option_t *opt) const
   //
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
-    GetMatrixL2GOrig().Print();
+    GetMatrixL2GIdeal().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
     printf("T2L         : "); 

@@ -37,6 +37,8 @@
 #include <TString.h>
 #include <TTree.h>
 #include <TFile.h>
+#include <TROOT.h>
+#include <TSystem.h>
 #include <stdio.h>
 
 using namespace TMath;
@@ -93,6 +95,9 @@ AliAlgSteer::AliAlgSteer()
   ,fOutCDBPath("local://outOCDB")
   ,fOutCDBComment("AliAlgSteer")
   ,fOutCDBResponsible("")
+   //
+  ,fRefOCDBConf("configRefOCDB.C")
+  ,fRefOCDBLoaded(0)
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -151,11 +156,16 @@ void AliAlgSteer::InitDetectors()
   // special fake sensor for vertex constraint point
   fVtxSens = new AliAlgVtx();
   fVtxSens->PrepareMatrixL2G();
-  fVtxSens->PrepareMatrixL2GOrig();
+  fVtxSens->PrepareMatrixL2GIdeal();
   //
   fRefPoint = new AliAlgPoint();
   fRefPoint->SetSensor(fVtxSens);
   //
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (det) det->CacheReferenceOCDB();
+  }
+ 
 }
 
 //________________________________________________________________
@@ -172,9 +182,12 @@ void AliAlgSteer::InitDOFs()
 }
 
 //________________________________________________________________
-  void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
+void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
 {
   // add detector participating in the alignment, optionally constructed externally
+  //
+  if (!fRefOCDBLoaded) LoadRefOCDB();
+  //
   if (id>=kNDetectors)  AliFatalF("Detector typeID %d exceeds allowed range %d:%d",
 				  id,0,kNDetectors-1);
   //
@@ -255,13 +268,16 @@ UInt_t AliAlgSteer::AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]
 Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 {
   // process event
+  SetESDEvent(esdEv);
   AliInfoF("Processing event %d of ev.specie %d",esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie());
+  //
+  if (esdEv->GetRunNumber() != GetRunNumber()) SetRunNumber(esdEv->GetRunNumber());
+  //
   if (!(esdEv->GetEventSpecie()&fSelEventSpecii)) {
     AliInfoF("Reject: specie does not match, allowed 0x%0x",fSelEventSpecii);
     return kFALSE;
   }
   //
-  SetESDEvent(esdEv);
   SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   if (!IsCosmicEvent() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
@@ -595,7 +611,10 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   // load needed info for new run
   if (run==fRunNumber) return;  // nothing to do
   fRunNumber = run;
+  AliInfoF("Processing new run %d",fRunNumber);
+  //
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
+  //
   fStat[kInpStat][kRun]++;
   //
 }
@@ -909,6 +928,37 @@ void AliAlgSteer::SetOutCDBRunRange(int rmin,int rmax)
   // set output run range
   fOutCDBRunRange[0] = rmin >=0 ? rmin : 0;
   fOutCDBRunRange[1] = rmax>fOutCDBRunRange[0] ? rmax : AliCDBRunRange::Infinity();  
+}
+
+//______________________________________________________
+void AliAlgSteer::LoadRefOCDB()
+{
+  // setup OCDB whose objects will be used as a reference with respect to which the
+  // alignment/calibration will prodice its corrections.
+  // Detectors which need some reference calibration data must use this one
+  //
+  //
+  if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
+    AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());
+    gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
+  }
+  else {
+    AliWarningF("No reference OCDB config macro %s is found, assume it was preconfigured upstream",
+		fRefOCDBConf.Data());
+  }
+  if (AliGeomManager::GetGeometry()) {
+    AliInfo("Destroying current geometry before loading reference one");
+    AliGeomManager::Destroy();
+  }
+  AliGeomManager::LoadGeometry("geometry.root");
+  if (!AliGeomManager::GetGeometry()) AliFatal("Failed to load geometry, cannot run");
+  //
+  TString detList = "";
+  for (int i=0;i<kNDetectors;i++) {detList += GetDetNameByDetID(i); detList += " ";}
+  AliGeomManager::ApplyAlignObjsFromCDB(detList.Data());
+  //
+  fRefOCDBLoaded++;
+  //
 }
 
 //********************* interaction with PEDE **********************

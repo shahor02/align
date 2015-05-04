@@ -112,7 +112,7 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
   const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
-  //const TGeoHMatrix& matL2G = sens->GetMatrixL2GOrig(); // local to global orig matrix
+  //const TGeoHMatrix& matL2G = sens->GetMatrixL2GIdeal(); // local to global orig matrix
   matL2G.MasterToLocal(glo,loc);
   const TGeoHMatrix& matT2L = sens->GetMatrixT2L();  // matrix for tracking to local frame translation
   matT2L.MasterToLocal(loc,tra);
@@ -158,6 +158,13 @@ void AliAlgDet::AcknowledgeNewRun(Int_t run)
 {
   // update parameters needed to process this run
 }
+
+//_________________________________________________________
+void AliAlgDet::CacheReferenceOCDB()
+{
+  // if necessary, detector may fetch here some reference OCDB data
+}
+
 
 //_________________________________________________________
 AliAlgPoint* AliAlgDet::GetPointFromPool()
@@ -220,7 +227,7 @@ void AliAlgDet::DefineMatrices()
     // modified global-local matrix
     vol->PrepareMatrixL2G();
     // ideal global-local matrix
-    vol->PrepareMatrixL2GOrig();
+    vol->PrepareMatrixL2GIdeal();
     //
   }
   // Now set tracking-local matrix (MUST be done after ALL L2G matrices are done!)

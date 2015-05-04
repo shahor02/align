@@ -41,7 +41,7 @@ void AliAlgSensITS::SetTrackingFrame()
   double tra[3]={0},loc[3],glo[3];
   // ITS defines tracking frame with origin in sensor, others at 0
   GetMatrixT2L().LocalToMaster(tra,loc);
-  GetMatrixL2GOrig().LocalToMaster(loc,glo);
+  GetMatrixL2GIdeal().LocalToMaster(loc,glo);
   fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
   fAlp = ATan2(glo[1],glo[0]);
   AliAlgAux::BringToPiPM(fAlp);

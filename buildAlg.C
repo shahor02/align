@@ -32,6 +32,8 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   esdEv->InitMagneticField();
   int run = esdEv->GetRunNumber();
   int nEv = esdTree->GetEntries();
+
+  /*
   AliCDBManager* man = AliCDBManager::Instance();
   if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
     man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
@@ -43,14 +45,16 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
     man->SetRun(run);    
   }
   AliGeomManager::LoadGeometry("data/geometry.root");
+  */
   //
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
-  algSteer->AddDetector(AliAlgSteer::kTPC);
+  //algSteer->AddDetector(AliAlgSteer::kTPC);
   algSteer->AddDetector(AliAlgSteer::kTRD);
   algSteer->AddDetector(AliAlgSteer::kTOF);
   //
+  /*
   TString detalg = "GRP";
   for (int id=0;id<AliAlgSteer::kNDetectors;id++) {
     if (algSteer->GetDetectorByDetID(id)) {
@@ -61,6 +65,7 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   // apply alignment
   AliGeomManager::ApplyAlignObjsFromCDB(detalg.Data());
   //
+  */
   //
   algSteer->InitDetectors();
   // set/fix needed DOFS per detectort, TODO

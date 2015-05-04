@@ -139,8 +139,9 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fParVals(0)
   ,fParErrs(0)
   //
+  ,fMatL2GReco()
   ,fMatL2G()
-  ,fMatL2GOrig()
+  ,fMatL2GIdeal()
   ,fMatT2L()
 {
   // def c-tor
@@ -262,7 +263,7 @@ void AliAlgVol::Print(const Option_t *opt) const
   //
   if (opts.Contains("mat")) { // print matrices
     printf("L2G original: "); 
-    GetMatrixL2GOrig().Print();
+    GetMatrixL2GIdeal().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
     printf("T2L (fake)  : "); 
@@ -272,14 +273,15 @@ void AliAlgVol::Print(const Option_t *opt) const
 }
 
 //____________________________________________
-void AliAlgVol::PrepareMatrixL2G()
+void AliAlgVol::PrepareMatrixL2G(Bool_t reco)
 {
-  // extract from geometry L2G matrix
+  // extract from geometry L2G matrix, depending on reco flag, set it as a reco-time
+  // or current alignment matrix
   const char* path = GetSymName();
   if (gGeoManager->GetAlignableEntry(path)) {
     const TGeoHMatrix* l2g = AliGeomManager::GetMatrix(path);
     if (!l2g) AliFatalF("Failed to find L2G matrix for alignable %s",path);
-    SetMatrixL2G(*l2g);
+    reco ? SetMatrixL2GReco(*l2g) : SetMatrixL2G(*l2g);
   }
   else { // extract from path
     if (!gGeoManager->CheckPath(path)) AliFatalF("Volume path %s not valid!",path);
@@ -294,19 +296,19 @@ void AliAlgVol::PrepareMatrixL2G()
     else {
       l2g = *node->GetMatrix();
     }
-    SetMatrixL2G(l2g);
+    reco ? SetMatrixL2GReco(l2g) : SetMatrixL2G(l2g);
   }
   //
 }
 
 //____________________________________________
-void AliAlgVol::PrepareMatrixL2GOrig()
+void AliAlgVol::PrepareMatrixL2GIdeal()
 {
   // extract from geometry ideal L2G matrix
   TGeoHMatrix mtmp;
   if (!AliGeomManager::GetOrigGlobalMatrix(GetSymName(),mtmp)) 
     AliFatalF("Failed to find ideal L2G matrix for %s",GetSymName());
-  SetMatrixL2GOrig(mtmp);
+  SetMatrixL2GIdeal(mtmp);
   //
 }
 
@@ -320,7 +322,7 @@ void AliAlgVol::PrepareMatrixT2L()
   int nch = GetNChildren();
   for (int ich=nch;ich--;) {
     AliAlgVol* vol = GetChild(ich);
-    vol->GetMatrixL2GOrig().LocalToMaster(loc,glo);
+    vol->GetMatrixL2GIdeal().LocalToMaster(loc,glo);
     for (int j=3;j--;) tot[j] += glo[j];
   }
   if (nch) for (int j=3;j--;) tot[j] /= nch;
@@ -335,7 +337,7 @@ void AliAlgVol::PrepareMatrixT2L()
   fMatT2L.RotateZ(fAlp*RadToDeg());
   fMatT2L.SetDx(fX);
   // then convert it to Tracking to Local  matrix
-  fMatT2L.MultiplyLeft(&GetMatrixL2GOrig().Inverse());
+  fMatT2L.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
   //
 }
 
@@ -643,10 +645,10 @@ void AliAlgVol::CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const
   // Delta_j = G_j * GO^-1_j * GO_{j-1} * G^-1_{j-1}
   //
   deltaM = GetMatrixL2G();
-  deltaM *= GetMatrixL2GOrig().Inverse();
+  deltaM *= GetMatrixL2GIdeal().Inverse();
   const AliAlgVol* par = GetParent();
   if (par) {
-    deltaM *= par->GetMatrixL2GOrig();
+    deltaM *= par->GetMatrixL2GIdeal();
     deltaM *= par->GetMatrixL2G().Inverse();
   }
   //
@@ -666,13 +668,13 @@ void AliAlgVol::CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const
   // Delta_j = G_j * GO^-1_j * GO_{j-1} * G^-1_{j-1}
   //
   CreatePreLocDeltaMatrix(deltaM);
-  TGeoHMatrix zMat = GetMatrixL2GOrig();
+  TGeoHMatrix zMat = GetMatrixL2GIdeal();
   const AliAlgVol* par = this;
   while( (par=par->GetParent()) ) {
     TGeoHMatrix locP;
     par->CreatePreLocDeltaMatrix(locP);
-    locP.MultiplyLeft( &par->GetMatrixL2GOrig() );
-    locP.Multiply( &par->GetMatrixL2GOrig().Inverse() );
+    locP.MultiplyLeft( &par->GetMatrixL2GIdeal() );
+    locP.Multiply( &par->GetMatrixL2GIdeal().Inverse() );
     zMat.MultiplyLeft( &locP );
   }
   deltaM.MultiplyLeft( &zMat );
@@ -693,9 +695,9 @@ void AliAlgVol::CreatePreLocDeltaMatrix(TGeoHMatrix &deltaM) const
   // delta_j = GO^-1_j * GO_{j-1} * G^-1_{j-1} * G^_{j}
   //
   const AliAlgVol* par = GetParent();
-  deltaM = GetMatrixL2GOrig().Inverse();
+  deltaM = GetMatrixL2GIdeal().Inverse();
   if (par) {
-    deltaM *= par->GetMatrixL2GOrig();
+    deltaM *= par->GetMatrixL2GIdeal();
     deltaM *= par->GetMatrixL2G().Inverse();    
   }
   deltaM *= GetMatrixL2G();

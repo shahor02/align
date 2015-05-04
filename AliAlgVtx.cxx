@@ -39,6 +39,6 @@ void AliAlgVtx::PrepareMatrixT2L()
   //
   fMatT2L.Clear();
   fMatT2L.RotateZ(fAlp*RadToDeg());
-  //  fMatT2L.MultiplyLeft(&GetMatrixL2GOrig().Inverse()); L2G=I !!!
+  //  fMatT2L.MultiplyLeft(&GetMatrixL2GIdeal().Inverse()); L2G=I !!!
   //
 }
