@@ -807,7 +807,9 @@ void AliAlgTrack::Print(Option_t *opt) const
   Bool_t par = optS.Contains("lc"); // local param corrections
   Bool_t paru = optS.Contains("lcu"); // local param corrections in track param frame
   //
-  if (par) printf("Ref.track corr: "); for (int i=0;i<fNLocExtPar;i++) printf("%+.3e ",fLocParA[i]); printf("\n");
+  if (par) {
+    printf("Ref.track corr: "); for (int i=0;i<fNLocExtPar;i++) printf("%+.3e ",fLocParA[i]); printf("\n");
+  }
   //
   if (optS.Contains("p") || res || der) { 
     for (int ip=0;ip<GetNPoints();ip++) {
@@ -1014,6 +1016,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
     //
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
+      if (pnt->GetNeedUpdateFromTrack()) pnt->UpdatePointByTrackInfo(&trc); 
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);

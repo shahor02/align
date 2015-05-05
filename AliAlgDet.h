@@ -11,7 +11,7 @@ class AliAlgSens;
 class AliAlgVol;
 class AliAlgSteer;
 class AliTrackPointArray;
-
+class AliExternalTrackParam;
 
 class AliAlgDet : public TNamed
 {
@@ -27,7 +27,6 @@ class AliAlgDet : public TNamed
   virtual void  CacheReferenceOCDB();
   virtual void  AcknowledgeNewRun(Int_t run);
   virtual void  UpdateL2GRecoMatrices();
-
   //
   Int_t   VolID2SID(Int_t vid)                  const;
   Int_t   SID2VolID(Int_t sid)                  const {return sid<GetNSensors() ? fSID2VolID[sid] : -1;} //todo
@@ -57,6 +56,10 @@ class AliAlgDet : public TNamed
   virtual void  Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp);
+  virtual void  UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
+  virtual void  SetUseErrorParam(Int_t v=0);
+  Int_t         GetUseErrorParam()                   const {return fUseErrorParam;}
+  //
   virtual Bool_t AcceptTrack(const AliESDtrack* trc) const = 0;
   //
   virtual AliAlgPoint* GetPointFromPool();
@@ -97,6 +100,7 @@ class AliAlgDet : public TNamed
   ULong_t   fTrackFlagSel;             // flag for track selection
   Int_t     fNPointsSel;               // min number of points to require                 
   //
+  Int_t     fUseErrorParam;          // signal that points need to be updated using track info, 0 - no
   Double_t  fAddError[2];            // additional error increment for measurement
   TObjArray fSensors;                // all sensors of the detector
   TObjArray fVolumes;                // all volumes of the detector  

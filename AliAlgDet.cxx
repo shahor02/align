@@ -11,6 +11,7 @@
 #include "AliCDBEntry.h"
 #include "AliAlignObj.h"
 #include "AliCDBId.h"
+#include "AliExternalTrackParam.h"
 #include <TString.h>
 
 ClassImp(AliAlgDet)
@@ -26,6 +27,7 @@ AliAlgDet::AliAlgDet()
   ,fTrackFlagSel(0)
   ,fNPointsSel(0)
   //
+  ,fUseErrorParam(0)
   ,fSensors()
   ,fVolumes()
   //
@@ -99,28 +101,34 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix 
   matT2L.MasterToLocal(loc,tra); // go to tracking frame
   //
-  // convert error
-  TGeoHMatrix hcov;
-  Double_t hcovel[9];
-  const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
-  hcovel[0] = double(pntcov[0]);
-  hcovel[1] = double(pntcov[1]);
-  hcovel[2] = double(pntcov[2]);
-  hcovel[3] = double(pntcov[1]);
-  hcovel[4] = double(pntcov[3]);
-  hcovel[5] = double(pntcov[4]);
-  hcovel[6] = double(pntcov[2]);
-  hcovel[7] = double(pntcov[4]);
-  hcovel[8] = double(pntcov[5]);
-  hcov.SetRotation(hcovel);
-  hcov.Multiply(&matL2Grec);                
-  hcov.MultiplyLeft(&matL2Grec.Inverse());    // errors in local frame
-  hcov.Multiply(&matT2L);
-  hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
-  //
-  Double_t *hcovscl = hcov.GetRotationMatrix();
-  const double *sysE = sens->GetAddError(); // additional syst error
-  pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
+  if (!fUseErrorParam) {
+    // convert error
+    TGeoHMatrix hcov;
+    Double_t hcovel[9];
+    const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
+    hcovel[0] = double(pntcov[0]);
+    hcovel[1] = double(pntcov[1]);
+    hcovel[2] = double(pntcov[2]);
+    hcovel[3] = double(pntcov[1]);
+    hcovel[4] = double(pntcov[3]);
+    hcovel[5] = double(pntcov[4]);
+    hcovel[6] = double(pntcov[2]);
+    hcovel[7] = double(pntcov[4]);
+    hcovel[8] = double(pntcov[5]);
+    hcov.SetRotation(hcovel);
+    hcov.Multiply(&matL2Grec);                
+    hcov.MultiplyLeft(&matL2Grec.Inverse());    // errors in local frame
+    hcov.Multiply(&matT2L);
+    hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
+    //
+    Double_t *hcovscl = hcov.GetRotationMatrix();
+    const double *sysE = sens->GetAddError(); // additional syst error
+    pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
+  }
+  else { // errors will be calculated just befor using the point in the fit, using track info
+    pnt->SetYZErrTracking(0,0,0);
+    pnt->SetNeedUpdateFromTrack();
+  }
   pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
   pnt->SetAlphaSens(sens->GetAlpTracking());
   pnt->SetXSens(sens->GetXTracking());
@@ -211,6 +219,7 @@ void AliAlgDet::AddVolume(AliAlgVol* vol)
   fVolumes.AddLast(vol);
   if (vol->IsSensor()) {
     fSensors.AddLast(vol);
+    ((AliAlgSens*)vol)->SetDetector(this);
     Int_t vid = ((AliAlgSens*)vol)->GetVolID();
     if (fVolIDMin<0 || vid<fVolIDMin) fVolIDMin = vid;
     if (fVolIDMax<0 || vid>fVolIDMax) fVolIDMax = vid;
@@ -359,6 +368,21 @@ void AliAlgDet::SetAddError(double sigy, double sigz)
   fAddError[1] = sigz;
   for (int isn=GetNSensors();isn--;) GetSensor(isn)->SetAddError(sigy,sigz);
   //
+}
+
+//____________________________________________
+void AliAlgDet::SetUseErrorParam(Int_t v) 
+{
+  // set type of points error parameterization
+  AliFatal("UpdatePointByTrackInfo is not implemented for this detector");
+  //  
+}
+
+//____________________________________________
+void AliAlgDet::UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const
+{
+  // update point using specific error parameterization
+  AliFatal("If needed, this method has to be implemented for specific detector");
 }
 
 //____________________________________________

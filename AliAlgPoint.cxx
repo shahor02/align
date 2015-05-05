@@ -46,8 +46,6 @@ void AliAlgPoint::Init()
   // 
   // compute parameters of tranformation to diagonal error matrix
   if (!IsZeroPos(fErrYZTracking[0]+fErrYZTracking[2])) { 
-    // 
-    SetContainsMeasurement();
     //
     // is there a correlation?
     if (SmallerAbs(fErrYZTracking[1]*fErrYZTracking[1]/(fErrYZTracking[0]*fErrYZTracking[2]),kCorrToler)) {
@@ -79,8 +77,13 @@ void AliAlgPoint::Init()
     }
   }
   //
-  if ( !(IsZeroPos(fX2X0) && IsZeroPos(fXTimesRho)) ) SetContainsMaterial();
-  //
+}
+
+//_____________________________________
+void AliAlgPoint::UpdatePointByTrackInfo(const AliExternalTrackParam* t)
+{
+  // recalculate point errors using info about the track in the sensor tracking frame
+  fSensor->UpdatePointByTrackInfo(this, t);
 }
 
 //_____________________________________

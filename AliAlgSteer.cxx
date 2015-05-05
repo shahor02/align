@@ -700,8 +700,8 @@ void AliAlgSteer::Print(const Option_t *opt) const
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (det) det->Print(opt);
-    else printf("Detector:%5s is not defined\n",GetDetNameByDetID(idt));
+    if (!det) continue;
+    det->Print(opt);
   }
   //
   if (opts.Contains("stat")) PrintStatistics();

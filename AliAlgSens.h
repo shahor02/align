@@ -4,7 +4,10 @@
 #include "AliAlgVol.h"
 #include <TMath.h>
 
+class AliAlgDet;
+class AliAlgPoint;
 class TObjArray;
+class AliExternalTrackParam;
 
 
 /*--------------------------------------------------------
@@ -21,7 +24,9 @@ class AliAlgSens : public AliAlgVol
   //
   virtual void AddChild(AliAlgVol*);
   //
-  Int_t GetInternalID()                         const  {return fIntID;}
+  void       SetDetector(const AliAlgDet* det)         {fDet = det;}
+  const AliAlgDet* GetDetector()                 const {return fDet;}
+  Int_t GetInternalID()                          const {return fIntID;}
   void  SetInternalID(Int_t v)                         {fIntID = v;}
   //
   void  IncrementStat()                                {fNProcPoints++;}
@@ -46,6 +51,8 @@ class AliAlgSens : public AliAlgVol
   virtual Bool_t IsSensor()                       const {return kTRUE;}
   virtual void   Print(const Option_t *opt="")    const;
   //
+  virtual void UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
+  //
  protected:
   //
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
@@ -55,6 +62,7 @@ class AliAlgSens : public AliAlgVol
   //
   Int_t    fIntID;                    // internal id within the detector
   Double_t fAddError[2];              // additional error increment for measurement
+  const AliAlgDet* fDet;              // pointer on detector
   //
   ClassDef(AliAlgSens,1)
 };

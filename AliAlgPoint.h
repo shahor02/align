@@ -13,10 +13,11 @@ class AliAlgPoint : public TObject
  public:
   enum {kMaterialBit=BIT(14)     // point contains material
 	,kMeasurementBit=BIT(15) // point contains measurement
-	,kVaryELossBit=BIT(16)   // ELoss variation allowed
-	,kUseBzOnly=BIT(17)      // use only Bz component (ITS)
-	,kInvDir=BIT(18)         // propagation via this point is in decreasing X direction (upper cosmic leg)
-	,kStatOK=BIT(19)         // point is accounted in global statistics
+	,kUpdateFromTrackBit=BIT(16)  // point needs to recalculate itself using track info
+	,kVaryELossBit=BIT(17)   // ELoss variation allowed
+	,kUseBzOnly=BIT(18)      // use only Bz component (ITS)
+	,kInvDir=BIT(19)         // propagation via this point is in decreasing X direction (upper cosmic leg)
+	,kStatOK=BIT(20)         // point is accounted in global statistics
   };
   enum {kParY = 0                           // track parameters
 	,kParZ
@@ -30,6 +31,7 @@ class AliAlgPoint : public TObject
   virtual   ~AliAlgPoint() {}
   //
   void       Init();
+  void       UpdatePointByTrackInfo(const AliExternalTrackParam* t);
   //
   Double_t   GetAlphaSens()           const {return fAlphaSens;}
   Double_t   GetXSens()               const {return fXSens;}
@@ -50,6 +52,7 @@ class AliAlgPoint : public TObject
   Int_t      GetNMatPar()             const;
   Bool_t     ContainsMaterial()       const {return TestBit(kMaterialBit);}
   Bool_t     ContainsMeasurement()    const {return TestBit(kMeasurementBit);}
+  Bool_t     GetNeedUpdateFromTrack() const {return TestBit(kUpdateFromTrackBit);}
   Bool_t     GetELossVaried()         const {return TestBit(kVaryELossBit);}
   Bool_t     GetUseBzOnly()           const {return TestBit(kUseBzOnly);}
   Bool_t     IsInvDir()               const {return TestBit(kInvDir);}
@@ -68,6 +71,7 @@ class AliAlgPoint : public TObject
   void       SetELossVaried(Bool_t v=kTRUE)           {SetBit(kVaryELossBit,v);}
   void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
   void       SetContainsMeasurement(Bool_t v=kTRUE)   {SetBit(kMeasurementBit,v);}
+  void       SetNeedUpdateFromTrack(Bool_t v=kTRUE )  {SetBit(kUpdateFromTrackBit);}
   void       SetUseBzOnly(Bool_t v=kTRUE)             {SetBit(kUseBzOnly,v);}
   void       SetInvDir(Bool_t v=kTRUE)                {SetBit(kInvDir,v);}
   void       SetStatOK(Bool_t v=kTRUE)                {SetBit(kStatOK,v);}

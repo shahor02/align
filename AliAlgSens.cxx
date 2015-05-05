@@ -17,6 +17,10 @@
 #include "AliAlgAux.h"
 #include "AliLog.h"
 #include "AliGeomManager.h"
+#include "AliExternalTrackParam.h"
+#include "AliAlgPoint.h"
+#include "AliAlgDet.h"
+
 ClassImp(AliAlgSens)
 
 using namespace AliAlgAux;
@@ -26,6 +30,7 @@ using namespace TMath;
 AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid) 
   : AliAlgVol(name)
   ,fIntID(iid)
+  ,fDet(0)
 {
   // def c-tor
   SetVolID(vid);
@@ -328,4 +333,10 @@ void AliAlgSens::PrepareMatrixT2L()
   if (!t2l) AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
   SetMatrixT2L(*t2l);  
   //
+}
+
+//____________________________________________
+void AliAlgSens::UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const
+{
+  fDet->UpdatePointByTrackInfo(pnt,t);
 }
