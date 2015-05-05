@@ -6,8 +6,7 @@
 class AliAlgDetTOF : public AliAlgDet
 {
  public:
-  AliAlgDetTOF();
-  AliAlgDetTOF(const char* name, const char* title="");
+  AliAlgDetTOF(const char* title="");
   virtual ~AliAlgDetTOF();
   //
   virtual void DefineVolumes();  

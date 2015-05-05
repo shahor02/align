@@ -761,3 +761,31 @@ void AliAlgVol::CreateAlignmentObjects(TClonesArray* arr) const
   for (int ich=0;ich<nch;ich++) GetChild(ich)->CreateAlignmentObjects(arr);
   //
 }
+
+//_________________________________________________________________
+void AliAlgVol::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMatrix *cumulDelta)
+{
+  // recreate fMatL2GReco matrices from ideal L2G matrix and alignment objects
+  // used during data reconstruction. For the volume at level J we have
+  // L2G' = Delta_J * Delta_{J-1} *...* Delta_0 * L2GIdeal
+  // cumulDelta is Delta_{J-1} * ... * Delta_0, supplied by the parent
+  //
+  fMatL2GReco = fMatL2GIdeal;
+  // find alignment object for this volume
+  int nalg = algArr->GetEntriesFast();
+  const AliAlignObjParams* par = 0;
+  for (int i=0;i<nalg;i++) {
+    par = (AliAlignObjParams*)algArr->At(i);
+    if (!strcmp(par->GetSymName(),GetSymName())) break;
+    par = 0;
+  }
+  TGeoHMatrix delta;
+  if (!par) AliInfoF("Alignment for %s is absent in Reco-Time alignment object",GetSymName());
+  else par->GetMatrix(delta);
+  if (cumulDelta) delta *= *cumulDelta;
+  //
+  // propagate to children
+  for (int ich=GetNChildren();ich--;) GetChild(ich)->UpdateL2GRecoMatrices(algArr,&delta);
+  //
+}
+ 

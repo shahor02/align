@@ -6,8 +6,7 @@
 class AliAlgDetTRD : public AliAlgDet
 {
  public:
-  AliAlgDetTRD();
-  AliAlgDetTRD(const char* name, const char* title="");
+  AliAlgDetTRD(const char* title="");
   virtual ~AliAlgDetTRD();
   //
   virtual void DefineVolumes();  

@@ -8,6 +8,8 @@
 #include "AliGeomManager.h"
 #include "AliCDBManager.h"
 #include "AliCDBMetaData.h"
+#include "AliCDBEntry.h"
+#include "AliAlignObj.h"
 #include "AliCDBId.h"
 #include <TString.h>
 
@@ -35,28 +37,6 @@ AliAlgDet::AliAlgDet()
 {
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
-  fAddError[0] = fAddError[1] = 0;
-}
-
-//____________________________________________
-AliAlgDet::AliAlgDet(const char* name, const char* title) 
-  : TNamed(name,title)
-  ,fVolIDMin(-1)
-  ,fVolIDMax(-1)
-  ,fNSensors(0)
-  ,fSID2VolID(0)
-  //
-  ,fSensors()
-  ,fVolumes()
-  //
-  ,fNPoints(0)
-  ,fPoolNPoints(0)
-  ,fPoolFreePointID(0)
-  ,fPointsPool()
-  ,fAlgSteer(0)
-{
-  // def c-tor
-  SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this  
   fAddError[0] = fAddError[1] = 0;
 }
 
@@ -157,6 +137,28 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
 void AliAlgDet::AcknowledgeNewRun(Int_t run)
 {
   // update parameters needed to process this run
+
+  // detector should be able to undo alignment/calibration used during the reco
+  UpdateL2GRecoMatrices();
+
+}
+
+//_________________________________________________________
+void AliAlgDet::UpdateL2GRecoMatrices()
+{
+  // Update L2G matrices used for data reconstruction
+  //
+  AliCDBManager* man = AliCDBManager::Instance();
+  AliCDBEntry* ent = man->Get(Form("%s/Align/Data",GetName()));
+  const TClonesArray *algArr = (const TClonesArray*)ent->GetObject();
+  //
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    // call init for root level volumes, they will take care of their children
+    if (!vol->GetParent()) vol->UpdateL2GRecoMatrices(algArr,0);
+  }
+  //
 }
 
 //_________________________________________________________

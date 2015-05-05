@@ -96,6 +96,7 @@ class AliAlgVol : public TNamed
   void  SetMatrixL2GReco(const TGeoHMatrix& m)         {fMatL2GReco = m;}
   virtual void   PrepareMatrixL2G(Bool_t reco=kFALSE);
   virtual void   PrepareMatrixL2GIdeal();
+  virtual void   UpdateL2GRecoMatrices(const TClonesArray* algArr,const TGeoHMatrix* cumulDelta);
   //
   void  GetMatrixT2G(TGeoHMatrix& m)             const;
   //

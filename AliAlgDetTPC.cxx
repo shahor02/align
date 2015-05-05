@@ -10,16 +10,10 @@
 ClassImp(AliAlgDetTPC);
 
 //____________________________________________
-AliAlgDetTPC::AliAlgDetTPC()
+AliAlgDetTPC::AliAlgDetTPC(const char* title)
 {
   // default c-tor
-  SetDetID(AliAlgSteer::kTPC);
-}
-
-//____________________________________________
-AliAlgDetTPC::AliAlgDetTPC(const char* name, const char* title)
-  :AliAlgDet(name,title)
-{
+  SetNameTitle(AliAlgSteer::GetDetNameByDetID(AliAlgSteer::kTPC),title);
   SetDetID(AliAlgSteer::kTPC);
 }
 

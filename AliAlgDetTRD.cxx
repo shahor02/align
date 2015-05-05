@@ -10,18 +10,13 @@
 ClassImp(AliAlgDetTRD);
 
 //____________________________________________
-AliAlgDetTRD::AliAlgDetTRD()
+AliAlgDetTRD::AliAlgDetTRD(const char* title)
 {
   // default c-tor
+  SetNameTitle(AliAlgSteer::GetDetNameByDetID(AliAlgSteer::kTRD),title);
   SetDetID(AliAlgSteer::kTRD);
 }
 
-//____________________________________________
-AliAlgDetTRD::AliAlgDetTRD(const char* name, const char* title)
-  :AliAlgDet(name,title)
-{
-  SetDetID(AliAlgSteer::kTRD);
-}
 
 //____________________________________________
 AliAlgDetTRD::~AliAlgDetTRD()

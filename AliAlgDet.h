@@ -26,6 +26,8 @@ class AliAlgDet : public TNamed
   //
   virtual void  CacheReferenceOCDB();
   virtual void  AcknowledgeNewRun(Int_t run);
+  virtual void  UpdateL2GRecoMatrices();
+
   //
   Int_t   VolID2SID(Int_t vid)                  const;
   Int_t   SID2VolID(Int_t sid)                  const {return sid<GetNSensors() ? fSID2VolID[sid] : -1;} //todo

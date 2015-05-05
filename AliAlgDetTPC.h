@@ -6,8 +6,7 @@
 class AliAlgDetTPC : public AliAlgDet
 {
  public:
-  AliAlgDetTPC();
-  AliAlgDetTPC(const char* name, const char* title="");
+  AliAlgDetTPC(const char* title="");
   virtual ~AliAlgDetTPC();
   //
   virtual void DefineVolumes();  

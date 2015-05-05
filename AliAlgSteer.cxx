@@ -32,6 +32,7 @@
 #include "AliRecoParam.h"
 #include "AliCDBRunRange.h"
 #include "AliCDBManager.h"
+#include "AliCDBEntry.h"
 #include "Mille.h"
 #include <TMath.h>
 #include <TString.h>
@@ -633,7 +634,9 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   //
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
   //
-  LoadRefOCDB(); //??? we need to get back reference OCDB ???
+  AliCDBManager::Destroy();
+  //
+  //  LoadRefOCDB(); //??? we need to get back reference OCDB ???
   //
   fStat[kInpStat][kRun]++;
   //

@@ -25,9 +25,8 @@ AliCDBId* AliAlgAux::FindCDBId(const TList* cdbList,const TString& key)
   TObjString* entry;
   while ( (entry=(TObjString*)next()) ) if (entry->GetString().Contains(key)) break;    
   if (!entry) return 0;
-  AliCDBId* id = new AliCDBId();
-  id->MakeFromString(entry->GetString());
-  return id;
+  return AliCDBId::MakeFromString(entry->GetString());
+  //
 }
 
 //_________________________________________________________
@@ -67,6 +66,7 @@ Bool_t AliAlgAux::PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList)
   AliCDBManager* man = AliCDBManager::Instance();
   ostr = (TObjString*)cdbMap->GetValue("default");
   RectifyOCDBUri( uriDef=ostr->GetString() );
+  AliInfoGeneralF("","Default storage %s",uriDef.Data());
   man->SetDefaultStorage(uriDef.Data());
   man->SetRun(run);
   //
@@ -87,16 +87,18 @@ Bool_t AliAlgAux::PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList)
       AliWarningGeneralF("::PreloadOCDB","Key %s has special storage %s but absent in the cdbList",
 			 key.Data(),uri.Data());
     }
+    AliInfoGeneralF("::PreloadOCDB","Setting storage for %s to %s",key.Data(),uri.Data());
     man->SetSpecificStorage(key.Data(),uri.Data(),ver,sver);
   }
   //
   // now set remaining objects from the list as specific storages
   TIter nextL(cdbList);
-  AliCDBId cdbIDF;
   while ( (ostr=(TObjString*)nextL()) ) {
-    cdbIDF.MakeFromString(ostr->GetString());
-    man->SetSpecificStorage(cdbIDF.GetPath().Data(),uriDef.Data(),
-			    cdbIDF.GetVersion(),cdbIDF.GetSubVersion());
+    AliCDBId *cdbIDF = AliCDBId::MakeFromString(ostr->GetString());
+    cdbIDF->Print();
+    man->SetSpecificStorage(cdbIDF->GetPath().Data(),uriDef.Data(),
+			    cdbIDF->GetVersion(),cdbIDF->GetSubVersion());
+    delete cdbIDF;
   }
   //
   return kTRUE;
