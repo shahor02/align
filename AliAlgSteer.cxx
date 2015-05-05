@@ -99,6 +99,7 @@ AliAlgSteer::AliAlgSteer()
    //
   ,fRefOCDBConf("configRefOCDB.C")
   ,fRefOCDBLoaded(0)
+  ,fUseRecoOCDB(kTRUE)
 {
   // def c-tor
   for (int i=kNDetectors;i--;) {
@@ -598,6 +599,15 @@ Bool_t AliAlgSteer::FillMPRecData()
   return kTRUE;
 }
 
+//______________________________________________
+void  AliAlgSteer::SetESDTree(const TTree* tr)
+{
+  // attach tree with input events
+  fESDTree = tr;
+  // go the the real ESD tree
+  while (fESDTree->GetTree() && fESDTree->GetTree()!=fESDTree) fESDTree = fESDTree->GetTree();
+}
+
 //_________________________________________________________
 void AliAlgSteer::SetRunNumber(Int_t run)
 {
@@ -615,28 +625,41 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   fRunNumber = run;
   AliInfoF("Processing new run %d",fRunNumber);
   //
-  if (fUseRecoOCDB) {
-    LoadRecoTimeOCDB();
-
+  if (!fUseRecoOCDB) {
+    AliWarning("Reco-time OCDB will NOT be preloaded");
+    return;
   }
-
+  LoadRecoTimeOCDB();
   //
   for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
+  //
+  LoadRefOCDB(); //??? we need to get back reference OCDB ???
   //
   fStat[kInpStat][kRun]++;
   //
 }
 
 //_________________________________________________________
-Bool_t AliAlgSteer::LoadRecoTimeOCDB
+Bool_t AliAlgSteer::LoadRecoTimeOCDB()
 {
-  // load OCDB used for the reconstruction of data being processed
-  if (!fESDtree) {
-    AliFatal("Cannot load Reco-Time OCDB since the ESDtree is not set");
+  // Load OCDB paths used for the reconstruction of data being processed
+  // In order to avoid unnecessary uploads, the objects are not actually 
+  // loaded/cached but just added as specific paths with version
+  AliInfoF("Preloading Reco-Time OCDB for run %d from ESD UserInfo list",fRunNumber);
+  if (!fESDTree) {
+    AliFatal("Cannot preload Reco-Time OCDB since the ESD tree is not set");
   }
-
+  const TList* userInfo = const_cast<TTree*>(fESDTree)->GetUserInfo();
+  TMap* cdbMap = (TMap*)userInfo->FindObject("cdbMap");
+  TList* cdbList = (TList*)userInfo->FindObject("cdbList");
+  //
+  if (!cdbMap || !cdbList) {
+    userInfo->Print();
+    AliFatal("Failed to extract cdbMap and cdbList from UserInfo list");
+  }
+  //
+  return PreloadOCDB(fRunNumber,cdbMap,cdbList);
 }
-
 
 //_________________________________________________________
 AliAlgDet* AliAlgSteer::GetDetectorByVolID(Int_t vid) const
@@ -929,8 +952,8 @@ Bool_t AliAlgSteer::AddVertexConstraint()
 void AliAlgSteer::WriteCalibrationResults() const
 {
   // writes output calibration
+  AliCDBManager::Destroy();
   AliCDBManager* man = AliCDBManager::Instance();
-  if (man->IsDefaultStorageSet()) man->UnsetDefaultStorage();
   man->SetDefaultStorage(fOutCDBPath.Data());
   //
   AliAlgDet* det;
@@ -950,21 +973,27 @@ void AliAlgSteer::SetOutCDBRunRange(int rmin,int rmax)
 }
 
 //______________________________________________________
-void AliAlgSteer::LoadRefOCDB()
+Bool_t AliAlgSteer::LoadRefOCDB()
 {
   // setup OCDB whose objects will be used as a reference with respect to which the
   // alignment/calibration will prodice its corrections.
   // Detectors which need some reference calibration data must use this one
   //
   //
+  AliInfo("Loading reference OCDB");
+  AliCDBManager::Destroy();
+  AliCDBManager* man = AliCDBManager::Instance();
   if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());
     gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
   }
   else {
-    AliWarningF("No reference OCDB config macro %s is found, assume it was preconfigured upstream",
-		fRefOCDBConf.Data());
+    AliWarningF("No reference OCDB config macro %s is found, assume raw:// with run %d",
+		fRefOCDBConf.Data(),AliCDBRunRange::Infinity());
+    man->SetRaw(kTRUE);
+    man->SetRun(AliCDBRunRange::Infinity());
   }
+  //
   if (AliGeomManager::GetGeometry()) {
     AliInfo("Destroying current geometry before loading reference one");
     AliGeomManager::Destroy();
@@ -978,7 +1007,9 @@ void AliAlgSteer::LoadRefOCDB()
   //
   fRefOCDBLoaded++;
   //
+  return kTRUE;
 }
+
 
 //********************* interaction with PEDE **********************
 

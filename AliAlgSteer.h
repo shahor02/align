@@ -44,7 +44,11 @@ class AliAlgSteer : public TObject
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
-  void     LoadRefOCDB();
+  Bool_t   LoadRefOCDB();
+  Bool_t   LoadRecoTimeOCDB();
+  Bool_t   GetUseRecoOCDB()               const {return fUseRecoOCDB;}
+  void     SetUseRecoOCDB(Bool_t v=kTRUE)       {fUseRecoOCDB=v;}
+
   void     InitDetectors();
   void     InitDOFs();  
   //
@@ -60,7 +64,7 @@ class AliAlgSteer : public TObject
   void     SetCosmicEvent(Bool_t v=kTRUE) {fCosmicEvent = v;}
   Float_t  GetStat(int cls, int tp)                       const {return fStat[cls][tp];}
   //
-  void     SetESDTree(const TTree* tr)                          {fESDTree = tr;}
+  void     SetESDTree(const TTree* tr);
   const    TTree* GetESDTree()                            const {return fESDTree;}
   void     SetESDEvent(const AliESDEvent* ev)                   {fESDEvent = ev;}
   const    AliESDEvent* GetESDEvent()                     const {return fESDEvent;}
@@ -231,6 +235,7 @@ class AliAlgSteer : public TObject
   // input related
   TString         fRefOCDBConf;                           // optional macro name for prealignment OCDB setup
   Int_t           fRefOCDBLoaded;                         // flag/counter for ref.OCDB loading
+  Bool_t          fUseRecoOCDB;                           // flag to preload reco-time calib objects
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors

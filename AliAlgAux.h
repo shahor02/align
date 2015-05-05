@@ -2,6 +2,10 @@
 #define ALIALGAUX_H
 
 #include <TMath.h>
+#include <TString.h>
+class AliCDBId;
+class TMap;
+class TList;
 
 using namespace TMath;
 
@@ -32,6 +36,11 @@ namespace AliAlgAux {
   inline Bool_t IsZeroPos(float  f) {return Smaller(f,kAlmostZeroF);}
   //
   void   PrintBits(ULong64_t patt, Int_t maxBits);
+  //
+  // OCDB related stuff
+  AliCDBId* FindCDBId(const TList* cdbList,const TString& key);
+  void      RectifyOCDBUri(TString& inp);
+  Bool_t    PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList);
 }
 
 //_________________________________________________________________________________

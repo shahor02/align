@@ -1,2 +1,3 @@
-AliITSAlignMille2Module::GetGeomParamsGlo  converts params to global, as used in AliAlignObjParam
+setup of MagField
+fetch reco time L2G, use for points filtering
 

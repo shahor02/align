@@ -111,7 +111,6 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   //
   algSteer->SetMinDetAcc(2);
   //
-  algSteer->AcknowledgeNewRun(run);
   algSteer->SetMPOutType(AliAlgSteer::kMilleMPRec);
   //algSteer->SetMPOutType(AliAlgSteer::kMille);
   //----------------------------------------------------------------
@@ -129,6 +128,7 @@ void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> L
   }
   //
   */
+  algSteer->SetESDTree(esdTree);
   int evFirst=0,evLast = esdTree->GetEntries()-1;
   if (evID>0) {
     evFirst = evID;
