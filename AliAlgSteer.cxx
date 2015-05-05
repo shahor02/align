@@ -98,6 +98,7 @@ AliAlgSteer::AliAlgSteer()
   ,fOutCDBComment("AliAlgSteer")
   ,fOutCDBResponsible("")
    //
+  ,fRecoOCDBConf("configRecoOCDB.C")
   ,fRefOCDBConf("configRefOCDB.C")
   ,fRefOCDBLoaded(0)
   ,fUseRecoOCDB(kTRUE)
@@ -649,6 +650,18 @@ Bool_t AliAlgSteer::LoadRecoTimeOCDB()
   // In order to avoid unnecessary uploads, the objects are not actually 
   // loaded/cached but just added as specific paths with version
   AliInfoF("Preloading Reco-Time OCDB for run %d from ESD UserInfo list",fRunNumber);
+  //
+  AliCDBManager::Destroy();
+  if (!fRecoOCDBConf.IsNull() && !gSystem->AccessPathName(fRecoOCDBConf.Data(), kFileExists)) {
+    AliInfoF("Executing reco-time OCDB setup macro %s",fRecoOCDBConf.Data());
+    gROOT->ProcessLine(Form(".x %s(%d)",fRecoOCDBConf.Data(),fRunNumber));
+    AliCDBManager* man = AliCDBManager::Instance();
+    if (man->IsDefaultStorageSet()) return kTRUE;
+    AliFatalF("macro %s failed to configure reco-time OCDB",fRecoOCDBConf.Data());
+  }
+  else AliWarningF("No reco-time OCDB config macro %s is found, will use ESD:UserInfo",
+		   fRefOCDBConf.Data());
+  //
   if (!fESDTree) {
     AliFatal("Cannot preload Reco-Time OCDB since the ESD tree is not set");
   }
@@ -985,7 +998,6 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   //
   AliInfo("Loading reference OCDB");
   AliCDBManager::Destroy();
-  AliCDBManager* man = AliCDBManager::Instance();
   if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());
     gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
@@ -993,6 +1005,7 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   else {
     AliWarningF("No reference OCDB config macro %s is found, assume raw:// with run %d",
 		fRefOCDBConf.Data(),AliCDBRunRange::Infinity());
+    AliCDBManager* man = AliCDBManager::Instance();
     man->SetRaw(kTRUE);
     man->SetRun(AliCDBRunRange::Infinity());
   }

@@ -1,9 +1,9 @@
 // this is a macro to setup the OCDB whose objects will be used
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
-void configRefOCDB()
+
+void configRefOCDB(int run = 117220) 
 {
-  int run = 117220;
   //
   AliCDBManager* man = AliCDBManager::Instance();
   man->ClearCache();

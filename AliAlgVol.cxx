@@ -262,10 +262,12 @@ void AliAlgVol::Print(const Option_t *opt) const
   printf("\n");
   //
   if (opts.Contains("mat")) { // print matrices
-    printf("L2G original: "); 
+    printf("L2G ideal   : "); 
     GetMatrixL2GIdeal().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
+    printf("L2G RecoTime: "); 
+    GetMatrixL2GReco().Print();
     printf("T2L (fake)  : "); 
     GetMatrixT2L().Print();
  }
@@ -784,6 +786,7 @@ void AliAlgVol::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMat
   else par->GetMatrix(delta);
   if (cumulDelta) delta *= *cumulDelta;
   //
+  fMatL2GReco.MultiplyLeft(&delta);
   // propagate to children
   for (int ich=GetNChildren();ich--;) GetChild(ich)->UpdateL2GRecoMatrices(algArr,&delta);
   //

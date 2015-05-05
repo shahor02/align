@@ -159,6 +159,8 @@ class AliAlgSteer : public TObject
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
   const  char* GetRefOCDBConfigMacro()                    const {return fRefOCDBConf.Data();}
+  void   SetRecoOCDBConfigMacro(const char* nm="configRecoOCDB.C") {fRecoOCDBConf = nm;}
+  const  char* GetRecoOCDBConfigMacro()                   const {return fRecoOCDBConf.Data();}
   Int_t  GetRefOCDBLoaded()                               const {return fRefOCDBLoaded;}
   //
   virtual void Print(const Option_t *opt="")              const;
@@ -233,7 +235,8 @@ class AliAlgSteer : public TObject
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
   //
   // input related
-  TString         fRefOCDBConf;                           // optional macro name for prealignment OCDB setup
+  TString         fRecoOCDBConf;                          // optional macro name for reco-time OCDB setup: void fun(int run)
+  TString         fRefOCDBConf;                           // optional macro name for prealignment OCDB setup: void fun()
   Int_t           fRefOCDBLoaded;                         // flag/counter for ref.OCDB loading
   Bool_t          fUseRecoOCDB;                           // flag to preload reco-time calib objects
   //

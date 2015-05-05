@@ -308,10 +308,12 @@ void AliAlgSens::Print(const Option_t *opt) const
   printf("} in %s frame\n",fgkFrameName[fVarFrame]);
   //
   if (opts.Contains("mat")) { // print matrices
-    printf("L2G original: "); 
+    printf("L2G ideal   : "); 
     GetMatrixL2GIdeal().Print();
     printf("L2G misalign: "); 
     GetMatrixL2G().Print();
+    printf("L2G RecoTime: "); 
+    GetMatrixL2GReco().Print();
     printf("T2L         : "); 
     GetMatrixT2L().Print();
   }

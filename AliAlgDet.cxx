@@ -91,11 +91,13 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   pnt->SetSensor(sens);
   //
   double tra[3],loc[3],glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
-  const TGeoHMatrix& matL2G = sens->GetMatrixL2G(); // local to global matrix
-  //const TGeoHMatrix& matL2G = sens->GetMatrixL2GIdeal(); // local to global orig matrix
-  matL2G.MasterToLocal(glo,loc);
-  const TGeoHMatrix& matT2L = sens->GetMatrixT2L();  // matrix for tracking to local frame translation
-  matT2L.MasterToLocal(loc,tra);
+  const TGeoHMatrix& matL2Grec = sens->GetMatrixL2GReco(); // local to global matrix used for reconstruction
+  //const TGeoHMatrix& matL2G    = sens->GetMatrixL2G();     // local to global orig matrix used as a reference 
+  const TGeoHMatrix& matT2L    = sens->GetMatrixT2L();     // matrix for tracking to local frame translation
+  //
+  // undo reco-time alignment
+  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix 
+  matT2L.MasterToLocal(loc,tra); // go to tracking frame
   //
   // convert error
   TGeoHMatrix hcov;
@@ -111,10 +113,10 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   hcovel[7] = double(pntcov[4]);
   hcovel[8] = double(pntcov[5]);
   hcov.SetRotation(hcovel);
-  hcov.Multiply(&matL2G);
-  hcov.MultiplyLeft(&matL2G.Inverse());
+  hcov.Multiply(&matL2Grec);                
+  hcov.MultiplyLeft(&matL2Grec.Inverse());    // errors in local frame
   hcov.Multiply(&matT2L);
-  hcov.MultiplyLeft(&matT2L.Inverse());
+  hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
   //
   Double_t *hcovscl = hcov.GetRotationMatrix();
   const double *sysE = sens->GetAddError(); // additional syst error
