@@ -41,6 +41,7 @@
 #include <TROOT.h>
 #include <TSystem.h>
 #include <stdio.h>
+#include <TGeoGlobalMagField.h>
 
 using namespace TMath;
 using namespace AliAlgAux;
@@ -626,6 +627,12 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   if (fRunNumber>0) fStat[kAccStat][kRun]++;
   fRunNumber = run;
   AliInfoF("Processing new run %d",fRunNumber);
+  //
+  // setup magnetic field
+  if (!TGeoGlobalMagField::Instance()->GetField() || 
+      !IsZeroAbs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())) { 
+    fESDEvent->InitMagneticField();
+  }
   //
   if (!fUseRecoOCDB) {
     AliWarning("Reco-time OCDB will NOT be preloaded");
