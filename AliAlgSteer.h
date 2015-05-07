@@ -127,19 +127,19 @@ class AliAlgSteer : public TObject
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
   //----------------------------------------
   // output related
-  void   SetMPDatFileName(const char* name="mpData");
-  void   SetMPParFileName(const char* name="mpParam.txt");
-  void   SetResidFileName(const char* name="controlRes.root");
-  void   SetOutCDBPath(const char* name="local://outOCDB");
-  void   SetOutCDBComment(const char* cm=0)                     {fOutCDBComment = cm;}
-  void   SetOutCDBResponsible(const char* v=0)                  {fOutCDBResponsible = v;}
-  void   SetOutCDBRunRange(int rmin=0,int rmax=999999999);
-  Int_t* GetOutCDBRunRange() const {return (int*)fOutCDBRunRange;}
-  Int_t  GetOutCDBRunMin()   const {return fOutCDBRunRange[0];}
-  Int_t  GetOutCDBRunMax()   const {return fOutCDBRunRange[1];}
-  void    SetControlFrac(float v=1.) {fControlFrac = v;}
-  Float_t GetControlFrac()   const {return fControlFrac;}
-  void   WriteCalibrationResults()                         const;
+  void     SetMPDatFileName(const char* name="mpData");
+  void     SetMPParFileName(const char* name="mpParam.txt");
+  void     SetResidFileName(const char* name="controlRes.root");
+  void     SetOutCDBPath(const char* name="local://outOCDB");
+  void     SetOutCDBComment(const char* cm=0)                    {fOutCDBComment = cm;}
+  void     SetOutCDBResponsible(const char* v=0)                 {fOutCDBResponsible = v;}
+  void     SetOutCDBRunRange(int rmin=0,int rmax=999999999);
+  Int_t*   GetOutCDBRunRange()                             const {return (int*)fOutCDBRunRange;}
+  Int_t    GetOutCDBRunMin()                               const {return fOutCDBRunRange[0];}
+  Int_t    GetOutCDBRunMax()                               const {return fOutCDBRunRange[1];}
+  Float_t  GetControlFrac()                                const {return fControlFrac;}
+  void     SetControlFrac(float v=1.)                            {fControlFrac = v;}
+  void     WriteCalibrationResults()                       const;
   const  char* GetOutCDBComment()                          const {return fOutCDBComment.Data();}
   const  char* GetOutCDBResponsible()                      const {return fOutCDBResponsible.Data();}
   const  char* GetOutCDBPath()                             const {return fOutCDBPath.Data();}
@@ -147,21 +147,27 @@ class AliAlgSteer : public TObject
   const  char* GetResidFileName()                          const {return fResidFileName.Data();}
   const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
   //
-  Bool_t FillMPRecData();
-  Bool_t FillMilleData();
-  Bool_t FillControlData();
-  Int_t  GetMPOutType()                                    const {return fMPOutType;}
-  void   SetMPOutType(MPOut_t t)                                 {fMPOutType = t;}
-  void   CloseMPRecOutput();
-  void   CloseMilleOutput();
-  void   CloseResidOutput();
-  void   InitMPRecOutput();
-  void   InitMIlleOutput();
-  void   InitResidOutput();
-  Bool_t StoreProcessedTrack();
-  void   PrintStatistics() const;
+  Bool_t   FillMPRecData();
+  Bool_t   FillMilleData();
+  Bool_t   FillControlData();
+  void     SetMPOutType(Int_t t)                                 {fMPOutType = t;}
+  void     ProduceMPData(Bool_t v=kTRUE)                         {if (v) fMPOutType|=kMille; else fMPOutType&=~kMille;}
+  void     ProduceMPRecord(Bool_t v=kTRUE)                       {if (v) fMPOutType|=kMPRec; else fMPOutType&=~kMPRec;}
+  void     ProduceControlRes(Bool_t v=kTRUE)                     {if (v) fMPOutType|=kContR; else fMPOutType&=~kContR;}
+  Int_t    GetMPOutType()                                  const {return fMPOutType;}
+  Bool_t   GetProduceMPData()                              const {return fMPOutType&kMille;}
+  Bool_t   GetProduceMPRecord()                            const {return fMPOutType&kMPRec;}
+  Bool_t   GetProduceControlRes()                          const {return fMPOutType&kContR;}
+  void     CloseMPRecOutput();
+  void     CloseMilleOutput();
+  void     CloseResidOutput();
+  void     InitMPRecOutput();
+  void     InitMIlleOutput();
+  void     InitResidOutput();
+  Bool_t   StoreProcessedTrack(Int_t what);
+  void     PrintStatistics() const;
   //
-  void   GenPedeParamFile(const Option_t *opt="")         const;
+  void     GenPedeParamFile(const Option_t *opt="")         const;
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
@@ -226,8 +232,8 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkStatName[kMaxStat];             // stat type names  
   //
   // output related
-  Float_t         fControlFrac;                           //  fraction of tracks to store control residuals
-  MPOut_t         fMPOutType;                             // Format to store MP data
+  Float_t         fControlFrac;                           //  fraction of tracks to process control residuals
+  Int_t           fMPOutType;                             // What to store as an output, see StoreProcessedTrack
   Mille*          fMille;                                 //! Mille interface
   AliAlgMPRecord* fMPRecord;                              //! MP record 
   AliAlgRes*      fCResid;                                //! control residuals

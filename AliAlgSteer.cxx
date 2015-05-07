@@ -41,6 +41,7 @@
 #include <TFile.h>
 #include <TROOT.h>
 #include <TSystem.h>
+#include <TRandom.h>
 #include <stdio.h>
 #include <TGeoGlobalMagField.h>
 
@@ -86,7 +87,7 @@ AliAlgSteer::AliAlgSteer()
   ,fESDTree(0)
   ,fESDEvent(0)
   ,fVertex(0)
-  ,fControlFrac(0)
+  ,fControlFrac(1.0)
   ,fMPOutType(kMille)
   ,fMille(0)
   ,fMPRecord(0)
@@ -378,16 +379,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
   //
-  if ((fMPOutType||kMille)||(fMPOutType||kMPRec)) { // need derivatives
-    //if (!fAlgTrack->CalcResiduals()) return kFALSE;
-    if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
-  }
+  if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
-  if ((fMPOutType||kContR)) { // need control residuals
-    if (!TestLocalSolution()) return kFALSE;
-  }
+  if (!StoreProcessedTrack( fMPOutType&~kContR )) return kFALSE; // store derivatives for MP
   //
-  if (!StoreProcessedTrack()) return kFALSE;
+  if (GetProduceControlRes() &&  // need control residuals, ignore selection fraction if this is the 
+      (fMPOutType==kContR || gRandom->Rndm()<fControlFrac) ) { // output requested
+    if ( !TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
+  }
   //
   fStat[kAccStat][kTrackColl]++;
   //
@@ -493,28 +492,27 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
   //
-  if ((fMPOutType||kMille)||(fMPOutType||kMPRec)) { // need derivatives
-    if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
-  }
+  if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
-  if ((fMPOutType||kContR)) { // need control residuals
-    if (!TestLocalSolution()) return kFALSE;
-  }
+  if (!StoreProcessedTrack( fMPOutType&~kContR )) return kFALSE; // store derivatives for MP
   //
-  if (!StoreProcessedTrack()) return kFALSE;
+  if (GetProduceControlRes() &&  // need control residuals, ignore selection fraction if this is the 
+      (fMPOutType==kContR || gRandom->Rndm()<fControlFrac) ) { // output requested
+    if ( !TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
+  }
   //
   fStat[kAccStat][kTrackCosm]++;
   return kTRUE;
 }
 
 //_________________________________________________________
-Bool_t AliAlgSteer::StoreProcessedTrack()
+Bool_t AliAlgSteer::StoreProcessedTrack(Int_t what)
 {
   // write alignment track
   Bool_t res = kTRUE;
-  if ((fMPOutType||kMille)) res &= FillMilleData();
-  if ((fMPOutType||kMPRec)) res &= FillMPRecData();
-  if ((fMPOutType||kContR)) res &= FillControlData();
+  if ((what&kMille)) res &= FillMilleData();
+  if ((what&kMPRec)) res &= FillMPRecData();
+  if ((what&kContR)) res &= FillControlData();
   //
   return res;
 }
@@ -743,12 +741,12 @@ void AliAlgSteer::Print(const Option_t *opt) const
   TString opts = opt; 
   opts.ToLower();
   printf("MPData output :\t");
-  if ((fMPOutType||kMille)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
-  if ((fMPOutType||kMPRec)) printf("%s%s ",fMPDatFileName.Data(),".root");
+  if (GetProduceMPData()) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
+  if (GetProduceMPRecord()) printf("%s%s ",fMPDatFileName.Data(),".root");
   printf("\n");
   printf("MP Params     :\t%s\n",fMPParFileName.Data());
-  if ((fMPOutType||kContR) && fControlFrac>0) printf("Contol Res. (F:%.3f) %s\n",
-						     fControlFrac,fResidFileName.Data());
+  if (GetProduceMPRecord() && fControlFrac>0) 
+    printf("Contol Resid  :\t%s  (F:%.3f)\n",fResidFileName.Data(),fControlFrac);
   printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
