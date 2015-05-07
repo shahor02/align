@@ -27,6 +27,8 @@ AliAlgTrack::AliAlgTrack() :
   ,fMass(0.14)
   ,fChi2(0)
   ,fChi2CosmUp(0)
+  ,fChi2Ini(0)
+  ,fChi2IniCosmUp(0)
   ,fPoints(0)
   ,fLocPar()
   ,fGloParID(0)
@@ -62,6 +64,7 @@ void AliAlgTrack::Clear(Option_t *)
   ResetBit(0xffffffff);
   fPoints.Clear();
   fChi2 = fChi2CosmUp = 0;
+  fChi2Ini = fChi2IniCosmUp = 0;
   fInnerPointID = -1;
   fNeedInv[0] = fNeedInv[1] = kFALSE;
   fNLocPar = fNLocExtPar = fNGloPar = 0;
@@ -380,6 +383,8 @@ Bool_t AliAlgTrack::CalcResiduals(const double *params)
   //
   if (!params) params = fLocParA;
   int np = GetNPoints();
+  fChi2Ini = fChi2;  // save chi2
+  fChi2IniCosmUp = fChi2CosmUp;  
   fChi2 = 0;
   //
   // collision track or cosmic lower leg
@@ -855,7 +860,7 @@ Bool_t AliAlgTrack::IniFit()
   //
   AliExternalTrackParam trc = *this;
   //
-  fChi2 = 0;
+  fChi2 = fChi2CosmUp = 0;
   //
   // the points are ranged from outer to inner for collision tracks, 
   // and from outer point of lower leg to outer point of upper leg for the cosmic track 

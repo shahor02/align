@@ -35,6 +35,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Int_t        GetNLocPar()                      const {return fNLocPar;}
   Int_t        GetNLocExtPar()                   const {return fNLocExtPar;}
   Int_t        GetInnerPointID()                 const {return fInnerPointID;}
+  AliAlgPoint* GetInnerPoint()                   const {return GetPoint(fInnerPointID);}
   //
   virtual void Clear(Option_t *opt="");
   virtual void Print(Option_t *opt="")           const;
@@ -67,6 +68,11 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t GetChi2()                             const {return fChi2;}
   Double_t GetChi2CosmUp()                       const {return fChi2CosmUp;}
   Double_t GetChi2CosmLow()                      const {return fChi2-fChi2CosmUp;}
+  void     SetChi2Ini(double c)                        {fChi2Ini = c;};
+  void     SetChi2IniCosmUp(double c)                  {fChi2IniCosmUp = c;};
+  Double_t GetChi2Ini()                          const {return fChi2Ini;}
+  Double_t GetChi2IniCosmUp()                    const {return fChi2IniCosmUp;}
+  Double_t GetChi2IniCosmLow()                   const {return fChi2Ini-fChi2IniCosmUp;}
   //
   // propagation methods
   void   CopyFrom(const AliExternalTrackParam* etp);
@@ -116,6 +122,8 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t  fMass;                       // assumed mass
   Double_t  fChi2;                       // chi2 with current residuals
   Double_t  fChi2CosmUp;                 // chi2 for cosmic upper leg
+  Double_t  fChi2Ini;                    // chi2 with current residuals
+  Double_t  fChi2IniCosmUp;              // chi2 for cosmic upper leg
   TObjArray fPoints;                     // alignment points
   TArrayD   fResid[2];                   // residuals array
   TArrayD   fDResDLoc[2];                // array for derivatives over local params

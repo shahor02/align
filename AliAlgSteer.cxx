@@ -633,7 +633,7 @@ Bool_t AliAlgSteer::FillControlData()
   if (nps<0) return kTRUE;
   //
   fCResid->Clear();
-  fCResid->SetNPoints(nps);
+  if (!fCResid->FillTrack(fAlgTrack)) return kFALSE;
   fCResid->SetRun(fRunNumber);
   fCResid->SetTimeStamp(fESDEvent->GetTimeStamp());
   fCResid->SetBz(fESDEvent->GetMagneticField());
@@ -641,31 +641,6 @@ Bool_t AliAlgSteer::FillControlData()
   if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
   fCResid->SetTrackID(tID);
   //
-  fCResid->SetQ2Pt(fAlgTrack->GetSigned1Pt());
-  fCResid->SetChi2(fAlgTrack->GetChi2());  
-  int nfill = 0;
-  for (int i=0;i<np;i++) {
-    AliAlgPoint* pnt = fAlgTrack->GetPoint(i);
-    if (!pnt->ContainsMeasurement()) continue;
-    fCResid->SetVolID(nfill,pnt->GetVolID());
-    fCResid->SetX(nfill,pnt->GetXPoint());
-    fCResid->SetY(nfill,pnt->GetYTracking());
-    fCResid->SetZ(nfill,pnt->GetZTracking());
-    fCResid->SetDY(nfill,pnt->GetResidY());
-    fCResid->SetDZ(nfill,pnt->GetResidZ());
-    fCResid->SetSigY2(nfill,pnt->GetYZErrTracking()[0]);
-    fCResid->SetSigYZ(nfill,pnt->GetYZErrTracking()[1]);
-    fCResid->SetSigZ2(nfill,pnt->GetYZErrTracking()[2]);
-    //
-    fCResid->SetSnp(nfill,pnt->GetTrParamWSA()[AliAlgPoint::kParSnp]);
-    fCResid->SetTgl(nfill,pnt->GetTrParamWSA()[AliAlgPoint::kParTgl]);
-    //
-    nfill++;
-  }
-  if (nfill!=nps) {
-    fAlgTrack->Print("p");
-    AliFatalF("Something is wrong: %d residuals were stored instead of %d",nfill,nps);
-  }
   fResidTree->Fill();
   //
   return kTRUE;
@@ -939,6 +914,7 @@ void AliAlgSteer::CloseMPRecOutput()
 {
   // close output
   if (!fMPRecFile) return;
+  AliInfoF("Closing %s",fMPRecFile->GetName());
   fMPRecFile->cd();
   fMPRecTree->Write();
   delete fMPRecTree;
@@ -955,6 +931,7 @@ void AliAlgSteer::CloseResidOutput()
 {
   // close output
   if (!fResidFile) return;
+  AliInfoF("Closing %s",fResidFile->GetName());
   fResidFile->cd();
   fResidTree->Write();
   delete fResidTree;
@@ -970,6 +947,7 @@ void AliAlgSteer::CloseResidOutput()
 void AliAlgSteer::CloseMilleOutput()
 {
   // close output
+  if (fMille ) AliInfoF("Closing %s%s",fMPDatFileName.Data(),fgkMPDataExt);
   delete fMille;
   fMille = 0;
 }

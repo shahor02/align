@@ -140,7 +140,7 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   }
   algSteer->CloseMPRecOutput();
   algSteer->CloseMilleOutput();
-
+  algSteer->CloseResidOutput();
   algSteer->Print("stat");
 
 }
