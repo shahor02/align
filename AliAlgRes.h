@@ -46,6 +46,10 @@ class AliAlgRes: public TObject
   Float_t  GetSigZ2(int i)                      const {return fSigZ2[i];}      
   Int_t    GetVolID(int i)                      const {return fVolID[i];}
   //
+  Float_t  GetXLab(int i)                       const;
+  Float_t  GetYLab(int i)                       const;
+  Float_t  GetZLab(int i)                       const;
+  //
   Bool_t       FillTrack(const AliAlgTrack* trc);
   void         Resize(Int_t n);
   virtual void Clear(const Option_t *opt="");
@@ -62,9 +66,9 @@ class AliAlgRes: public TObject
   Float_t  fChi2;                   //  chi2 after solution
   Float_t  fChi2Ini;                //  chi2 before solution
   Float_t  fQ2Pt;                   //  Q/Pt at reference point
-  Float_t* fX;                      //[fNPoints] tracking X of track
-  Float_t* fY;                      //[fNPoints] tracking Y
-  Float_t* fZ;                      //[fNPoints] tracking Z
+  Float_t* fX;                      //[fNPoints] tracking X of cluster
+  Float_t* fY;                      //[fNPoints] tracking Y of cluster
+  Float_t* fZ;                      //[fNPoints] tracking Z of cluster
   Float_t* fSnp;                    //[fNPoints] track Snp
   Float_t* fTgl;                    //[fNPoints] track Tgl
   Float_t* fAlpha;                  //[fNPoints] track alpha

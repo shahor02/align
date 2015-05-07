@@ -65,13 +65,13 @@ class AliAlgDet : public TNamed
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
   //
-  void    SetInitGeomDone()                               {SetBit(kInitGeomDone);}
-  Bool_t  GetInitGeomDone()                         const {return TestBit(kInitGeomDone);}
+  void      SetInitGeomDone()                             {SetBit(kInitGeomDone);}
+  Bool_t    GetInitGeomDone()                       const {return TestBit(kInitGeomDone);}
   //
-  void    SetInitDOFsDone()                               {SetBit(kInitDOFsDone);}
-  Bool_t  GetInitDOFsDone()                         const {return TestBit(kInitDOFsDone);}
+  void      SetInitDOFsDone()                             {SetBit(kInitDOFsDone);}
+  Bool_t    GetInitDOFsDone()                       const {return TestBit(kInitDOFsDone);}
   //
-  Int_t   GetNDOFs()                                const {return fNDOFs;}
+  Int_t     GetNDOFs()                              const {return fNDOFs;}
   //
   void      SetTrackFlagSel(ULong_t f)                    {fTrackFlagSel = f;}
   ULong_t   GetTrackFlagSel()                       const {return fTrackFlagSel;}

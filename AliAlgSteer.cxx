@@ -211,13 +211,14 @@ void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
     case kTPC: det = new AliAlgDetTPC(GetDetNameByDetID(kTPC)); break;
     case kTRD: det = new AliAlgDetTRD(GetDetNameByDetID(kTRD)); break;
     case kTOF: det = new AliAlgDetTOF(GetDetNameByDetID(kTOF)); break;
-    default: AliErrorF("%d not implemented yet",id); break;
+    default: AliFatalF("%d not implemented yet",id); break;
     };
   }
   //
   fDetectors[fNDet] = det;
   fDetPos[id] = fNDet;
   det->SetAlgSteer(this);
+  SetObligatoryDetector(id,det->IsObligatory());
   fNDet++;
   //
 }
@@ -1000,8 +1001,8 @@ void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
   if (!det) {
     AliErrorF("Detector %d is not defined",detID);
   }
-  if (v) fObligatoryDetPattern |=  0x1<<v;
-  else   fObligatoryDetPattern &=~(0x1<<v);
+  if (v) fObligatoryDetPattern |=  0x1<<detID;
+  else   fObligatoryDetPattern &=~(0x1<<detID);
   if (det->IsObligatory()!=v) det->SetObligatory(v);
   //
 }

@@ -344,8 +344,9 @@ void AliAlgDet::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
-	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),GetVolIDMax(), fAddError[0],fAddError[1]);
+  printf("%c Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
+	 IsObligatory() ? '*':' ',GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),
+	 GetVolIDMax(),fAddError[0],fAddError[1]);
   if (opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }

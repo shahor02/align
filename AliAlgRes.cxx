@@ -3,7 +3,9 @@
 #include "AliAlgPoint.h"
 #include "AliLog.h"
 #include <TString.h>
+#include <TMath.h>
 
+using namespace TMath;
 
 ClassImp(AliAlgRes)
 
@@ -119,15 +121,24 @@ void AliAlgRes::Print(const Option_t *opt) const
 {
   // print info
   TString opts = opt; opts.ToLower();
-  printf("%5sTr.%4d Run:%6d Bz:%+4.1f Np: %3d q/Pt:%+.4f | Chi2:%6.1f |Vtx:%3s| TStamp:%d",
-	 IsCosmic() ? "Cosm.":"Coll.", fTrackID,fRun,fBz,fNPoints,fQ2Pt,fChi2,
-	 HasVertex() ? "ON":"OFF",fTimeStamp);
+  Bool_t lab = opts.Contains("l");
+  printf("%5sTr.",IsCosmic() ? "Cosm.":"Coll.");
+  if (IsCosmic()) printf("%2d/%2d ",fTrackID>>16,fTrackID&0xffff);
+  else            printf("%5d ",fTrackID);
+  printf("Run:%6d Bz:%+4.1f Np: %3d q/Pt:%+.4f | Chi2:%6.1f |Vtx:%3s| TStamp:%d\n",
+	 fRun,fBz,fNPoints,fQ2Pt,fChi2,HasVertex() ? "ON":"OFF",fTimeStamp);
   if (opts.Contains("r")) {
     printf("%5s %s %7s %7s %7s %5s %5s %9s %9s\n",
 	   " VID "," Alp ","   X   ","   Y   ","   Z   "," Snp "," Tgl ","    DY   ","    DZ   ");
     for (int i=0;i<fNPoints;i++) {
+      float x=fX[i],y=fY[i],z=fZ[i];
+      if (lab) {
+	x = GetXLab(i);
+	y = GetYLab(i);
+	z = GetZLab(i);
+      }
       printf("%5d %+5.2f %+7.2f %+7.2f %+7.2f %+5.2f %+5.2f %+9.2e %+9.2e\n",
-	     fVolID[i],fAlpha[i],fX[i],fY[i],fZ[i],fSnp[i],fTgl[i],fDY[i],fDZ[i]);
+	     fVolID[i],fAlpha[i],x,y,z,fSnp[i],fTgl[i],fDY[i],fDZ[i]);
     }
   }
 }
@@ -152,9 +163,11 @@ Bool_t AliAlgRes::FillTrack(const AliAlgTrack* trc)
   int nfill = 0;
   for (int i=0;i<np;i++) {
     AliAlgPoint* pnt = trc->GetPoint(i);
+    int inv = pnt->IsInvDir() ? -1:1;    // Flag invertion for cosmic upper leg
     if (!pnt->ContainsMeasurement()) continue;
     fVolID[nfill] = pnt->GetVolID();
-    fX[nfill]     = pnt->GetXPoint();
+    fAlpha[nfill] = pnt->GetAlphaSens();
+    fX[nfill]     = pnt->GetXPoint()*inv;
     fY[nfill]     = pnt->GetYTracking();
     fZ[nfill]     = pnt->GetZTracking();
     fDY[nfill]    = pnt->GetResidY();
@@ -173,4 +186,25 @@ Bool_t AliAlgRes::FillTrack(const AliAlgTrack* trc)
     AliFatalF("Something is wrong: %d residuals were stored instead of %d",nfill,nps);
   }
   return kTRUE;
+}
+
+//_________________________________________________
+Float_t AliAlgRes::GetXLab(int i) const
+{
+  // cluster lab X
+  return Abs(fX[i])*Cos(fAlpha[i]) - fY[i]*Sin(fAlpha[i]);
+}
+
+//_________________________________________________
+Float_t AliAlgRes::GetYLab(int i) const
+{
+  // cluster lab Y
+  return Abs(fX[i])*Sin(fAlpha[i]) + fY[i]*Cos(fAlpha[i]);
+}
+
+//_________________________________________________
+Float_t AliAlgRes::GetZLab(int i) const
+{
+  // cluster lab Z
+  return fZ[i];
 }

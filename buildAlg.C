@@ -9,7 +9,6 @@
 #include "AliAlgDet.h"
 #endif
 
-
 TFile* flIn=0;
 AliESDEvent *esdEv=0;
 AliESDfriend *esdFr=0;
@@ -50,7 +49,7 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   algSteer = new AliAlgSteer();
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
-  //algSteer->AddDetector(AliAlgSteer::kTPC);
+  algSteer->AddDetector(AliAlgSteer::kTPC);
   algSteer->AddDetector(AliAlgSteer::kTRD);
   algSteer->AddDetector(AliAlgSteer::kTOF);
   //
