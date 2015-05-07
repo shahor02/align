@@ -18,116 +18,29 @@ Int_t LoadESD(const char* path="data/AliESDs.root",Bool_t friends=kTRUE);
 void PrintTrack(Int_t i);
 void PrintTracks();
 void ConnectFriends();
+//
+void ConfigAlign(AliAlgSteer* algSteer);
+void ConfigITS(AliAlgSteer* algSteer);
+void ConfigTPC(AliAlgSteer* algSteer);
+void ConfigTRD(AliAlgSteer* algSteer);
+void ConfigTOF(AliAlgSteer* algSteer);
+//
+AliAlgSteer * algSTEER = 0;
 
-
-AliAlgSteer * algSteer = 0;
-
-//void buildAlg(int evID=4062, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-//void buildAlg(int evID=4, int trID=2, Bool_t cosm=kFALSE) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
+//void buildAlg(int evID=4062, int trID=0) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+//void buildAlg(int evID=6594, int trID=0) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+void buildAlg(int evID=4, int trID=2) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
   LoadEvent(evID>=0 ? evID : 0);
-  //  esdEv->InitMagneticField();
-  int run = esdEv->GetRunNumber();
+  //
   int nEv = esdTree->GetEntries();
-
-  /*
-  AliCDBManager* man = AliCDBManager::Instance();
-  if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
-    man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
-    man->SetRun(run);
-    man->SetSnapshotMode("data/OCDB.root");
-  }
-  else {
-    man->SetRaw(1);
-    man->SetRun(run);    
-  }
-  AliGeomManager::LoadGeometry("data/geometry.root");
-  */
   //
-  algSteer = new AliAlgSteer();
+  algSTEER = new AliAlgSteer();
   //
-  algSteer->AddDetector(AliAlgSteer::kITS);
-  algSteer->AddDetector(AliAlgSteer::kTPC);
-  algSteer->AddDetector(AliAlgSteer::kTRD);
-  algSteer->AddDetector(AliAlgSteer::kTOF);
+  ConfigAlign(algSTEER);
   //
-  /*
-  TString detalg = "GRP";
-  for (int id=0;id<AliAlgSteer::kNDetectors;id++) {
-    if (algSteer->GetDetectorByDetID(id)) {
-      detalg += " ";
-      detalg += algSteer->GetDetNameByDetID(id);
-    }
-  }
-  // apply alignment
-  AliGeomManager::ApplyAlignObjsFromCDB(detalg.Data());
-  //
-  */
-  //
-  algSteer->InitDetectors();
-  // set/fix needed DOFS per detectort, TODO
-  //
-  algSteer->InitDOFs(); 
-  //
-  // track selections
-  //
-  AliAlgDetITS* its = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
-  if (its) {
-    its->SetTrackFlagSel(AliESDtrack::kITSin);
-    its->SetNPointsSel(2);
-    //
-    its->SetAddErrorLr(0,30e-4,200e-4);
-    its->SetAddErrorLr(1,30e-4,200e-4);
-    its->SetAddErrorLr(2,500e-4,80e-4);
-    its->SetAddErrorLr(3,500e-4,80e-4);
-    its->SetAddErrorLr(4,50e-4,500e-4);
-    its->SetAddErrorLr(5,50e-4,500e-4);   
-  }
-  //
-  AliAlgDetTPC* tpc = (AliAlgDetTPC*)algSteer->GetDetectorByDetID(AliAlgSteer::kTPC);
-  if (tpc) {
-    tpc->SetTrackFlagSel(AliESDtrack::kTPCin);
-    tpc->SetNPointsSel(50);
-    //
-    if (cosm) tpc->SetAddError(0.2,1.0);  // cosmics is not calibrated
-    else      tpc->SetAddError(0.1,0.1);
-  }
-  //
-  AliAlgDetTRD* trd = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
-  if (trd) {
-    trd->SetTrackFlagSel(AliESDtrack::kTRDout);
-    trd->SetNPointsSel(2);
-    trd->SetObligatory(kFALSE);
-  }
-  //
-  AliAlgDetTOF* tof = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
-  if (tof) {
-    tof->SetTrackFlagSel(AliESDtrack::kTOFout);
-    tof->SetNPointsSel(2);
-  }
-  //
-  algSteer->SetMinDetAcc(2);
-  //
-  algSteer->SetMPOutType(0x1 | (0x1<<1) | (0x1<<2) );
-  //algSteer->SetMPOutType(AliAlgSteer::kMille);
-  //----------------------------------------------------------------
-  /*
-  PrintTracks();
-  //
-  algSteer->SetESDEvent(esdEv);
-  if (!cosm) {
-    AliESDtrack* tr = esdEv->GetTrack(trID);
-    algSteer->ProcessTrack(tr);
-  }
-  else {
-    AliESDCosmicTrack* trC = esdEv->GetCosmicTrack(trID);
-    algSteer->ProcessTrack(trC);
-  }
-  //
-  */
-  algSteer->SetESDTree(esdTree);
+  algSTEER->SetESDTree(esdTree);
   int evFirst=0,evLast = esdTree->GetEntries()-1;
   if (evID>0) {
     evFirst = evID;
@@ -135,13 +48,12 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   }
   for (int iev=evFirst;iev<=evLast;iev++) {
     LoadEvent(iev);
-    algSteer->ProcessEvent(esdEv);
+    algSTEER->ProcessEvent(esdEv);
   }
-  algSteer->CloseMPRecOutput();
-  algSteer->CloseMilleOutput();
-  algSteer->CloseResidOutput();
-  algSteer->Print("stat");
+  //
+  algSTEER->Terminate();
 
+  //
 }
 
 //-----------------------------------------------------------------
@@ -227,3 +139,90 @@ void ConnectFriends()
   }
 }
 
+//======================================================================
+//======================================================================
+//
+// Configure alignment steering
+//
+//======================================================================
+//======================================================================
+//======================================================================
+void ConfigAlign(AliAlgSteer* algSteer)
+{
+  //
+  algSteer->AddDetector(AliAlgSteer::kITS);
+  algSteer->AddDetector(AliAlgSteer::kTPC);
+  algSteer->AddDetector(AliAlgSteer::kTRD);
+  algSteer->AddDetector(AliAlgSteer::kTOF);
+  algSteer->InitDetectors();
+  //
+  algSteer->GetDetectorByDetID(AliAlgSteer::kTPC)->Disable();
+  algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->Disable();
+  algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->Disable();
+
+  ConfigITS(algSteer);
+  ConfigTPC(algSteer);
+  ConfigTRD(algSteer);
+  ConfigTOF(algSteer);
+  //
+  algSteer->SetCosmicSelStrict();
+  algSteer->SetMinDetAcc(1);
+  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  //
+  algSteer->InitDOFs();   
+  //  
+}
+
+//======================================================================
+void ConfigITS(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgDetITS* det = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
+  if (!det||det->IsDisabled()) return;
+  det->SetObligatory(kTRUE);
+  det->SetUseErrorParam(kTRUE);
+  det->SetTrackFlagSel(AliESDtrack::kITSin);
+  det->SetNPointsSel(2);
+  //
+  det->SetAddErrorLr(0,30e-4,200e-4);
+  det->SetAddErrorLr(1,30e-4,200e-4);
+  det->SetAddErrorLr(2,500e-4,80e-4);
+  det->SetAddErrorLr(3,500e-4,80e-4);
+  det->SetAddErrorLr(4,50e-4,500e-4);
+  det->SetAddErrorLr(5,50e-4,500e-4);   
+}
+
+//======================================================================
+void ConfigTPC(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgDetTPC* det = (AliAlgDetTPC*)algSteer->GetDetectorByDetID(AliAlgSteer::kTPC);
+  if (!det||det->IsDisabled()) return;
+  det->SetObligatory(kTRUE);
+  det->SetTrackFlagSel(AliESDtrack::kTPCin);
+  det->SetNPointsSel(50);
+  det->SetAddError(3,10.); // HUGE errors
+}
+
+//======================================================================
+void ConfigTRD(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgDetTRD* det = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
+  if (!det||det->IsDisabled()) return;
+  det->SetObligatory(kFALSE);
+  det->SetTrackFlagSel(AliESDtrack::kTRDout);
+  det->SetNPointsSel(2);
+}
+
+//======================================================================
+void ConfigTOF(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
+  if (!det||det->IsDisabled()) return;
+  det->SetObligatory(kTRUE);
+  det->SetTrackFlagSel(AliESDtrack::kTOFout);
+  det->SetNPointsSel(1);
+  //
+}

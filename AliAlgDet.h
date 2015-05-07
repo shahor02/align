@@ -16,7 +16,7 @@ class AliExternalTrackParam;
 class AliAlgDet : public TNamed
 {
  public:
-  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15)};
+  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15),kDisableBit=BIT(16)};
   //
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
@@ -50,6 +50,7 @@ class AliAlgDet : public TNamed
   virtual Int_t InitGeom();
   virtual Int_t AssignDOFs();
   virtual void  InitDOFs();
+  virtual void  Terminate();
   virtual void  AddVolume(AliAlgVol* vol);
   virtual void  DefineVolumes();
   virtual void  DefineMatrices();
@@ -64,6 +65,9 @@ class AliAlgDet : public TNamed
   //
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
+  //
+  void      Disable()                                     {SetBit(kDisableBit);SetObligatory(kFALSE);}
+  Bool_t    IsDisabled()                            const {return TestBit(kDisableBit);}
   //
   void      SetInitGeomDone()                             {SetBit(kInitGeomDone);}
   Bool_t    GetInitGeomDone()                       const {return TestBit(kInitGeomDone);}

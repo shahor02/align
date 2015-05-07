@@ -51,6 +51,7 @@ class AliAlgSteer : public TObject
 
   void     InitDetectors();
   void     InitDOFs();  
+  void     Terminate();
   //
   void     AddDetector(UInt_t id, AliAlgDet* det=0);
   void     AddDetector(AliAlgDet* det);
@@ -72,6 +73,11 @@ class AliAlgSteer : public TObject
   const    AliESDtrack* GetESDtrack(int i=0)              const {return fESDTrack[i];}
   //
   // Track selection
+  void     SetCosmicSelStrict(Bool_t v=kTRUE)                   {fCosmicSelStrict = v;}
+  Bool_t   GetCosmicSelStrict()                           const {return fCosmicSelStrict;}
+  //  
+  Int_t    GetMinPoints()                                 const {return fMinPoints[GetFieldOn()];}
+  void     SetMinPoints(Bool_t bON,int n)                       {int mn=bON?3:4; fMinPoints[bON]=n>mn?n:mn;}
   Double_t GetPtMin()                                     const {return fPtMin;}
   void     SetPtMin(double pt=0.3)                              {fPtMin = pt;}  
   Double_t GetEtaMax()                                    const {return fEtaMax;}
@@ -96,6 +102,7 @@ class AliAlgSteer : public TObject
   void     SetMaxChi2forVC(double chi2)                         {fMaxChi2forVC = chi2;}
   //
   Bool_t   CheckDetectorPattern(UInt_t patt)              const;
+  Bool_t   CheckDetectorPoints(const int* npsel)          const;
   void     SetObligatoryDetector(Int_t detID, Bool_t v=kTRUE);
   void     SetEventSpeciiSelection(UInt_t sel)                  {fSelEventSpecii = sel;}
   UInt_t   GetEventSpeciiSelection()                      const {return fSelEventSpecii;}
@@ -198,11 +205,11 @@ class AliAlgSteer : public TObject
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
   AliAlgVtx*    fVtxSens;                                 // fake sensor for the vertex
   //
-  //  
   // Track selection
   UInt_t        fSelEventSpecii;                          // consider only these event specii
   UInt_t        fObligatoryDetPattern;                    // pattern of obligatory detectors
   Bool_t        fCosmicSelStrict;                         // if true, each cosmic track leg selected like separate track
+  Int_t         fMinPoints[2];                            // require min points per leg (case Boff,Bon)
   Int_t         fMinDetAcc;                               // min number of detector required in track
   Double_t      fPtMin;                                   // min pT of tracks to consider
   Double_t      fEtaMax;                                  // eta cut on tracks

@@ -116,6 +116,8 @@ AliAlgSteer::AliAlgSteer()
     fDetectors[i] = 0;
     fDetPos[i] = -1;
   }
+  fMinPoints[0] = 3;
+  fMinPoints[1] = 4;
   for (int i=kNCosmLegs;i--;) fESDTrack[i] = 0;
   memset(fStat,0,kNStatCl*kMaxStat*sizeof(float));
   fMaxDCAforVC[0] = 0.1;
@@ -164,7 +166,8 @@ void AliAlgSteer::InitDetectors()
   fNDOFs = 0;
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (det) fNDOFs += det->AssignDOFs();
+    if (!det || det->IsDisabled()) continue;
+    fNDOFs += det->AssignDOFs();
   }
   // special fake sensor for vertex constraint point
   fVtxSens = new AliAlgVtx();
@@ -176,9 +179,10 @@ void AliAlgSteer::InitDetectors()
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (det) det->CacheReferenceOCDB();
+    if (!det || det->IsDisabled()) continue;
+    det->CacheReferenceOCDB();
   }
- 
+  // 
 }
 
 //________________________________________________________________
@@ -190,7 +194,16 @@ void AliAlgSteer::InitDOFs()
   if (done) return;
   done = kTRUE;
   //
-  for (int i=0;i<fNDet;i++) fDetectors[i]->InitDOFs();
+  int nact = 0;
+  for (int i=0;i<fNDet;i++) {
+    AliAlgDet* det = GetDetector(i);
+    if (det->IsDisabled()) continue;
+    fDetectors[i]->InitDOFs();
+    nact++;
+  }
+  if (nact<fMinDetAcc) {
+    AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc);
+  }
   //
 }
 
@@ -238,6 +251,23 @@ Bool_t AliAlgSteer::CheckDetectorPattern(UInt_t patt) const
 }
 
 //_________________________________________________________
+Bool_t AliAlgSteer::CheckDetectorPoints(const int* npsel) const 
+{
+  //validate detectors pattern according to number of selected points
+  int ndOK = 0;
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (!det || det->IsDisabled()) continue;
+    if (npsel[idt]<det->GetNPointsSel()) {
+      if (det->IsObligatory()) return kFALSE;
+      continue;
+    }
+    ndOK++;
+  }
+  return ndOK>=fMinDetAcc;
+}
+
+//_________________________________________________________
 UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr, Bool_t strict) const
 {
   // decide if the track should be processed
@@ -247,7 +277,7 @@ UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr, Bool_t strict) const
   if (Abs(esdTr->Eta())>fEtaMax)      return 0;
   //
   for (int idet=0;idet<kNDetectors;idet++) {
-    if (!(det=GetDetectorByDetID(idet))) continue;
+    if (!(det=GetDetectorByDetID(idet)) || det->IsDisabled()) continue;
     if (!det->AcceptTrack(esdTr)) {
       if (strict && det->IsObligatory()) return 0;
       else continue;
@@ -283,7 +313,6 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 {
   // process event
   SetESDEvent(esdEv);
-  AliInfoF("Processing event %d of ev.specie %d",esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie());
   //
   if (esdEv->GetRunNumber() != GetRunNumber()) SetRunNumber(esdEv->GetRunNumber());
   //
@@ -293,13 +322,17 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   }
   //
   SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d",
+	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),
+	   IsCosmicEvent() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
+  //
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   if (!IsCosmicEvent() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
   //
-  int accTr = 0;
+  int ntr=0,accTr = 0;
   if (IsCosmicEvent()) {
     fStat[kInpStat][kEventCosm]++;
-    int ntr = esdEv->GetNumberOfCosmicTracks();
+    ntr = esdEv->GetNumberOfCosmicTracks();
     for (int itr=0;itr<ntr;itr++) {
       accTr += ProcessTrack(esdEv->GetCosmicTrack(itr));      
     }
@@ -307,13 +340,16 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   }
   else {
     fStat[kInpStat][kEventColl]++;
-    int ntr = esdEv->GetNumberOfTracks();
+    ntr = esdEv->GetNumberOfTracks();
     for (int itr=0;itr<ntr;itr++) {
       accTr += ProcessTrack(esdEv->GetTrack(itr));      
     }
     if (accTr) fStat[kAccStat][kEventColl]++;
   }    
   //
+  AliInfoF("Processed event %d of ev.specie %d -> Accepted: %4d of %4d tracks",
+	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),accTr,ntr);
+
   return kTRUE;
 }
 
@@ -343,13 +379,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   for (int idet=0;idet<kNDetectors;idet++) {
     if (!(detAcc&(0x1<<idet))) continue;
     det=GetDetectorByDetID(idet);
-    if (!det->ProcessPoints(esdTr, fAlgTrack)) {
+    if (det->ProcessPoints(esdTr, fAlgTrack) < det->GetNPointsSel()) {
       detAcc &= ~(0x1<<idet); // did not survive, suppress detector in the track
       if (det->IsObligatory()) return kFALSE;
     }
     if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE; // abandon track
   }
   //
+  if (fAlgTrack->GetNPoints()<GetMinPoints()) return kFALSE;
   // fill needed points (tracking frame) in the fAlgTrack
   fRefPoint->SetContainsMeasurement(kFALSE);
   fRefPoint->SetContainsMaterial(kFALSE);
@@ -455,22 +492,22 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   fAlgTrack->AddPoint(fRefPoint); // reference point which the track will refer to
   //
   AliAlgDet* det = 0;
-  UInt_t detAccLeg[2] = {detAcc,detAcc};
-  for (int leg=kNCosmLegs;leg--;) {
+  Int_t npsel[kNDetectors] = {0};
+  for (int nPleg=0,leg=kNCosmLegs;leg--;) {
     for (int idet=0;idet<kNDetectors;idet++) {
-      if (!(detAccLeg[leg]&(0x1<<idet))) continue;
+      if (!(detAcc&(0x1<<idet))) continue;
       det = GetDetectorByDetID(idet);
       //
-      // upper leg points marked as the track goes in inverse direction
-      if (!det->ProcessPoints(fESDTrack[leg],fAlgTrack, leg==kCosmUp)) {
-	if (fCosmicSelStrict && det->IsObligatory()) return kFALSE;
-	detAccLeg[leg] &= ~(0x1<<idet); // did not survive, suppress detector
-      }
-      if (NumberOfBitsSet(detAccLeg[leg])<fMinDetAcc) return kFALSE; // abandon track
+      // upper leg points marked as the track going in inverse direction
+      int np = det->ProcessPoints(fESDTrack[leg],fAlgTrack, leg==kCosmUp);
+      if (np<det->GetNPointsSel() && fCosmicSelStrict && det->IsObligatory()) return kFALSE;
+      npsel[idet] += np;
+      nPleg += np;
     }
+    if (nPleg<GetMinPoints()) return kFALSE;
   }
   // last check on legs-combined patter
-  if (!CheckDetectorPattern(detAccLeg[0]&detAccLeg[1])) return kFALSE;
+  if (!CheckDetectorPoints(npsel)) return kFALSE;
   //
   fAlgTrack->CopyFrom(cosmTr);
   fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
@@ -683,7 +720,10 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   }
   LoadRecoTimeOCDB();
   //
-  for (int idet=0;idet<fNDet;idet++) GetDetector(idet)->AcknowledgeNewRun(run);
+  for (int idet=0;idet<fNDet;idet++) {
+    AliAlgDet* det = GetDetector(idet);
+    if (!det->IsDisabled()) det->AcknowledgeNewRun(run);
+  }
   //
   AliCDBManager::Destroy();
   //
@@ -1070,7 +1110,7 @@ void AliAlgSteer::WriteCalibrationResults() const
   //
   AliAlgDet* det;
   for (int idet=0;idet<kNDetectors;idet++) {
-    if (!(det=GetDetectorByDetID(idet))) continue;
+    if (!(det=GetDetectorByDetID(idet)) || det->IsDisabled()) continue;
     det->WriteCalibrationResults();
   }
   //
@@ -1122,6 +1162,17 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   return kTRUE;
 }
 
+//________________________________________________________
+void AliAlgSteer::Terminate()
+{
+  // finalize processing
+  CloseMPRecOutput();
+  CloseMilleOutput();
+  CloseResidOutput();
+  Print("stat");
+  //
+}
+
 
 //********************* interaction with PEDE **********************
 
@@ -1138,7 +1189,7 @@ void AliAlgSteer::GenPedeParamFile(const Option_t *opt) const
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (!det) continue;
+    if (!det || det->IsDisabled()) continue;
     det->WritePedeParamFile(flOut,opt);
     //
   }

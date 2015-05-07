@@ -344,10 +344,11 @@ void AliAlgDet::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("%c Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
-	 IsObligatory() ? '*':' ',GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),
+  printf("%c%c Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
+	 IsDisabled() ? '-':'+',IsObligatory() ? '*':' ',
+	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),
 	 GetVolIDMax(),fAddError[0],fAddError[1]);
-  if (opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
+  if (!IsDisabled() && opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }
 
@@ -440,4 +441,17 @@ void AliAlgDet::WriteAlignmentResults() const
   man->Put(arr,id,md); 
   //
   delete arr;
+}
+
+
+//______________________________________________________
+void AliAlgDet::Terminate()
+{
+  // called at the end of processing
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {
+    AliAlgVol *vol = GetVolume(iv);
+    // call init for root level volumes, they will take care of their children
+    if (!vol->GetParent()) vol->FinalizeStat();
+  }
 }
