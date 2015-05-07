@@ -44,6 +44,7 @@ class AliAlgPoint : public TObject
   const Double_t* GetYZErrTracking()  const {return fErrYZTracking;}
   //
   const AliAlgSens* GetSensor()       const {return fSensor;}
+  UInt_t     GetVolID()               const {return fSensor->GetVolID();}
   void       SetSensor(AliAlgSens* s)       {fSensor = s;}
   Int_t      GetDetID()               const {return fDetID;}
   Int_t      GetSID()                 const {return fSID;}

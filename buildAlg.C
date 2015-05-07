@@ -111,7 +111,7 @@ void buildAlg(int evID=6594, int trID=0, Bool_t cosm=kTRUE) // for cosm: data ->
   //
   algSteer->SetMinDetAcc(2);
   //
-  algSteer->SetMPOutType(AliAlgSteer::kMilleMPRec);
+  algSteer->SetMPOutType(0x1 | (0x1<<1) | (0x1<<2) );
   //algSteer->SetMPOutType(AliAlgSteer::kMille);
   //----------------------------------------------------------------
   /*

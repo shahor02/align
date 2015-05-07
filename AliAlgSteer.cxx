@@ -24,6 +24,7 @@
 #include "AliAlgDetTOF.h"
 #include "AliAlgVtx.h"
 #include "AliAlgMPRecord.h"
+#include "AliAlgRes.h"
 #include "AliTrackerBase.h"
 #include "AliESDCosmicTrack.h"
 #include "AliESDtrack.h"
@@ -48,7 +49,7 @@ using namespace AliAlgAux;
 
 ClassImp(AliAlgSteer)
 
-const Char_t* AliAlgSteer::fgkMPDataExt[AliAlgSteer::kMilleMPRec] = {".mille",".root"};
+const Char_t* AliAlgSteer::fgkMPDataExt = ".mille";
 const Char_t* AliAlgSteer::fgkDetectorName[AliAlgSteer::kNDetectors] = {"ITS", "TPC", "TRD", "TOF", "HMPID" };
 const Int_t   AliAlgSteer::fgkSkipLayers[AliAlgSteer::kNLrSkip] = {AliGeomManager::kPHOS1,AliGeomManager::kPHOS2,
 								   AliGeomManager::kMUON,AliGeomManager::kEMCAL};
@@ -85,15 +86,20 @@ AliAlgSteer::AliAlgSteer()
   ,fESDTree(0)
   ,fESDEvent(0)
   ,fVertex(0)
+  ,fControlFrac(0)
   ,fMPOutType(kMille)
   ,fMille(0)
   ,fMPRecord(0)
+  ,fCResid(0)
   ,fMPRecTree(0)
+  ,fResidTree(0)
   ,fMPRecFile(0)
+  ,fResidFile(0)
   ,fMilleDBuffer()
   ,fMilleIBuffer()
   ,fMPDatFileName("mpData")
   ,fMPParFileName("mpParam.txt")
+  ,fResidFileName("controlRes.root")
   //
   ,fOutCDBPath("local://outOCDB")
   ,fOutCDBComment("AliAlgSteer")
@@ -122,6 +128,7 @@ AliAlgSteer::~AliAlgSteer()
   // d-tor
   if (fMPRecFile) CloseMPRecOutput();
   if (fMille)     CloseMilleOutput();
+  if (fResidFile) CloseResidOutput();
   //
   delete fAlgTrack;
   delete[] fGloParVal;
@@ -371,8 +378,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
   //
-  if (!fAlgTrack->CalcResiduals()) return kFALSE;
-  if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
+  if ((fMPOutType||kMille)||(fMPOutType||kMPRec)) { // need derivatives
+    //if (!fAlgTrack->CalcResiduals()) return kFALSE;
+    if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
+  }
+  //
+  if ((fMPOutType||kContR)) { // need control residuals
+    if (!TestLocalSolution()) return kFALSE;
+  }
   //
   if (!StoreProcessedTrack()) return kFALSE;
   //
@@ -479,8 +492,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   //
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
-  if (!fAlgTrack->CalcResiduals()) return kFALSE;
-  if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
+  //
+  if ((fMPOutType||kMille)||(fMPOutType||kMPRec)) { // need derivatives
+    if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
+  }
+  //
+  if ((fMPOutType||kContR)) { // need control residuals
+    if (!TestLocalSolution()) return kFALSE;
+  }
   //
   if (!StoreProcessedTrack()) return kFALSE;
   //
@@ -493,8 +512,9 @@ Bool_t AliAlgSteer::StoreProcessedTrack()
 {
   // write alignment track
   Bool_t res = kTRUE;
-  if ((fMPOutType==kMille)||(fMPOutType==kMilleMPRec)) res &= FillMilleData();
-  if ((fMPOutType==kMPRec)||(fMPOutType==kMilleMPRec)) res &= FillMPRecData();
+  if ((fMPOutType||kMille)) res &= FillMilleData();
+  if ((fMPOutType||kMPRec)) res &= FillMPRecData();
+  if ((fMPOutType||kContR)) res &= FillControlData();
   //
   return res;
 }
@@ -504,7 +524,7 @@ Bool_t AliAlgSteer::FillMilleData()
 {
   // store MP2 in Mille format
   if (!fMille) {
-    TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt[kMille]);
+    TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt);
     fMille = new Mille(mo.Data());
     if (!fMille) AliFatalF("Failed to create output file %s",mo.Data());
   }
@@ -599,6 +619,55 @@ Bool_t AliAlgSteer::FillMPRecData()
   if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
   fMPRecord->SetTrackID(tID);
   fMPRecTree->Fill();
+  return kTRUE;
+}
+
+//_________________________________________________________
+Bool_t AliAlgSteer::FillControlData()
+{
+  // store control residuals
+  if (!fCResid) InitResidOutput();
+  //
+  int nps,np = fAlgTrack->GetNPoints();
+  nps = (!fRefPoint->ContainsMeasurement()) ? np-1 : np; // ref point is dummy?
+  if (nps<0) return kTRUE;
+  //
+  fCResid->Clear();
+  fCResid->SetNPoints(nps);
+  fCResid->SetRun(fRunNumber);
+  fCResid->SetTimeStamp(fESDEvent->GetTimeStamp());
+  fCResid->SetBz(fESDEvent->GetMagneticField());
+  UInt_t tID = 0xffff & UInt_t(fESDTrack[0]->GetID());
+  if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
+  fCResid->SetTrackID(tID);
+  //
+  fCResid->SetQ2Pt(fAlgTrack->GetSigned1Pt());
+  fCResid->SetChi2(fAlgTrack->GetChi2());  
+  int nfill = 0;
+  for (int i=0;i<np;i++) {
+    AliAlgPoint* pnt = fAlgTrack->GetPoint(i);
+    if (!pnt->ContainsMeasurement()) continue;
+    fCResid->SetVolID(nfill,pnt->GetVolID());
+    fCResid->SetX(nfill,pnt->GetXPoint());
+    fCResid->SetY(nfill,pnt->GetYTracking());
+    fCResid->SetZ(nfill,pnt->GetZTracking());
+    fCResid->SetDY(nfill,pnt->GetResidY());
+    fCResid->SetDZ(nfill,pnt->GetResidZ());
+    fCResid->SetSigY2(nfill,pnt->GetYZErrTracking()[0]);
+    fCResid->SetSigYZ(nfill,pnt->GetYZErrTracking()[1]);
+    fCResid->SetSigZ2(nfill,pnt->GetYZErrTracking()[2]);
+    //
+    fCResid->SetSnp(nfill,pnt->GetTrParamWSA()[AliAlgPoint::kParSnp]);
+    fCResid->SetTgl(nfill,pnt->GetTrParamWSA()[AliAlgPoint::kParTgl]);
+    //
+    nfill++;
+  }
+  if (nfill!=nps) {
+    fAlgTrack->Print("p");
+    AliFatalF("Something is wrong: %d residuals were stored instead of %d",nfill,nps);
+  }
+  fResidTree->Fill();
+  //
   return kTRUE;
 }
 
@@ -699,10 +768,12 @@ void AliAlgSteer::Print(const Option_t *opt) const
   TString opts = opt; 
   opts.ToLower();
   printf("MPData output :\t");
-  if ((fMPOutType==kMille)||(fMPOutType==kMilleMPRec)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt[kMille]);
-  if ((fMPOutType==kMPRec)||(fMPOutType==kMilleMPRec)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt[kMPRec]);
+  if ((fMPOutType||kMille)) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
+  if ((fMPOutType||kMPRec)) printf("%s%s ",fMPDatFileName.Data(),".root");
   printf("\n");
   printf("MP Params     :\t%s\n",fMPParFileName.Data());
+  if ((fMPOutType||kContR) && fControlFrac>0) printf("Contol Res. (F:%.3f) %s\n",
+						     fControlFrac,fResidFileName.Data());
   printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
   for (int idt=0;idt<kNDetectors;idt++) {
@@ -750,6 +821,7 @@ Bool_t AliAlgSteer::TestLocalSolution()
    return kFALSE;
   }
   //
+  /*
   // print solution vector
   int nlocpar = fAlgTrack->GetNLocPar();
   int nlocparETP = fAlgTrack->GetNLocExtPar(); // parameters of external track param
@@ -766,9 +838,10 @@ Bool_t AliAlgSteer::TestLocalSolution()
       int parI = offs + ipar;
       double err = Sqrt(expMatCov[ipar]);
       printf("Pnt:%3d MatVar:%d DOF %3d | %+.3e(%+.3e) -> sig:%+.3e -> pull: %+.2e\n",
-	     ip,ipar,parI,vsl[parI],Sqrt((*mat)(parI,parI)), err,vsl[parI]/err);
+      	     ip,ipar,parI,vsl[parI],Sqrt((*mat)(parI,parI)), err,vsl[parI]/err);
     }
   }
+  */
   //
   fAlgTrack->CalcResiduals(vsl.GetMatrixArray());
   fAlgTrack->SetLocPars(vsl.GetMatrixArray());
@@ -838,12 +911,26 @@ void AliAlgSteer::InitMPRecOutput()
   // prepare MP record output
   if (!fMPRecord) fMPRecord = new AliAlgMPRecord();
   //
-  TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt[kMPRec]);
+  TString mo = Form("%s%s",fMPDatFileName.Data(),".root");
   fMPRecFile = TFile::Open(mo.Data(),"recreate");
   if (!fMPRecFile) AliFatalF("Failed to create output file %s",mo.Data());
   //
   fMPRecTree = new TTree("mpTree","MPrecord Tree");
   fMPRecTree->Branch("mprec","AliAlgMPRecord",&fMPRecord);
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::InitResidOutput()
+{
+  // prepare residual output
+  if (!fCResid) fCResid = new AliAlgRes();
+  //
+  fResidFile = TFile::Open(fResidFileName.Data(),"recreate");
+  if (!fResidFile) AliFatalF("Failed to create output file %s",fResidFileName.Data());
+  //
+  fResidTree = new TTree("res","Control Residuals");
+  fResidTree->Branch("t","AliAlgRes",&fCResid);
   //
 }
 
@@ -864,6 +951,22 @@ void AliAlgSteer::CloseMPRecOutput()
 }
 
 //____________________________________________
+void AliAlgSteer::CloseResidOutput()
+{
+  // close output
+  if (!fResidFile) return;
+  fResidFile->cd();
+  fResidTree->Write();
+  delete fResidTree;
+  fResidTree = 0;
+  fResidFile->Close();
+  delete fResidFile;
+  fResidFile = 0;
+  delete fCResid;
+  fCResid = 0;
+}
+
+//____________________________________________
 void AliAlgSteer::CloseMilleOutput()
 {
   // close output
@@ -877,10 +980,10 @@ void AliAlgSteer::SetMPDatFileName(const char* name)
   // set output file name
   fMPDatFileName = name;
   // strip root or mille extensions, they will be added automatically later
-  if      (fMPDatFileName.EndsWith(fgkMPDataExt[kMille])) 
-    fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(fgkMPDataExt[kMille]));
-  else if (fMPDatFileName.EndsWith(fgkMPDataExt[kMPRec])) 
-      fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(fgkMPDataExt[kMPRec]));
+  if      (fMPDatFileName.EndsWith(fgkMPDataExt)) 
+    fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(fgkMPDataExt));
+  else if (fMPDatFileName.EndsWith(".root")) 
+      fMPDatFileName.Remove(fMPDatFileName.Length()-strlen(".root"));
   //
   if (fMPDatFileName.IsNull()) fMPDatFileName = "mpData"; 
   //
@@ -892,6 +995,15 @@ void AliAlgSteer::SetMPParFileName(const char* name)
   // set output file name
   fMPParFileName = name; 
   if (fMPParFileName.IsNull()) fMPParFileName = "mpParam.txt"; 
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::SetResidFileName(const char* name) 
+{
+  // set output file name
+  fResidFileName = name; 
+  if (fResidFileName.IsNull()) fResidFileName = "controlRes.root"; 
   //
 }
 

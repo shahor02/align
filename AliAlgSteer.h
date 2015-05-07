@@ -19,6 +19,7 @@ class AliAlgDet;
 class AliAlgVtx;
 class AliAlgPoint;
 class AliAlgMPRecord;
+class AliAlgRes;
 class TTree;
 class TFile;
 //
@@ -39,8 +40,7 @@ class AliAlgSteer : public TObject
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
   enum {kSPDNoSel,kSPDBoth,kSPDAny,kSPD0,kSPD1};
-  enum MPOut_t {kMille,kMPRec,kMilleMPRec};
-
+  enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
   //
   AliAlgSteer();
   virtual ~AliAlgSteer();
@@ -129,6 +129,7 @@ class AliAlgSteer : public TObject
   // output related
   void   SetMPDatFileName(const char* name="mpData");
   void   SetMPParFileName(const char* name="mpParam.txt");
+  void   SetResidFileName(const char* name="controlRes.root");
   void   SetOutCDBPath(const char* name="local://outOCDB");
   void   SetOutCDBComment(const char* cm=0)                     {fOutCDBComment = cm;}
   void   SetOutCDBResponsible(const char* v=0)                  {fOutCDBResponsible = v;}
@@ -136,21 +137,27 @@ class AliAlgSteer : public TObject
   Int_t* GetOutCDBRunRange() const {return (int*)fOutCDBRunRange;}
   Int_t  GetOutCDBRunMin()   const {return fOutCDBRunRange[0];}
   Int_t  GetOutCDBRunMax()   const {return fOutCDBRunRange[1];}
+  void    SetControlFrac(float v=1.) {fControlFrac = v;}
+  Float_t GetControlFrac()   const {return fControlFrac;}
   void   WriteCalibrationResults()                         const;
   const  char* GetOutCDBComment()                          const {return fOutCDBComment.Data();}
   const  char* GetOutCDBResponsible()                      const {return fOutCDBResponsible.Data();}
   const  char* GetOutCDBPath()                             const {return fOutCDBPath.Data();}
   const  char* GetMPDatFileName()                          const {return fMPDatFileName.Data();}
+  const  char* GetResidFileName()                          const {return fResidFileName.Data();}
   const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
   //
   Bool_t FillMPRecData();
   Bool_t FillMilleData();
+  Bool_t FillControlData();
   Int_t  GetMPOutType()                                    const {return fMPOutType;}
   void   SetMPOutType(MPOut_t t)                                 {fMPOutType = t;}
   void   CloseMPRecOutput();
   void   CloseMilleOutput();
+  void   CloseResidOutput();
   void   InitMPRecOutput();
   void   InitMIlleOutput();
+  void   InitResidOutput();
   Bool_t StoreProcessedTrack();
   void   PrintStatistics() const;
   //
@@ -219,15 +226,20 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkStatName[kMaxStat];             // stat type names  
   //
   // output related
+  Float_t         fControlFrac;                           //  fraction of tracks to store control residuals
   MPOut_t         fMPOutType;                             // Format to store MP data
   Mille*          fMille;                                 //! Mille interface
   AliAlgMPRecord* fMPRecord;                              //! MP record 
+  AliAlgRes*      fCResid;                                //! control residuals
   TTree*          fMPRecTree;                             //! tree to store MP record
+  TTree*          fResidTree;                             //! tree to store control residuals
   TFile*          fMPRecFile;                             //! file to store MP record tree
+  TFile*          fResidFile;                             //! file to store control residuals tree
   TArrayF         fMilleDBuffer;                          //! buffer for Mille Derivatives output
   TArrayI         fMilleIBuffer;                          //! buffer for Mille Indecis output
   TString         fMPDatFileName;                         //  file name for records binary data output
   TString         fMPParFileName;                         //  file name for MP steering params
+  TString         fResidFileName;                         //  file name for optional control residuals
   //
   TString         fOutCDBPath;                            // output OCDB path
   TString         fOutCDBComment;                         // optional comment to add to output cdb objects
@@ -242,7 +254,7 @@ class AliAlgSteer : public TObject
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors
-  static const Char_t* fgkMPDataExt[kMilleMPRec];         // extensions for MP2 binary data 
+  static const Char_t* fgkMPDataExt;                      // extension for MP2 binary data 
   //
   ClassDef(AliAlgSteer,1)
 };

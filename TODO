@@ -1,3 +1,6 @@
-setup of MagField
-fetch reco time L2G, use for points filtering
+root [0] .L buildAlg.C 
+root [1] buildAlg(2078)
+
+WHY no obligatory ITS?
+I-AliAlgSteer::FillMilleData: Track does not depend on free global parameters, discard
 
