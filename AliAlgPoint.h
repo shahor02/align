@@ -72,7 +72,7 @@ class AliAlgPoint : public TObject
   void       SetELossVaried(Bool_t v=kTRUE)           {SetBit(kVaryELossBit,v);}
   void       SetContainsMaterial(Bool_t v=kTRUE)      {SetBit(kMaterialBit,v);}
   void       SetContainsMeasurement(Bool_t v=kTRUE)   {SetBit(kMeasurementBit,v);}
-  void       SetNeedUpdateFromTrack(Bool_t v=kTRUE )  {SetBit(kUpdateFromTrackBit);}
+  void       SetNeedUpdateFromTrack(Bool_t v=kTRUE )  {SetBit(kUpdateFromTrackBit,v);}
   void       SetUseBzOnly(Bool_t v=kTRUE)             {SetBit(kUseBzOnly,v);}
   void       SetInvDir(Bool_t v=kTRUE)                {SetBit(kInvDir,v);}
   void       SetStatOK(Bool_t v=kTRUE)                {SetBit(kStatOK,v);}
@@ -128,6 +128,10 @@ class AliAlgPoint : public TObject
  protected:
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;
+  //
+  // ---------- dummies ----------
+  AliAlgPoint(const AliAlgPoint&);
+  AliAlgPoint& operator=(const AliAlgPoint&);
   //
  protected:
   //

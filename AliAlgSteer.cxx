@@ -682,15 +682,6 @@ Bool_t AliAlgSteer::FillControlData()
   return kTRUE;
 }
 
-//______________________________________________
-void  AliAlgSteer::SetESDTree(const TTree* tr)
-{
-  // attach tree with input events
-  fESDTree = tr;
-  // go the the real ESD tree
-  while (fESDTree->GetTree() && fESDTree->GetTree()!=fESDTree) fESDTree = fESDTree->GetTree();
-}
-
 //_________________________________________________________
 void AliAlgSteer::SetRunNumber(Int_t run)
 {
@@ -752,10 +743,11 @@ Bool_t AliAlgSteer::LoadRecoTimeOCDB()
   else AliWarningF("No reco-time OCDB config macro %s is found, will use ESD:UserInfo",
 		   fRefOCDBConf.Data());
   //
-  if (!fESDTree) {
-    AliFatal("Cannot preload Reco-Time OCDB since the ESD tree is not set");
-  }
-  const TList* userInfo = const_cast<TTree*>(fESDTree)->GetUserInfo();
+  if (!fESDTree) AliFatal("Cannot preload Reco-Time OCDB since the ESD tree is not set");
+  const TTree* tr = fESDTree;  // go the the real ESD tree
+  while (tr->GetTree() && tr->GetTree()!=tr) tr = tr->GetTree();
+  //
+  const TList* userInfo = const_cast<TTree*>(tr)->GetUserInfo();
   TMap* cdbMap = (TMap*)userInfo->FindObject("cdbMap");
   TList* cdbList = (TList*)userInfo->FindObject("cdbList");
   //

@@ -65,7 +65,7 @@ class AliAlgSteer : public TObject
   void     SetCosmicEvent(Bool_t v=kTRUE) {fCosmicEvent = v;}
   Float_t  GetStat(int cls, int tp)                       const {return fStat[cls][tp];}
   //
-  void     SetESDTree(const TTree* tr);
+  void     SetESDTree(const TTree* tr)                          {fESDTree = tr;}
   const    TTree* GetESDTree()                            const {return fESDTree;}
   void     SetESDEvent(const AliESDEvent* ev)                   {fESDEvent = ev;}
   const    AliESDEvent* GetESDEvent()                     const {return fESDEvent;}
@@ -191,7 +191,10 @@ class AliAlgSteer : public TObject
   Bool_t        TestLocalSolution();
   //
  protected:
+  //
+  // --------- dummies -----------
   AliAlgSteer(const AliAlgSteer&);
+  AliAlgSteer& operator=(const AliAlgSteer&);
   //
  protected:
   //

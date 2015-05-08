@@ -58,6 +58,10 @@ class AliAlgSens : public AliAlgVol
   virtual Bool_t  IsSortable()                         const {return kTRUE;}
   virtual Int_t   Compare(const TObject* a)            const;
   //
+  // --------- dummies -----------
+  AliAlgSens(const AliAlgSens&);
+  AliAlgSens& operator=(const AliAlgSens&);
+  //
  protected:
   //
   Int_t    fIntID;                    // internal id within the detector

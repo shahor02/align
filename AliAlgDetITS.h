@@ -20,9 +20,13 @@ class AliAlgDetITS : public AliAlgDet
   virtual void  SetUseErrorParam(Int_t v);
   //
  protected:
-
+  //
   void GetErrorParamAngle(int layer,double tgl,double tgphitr,double &erry,double &errz) const;
-
+  //
+  // -------- dummies --------
+  AliAlgDetITS(const AliAlgDetITS&);
+  AliAlgDetITS& operator=(const AliAlgDetITS&);
+  //
  protected:
   //
   ClassDef(AliAlgDetITS,1);

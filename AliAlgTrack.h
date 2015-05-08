@@ -110,6 +110,10 @@ class AliAlgTrack: public AliExternalTrackParam
   static Double_t RichardsonExtrap(double *val, int ord=1);
   static Double_t RichardsonExtrap(const double *val, int ord=1);
   //
+  // ---------- dummies ----------
+  AliAlgTrack(const AliAlgTrack&);
+  AliAlgTrack& operator=(const AliAlgTrack&);
+  //
  protected:
 
   //

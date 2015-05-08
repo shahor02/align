@@ -91,6 +91,10 @@ class AliAlgDet : public TNamed
  protected:
   void     SortSensors();
   //
+  // ------- dummies ---------
+  AliAlgDet(const AliAlgDet&);
+  AliAlgDet& operator=(const AliAlgDet&);
+  //
  protected:
   //
   Int_t     fNDOFs;                      // number of DOFs free

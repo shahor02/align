@@ -141,6 +141,9 @@ class AliAlgVol : public TNamed
   void       SetNDOFs(Int_t n=kNDOFGeom);
   void       CalcFree();
   //
+  // ------- dummies -------
+  AliAlgVol(const AliAlgVol&);
+  AliAlgVol& operator=(const AliAlgVol&);
  protected:
   //
   Frame_t    fVarFrame;               // Variation frame for this volume
