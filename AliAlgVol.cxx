@@ -467,7 +467,7 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   opts.ToLower();
   Bool_t showDef = opts.Contains("d"); // show free DOF even if not preconditioned
   Bool_t showFix = opts.Contains("f"); // show DOF even if fixed
-  Bool_t showNam = opts.Contains("n"); // show volume name even if no nothing else is prinable
+  Bool_t showNam = opts.Contains("n"); // show volume name even if no nothing else is printable
   //
   // is there something to print ?
   int nCond(0),nFix(0),nDef(0);

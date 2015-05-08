@@ -157,8 +157,8 @@ void ConfigAlign(AliAlgSteer* algSteer)
   algSteer->InitDetectors();
   //
   algSteer->GetDetectorByDetID(AliAlgSteer::kTPC)->Disable();
-  algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->Disable();
-  algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->Disable();
+  //  algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->Disable();
+  //  algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->Disable();
 
   ConfigITS(algSteer);
   ConfigTPC(algSteer);

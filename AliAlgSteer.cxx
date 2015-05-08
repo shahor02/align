@@ -606,9 +606,9 @@ Bool_t AliAlgSteer::FillMilleData()
 	deriv = fAlgTrack->GetDResDGlo(idim, gloOffs);
 	const int* gloIDP(gloParID + gloOffs);
 	for (int j=0;j<nDGlo;j++) {
-	  if (IsZeroAbs(deriv[j])) {
+	  if (!IsZeroAbs(deriv[j])) {
 	    buffDG[nGlo]  = deriv[j];        // value of derivative
-	    buffI[nGlo++] = gloIDP[j];       // global DOF ID
+	    buffI[nGlo++] = gloIDP[j]+1;     // global DOF ID + 1 (Millepede needs positive labels)
 	  }
 	}
 	fMille->mille(nVarLoc,buffDL, nGlo,buffDG, buffI, 
