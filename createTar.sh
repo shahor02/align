@@ -1,13 +1,11 @@
 #!/bin/bash
 
 tar cvzf algGlo.tar.gz \
-AliAlgAux.cxx  AliAlgDetITS.cxx  AliAlgDetTPC.cxx  AliAlgMPRecord.cxx  \
-AliAlgRes.cxx   AliAlgSensITS.cxx  AliAlgSensTPC.cxx  AliAlgSteer.cxx  \
-AliAlgVol.cxx   AliAlgAux.h    AliAlgDetITS.h    AliAlgDetTPC.h    AliAlgMPRecord.h \
-AliAlgRes.h     AliAlgSensITS.h    AliAlgSensTPC.h    AliAlgSteer.h    AliAlgVol.h \
-AliAlgDet.cxx  AliAlgDetTOF.cxx  AliAlgDetTRD.cxx  AliAlgPoint.cxx     AliAlgSens.cxx  \
-AliAlgSensTOF.cxx  AliAlgSensTRD.cxx  AliAlgTrack.cxx  AliAlgVtx.cxx \
-AliAlgDet.h    AliAlgDetTOF.h    AliAlgDetTRD.h    AliAlgPoint.h  \
-AliAlgSens.h    AliAlgSensTOF.h    AliAlgSensTRD.h    AliAlgTrack.h    AliAlgVtx.h \
+AliAlgAux.{h,cxx}  AliAlgDetITS.{h,cxx} AliAlgDetTPC.{h,cxx}  AliAlgMPRecord.{h,cxx}  \
+AliAlgRes.{h,cxx}  AliAlgSensITS.{h,cxx} AliAlgSensTPC.{h,cxx}  AliAlgSteer.{h,cxx}  \
+AliAlgVol.{h,cxx}  AliAlgDet.{h,cxx}  AliAlgDetTOF.{h,cxx}  AliAlgDetTRD.{h,cxx}  \
+AliAlgPoint.{h,cxx}  AliAlgSens.{h,cxx} AliAlgSensTOF.{h,cxx}  AliAlgSensTRD.{h,cxx} \
+AliAlgTrack.{h,cxx}  AliAlgVtx.{h,cxx} AlgLinkDef.h \
+Mille.{h,cxx} \
 Makefile
 
