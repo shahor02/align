@@ -551,7 +551,7 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
   if (matPar) matPar[0]=matPar[1]=0;
   if (dxa<kTinyDist) return kTRUE;
   if (step>maxStep) step = maxStep;
-  int nstep = dxa/step;
+  int nstep = int(dxa/step);
   step = dxa/nstep;
   if (dx<0) step = -step;
   //
