@@ -59,7 +59,6 @@ AliGloAlgTask::~AliGloAlgTask()
 void AliGloAlgTask::UserCreateOutputObjects() 
 {
   //
-  AliInfo("Processing");
   fOutput = new TList();
   fOutput->SetOwner(); 
   //
@@ -71,7 +70,6 @@ void AliGloAlgTask::UserCreateOutputObjects()
 void AliGloAlgTask::NotifyRun()
 {
   // attach tree to alignment object
-  AliInfo("Processing");
   AliAnalysisManager* anMan = AliAnalysisManager::GetAnalysisManager();
   AliESDInputHandler *handler = (AliESDInputHandler*)anMan->GetInputEventHandler();
   fAlgSteer->SetESDTree(handler->GetTree());
@@ -82,13 +80,12 @@ void AliGloAlgTask::UserExec(Option_t *)
 {
   // Main loop
   //
-  AliInfo("Processing");
   AliAnalysisManager* anMan = AliAnalysisManager::GetAnalysisManager();
   AliESDInputHandler *handler = (AliESDInputHandler*)anMan->GetInputEventHandler();
   AliESDEvent* esdEv = handler->GetEvent();
   AliESDfriend *esdFr = handler->GetESDfriend(); // get the input friend
   //
-  if(!esdEv) {AliInfo("no ESD or"); return;} 
+  if(!esdEv) {AliInfo("no ESD"); return;} 
   if(!esdFr || esdFr->GetNumberOfTracks()<esdEv->GetNumberOfTracks()) {AliInfo("no ESDFriend"); return;}
   //  AliInfo(Form("Number of ESD tracks in input = %d ",esdEv->GetNumberOfTracks()));
   //  AliInfo(Form("Number of tracks in input friends = %d ",esdFr->GetNumberOfTracks()));
