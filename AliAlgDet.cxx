@@ -18,7 +18,8 @@ ClassImp(AliAlgDet)
 
 //____________________________________________
 AliAlgDet::AliAlgDet()
-  :fVolIDMin(-1)
+:  fNDOFs(0)
+  ,fVolIDMin(-1)
   ,fVolIDMax(-1)
   ,fNSensors(0)
   ,fSID2VolID(0)
@@ -399,7 +400,7 @@ void AliAlgDet::SetObligatory(Bool_t v)
 void AliAlgDet::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
 {
   // contribute to params template file for PEDE
-  fprintf(flOut,"\n!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
+  fprintf(flOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
   //
   // parameters
   int nvol = GetNVolumes();
@@ -443,6 +444,28 @@ void AliAlgDet::WriteAlignmentResults() const
   delete arr;
 }
 
+//______________________________________________________
+Bool_t AliAlgDet::OwnsDOFID(Int_t id) const
+{
+  // check if DOF ID belongs to this detector
+  for (int iv=GetNVolumes();iv--;) {
+    AliAlgVol* vol = GetVolume(iv); // check only top level volumes
+    if (!vol->GetParent() && vol->OwnsDOFID(id)) return kTRUE;
+  }
+  return kFALSE;
+}
+
+//______________________________________________________
+AliAlgVol* AliAlgDet::GetVolOfDOFID(Int_t id) const
+{
+  // gets volume owning this DOF ID
+  for (int iv=GetNVolumes();iv--;) {
+    AliAlgVol* vol = GetVolume(iv);
+    if (vol->GetParent()) continue; // check only top level volumes
+    if ( (vol=vol->GetVolOfDOFID(id)) ) return vol;
+  }
+  return 0;
+}
 
 //______________________________________________________
 void AliAlgDet::Terminate()

@@ -16,6 +16,7 @@ class AliESDtrack;
 class AliESDCosmicTrack;
 class AliESDVertex;
 class AliAlgDet;
+class AliAlgVol;
 class AliAlgVtx;
 class AliAlgPoint;
 class AliAlgMPRecord;
@@ -113,6 +114,8 @@ class AliAlgSteer : public TObject
   //----------------------------------------
   Float_t*   GetGloParVal()                               const {return (Float_t*)fGloParVal;}
   Float_t*   GetGloParErr()                               const {return (Float_t*)fGloParErr;}
+  AliAlgVol* GetVolOfDOFID(int id)                        const;
+  AliAlgDet* GetDetOfDOFID(int id)                        const;
   //
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)fRefPoint;}
   //
@@ -172,7 +175,9 @@ class AliAlgSteer : public TObject
   void     InitMIlleOutput();
   void     InitResidOutput();
   Bool_t   StoreProcessedTrack(Int_t what);
-  void     PrintStatistics() const;
+  void     PrintStatistics()                               const;
+  Bool_t   GetMilleTXT()                                   const {return !fMilleOutBin;}
+  void     SetMilleTXT(Bool_t v=kTRUE)                           {fMilleOutBin = !v;}
   //
   void     GenPedeParamFile(const Option_t *opt="")         const;
   //
@@ -186,6 +191,7 @@ class AliAlgSteer : public TObject
   virtual void Print(const Option_t *opt="")              const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
+  
   //
   AliSymMatrix* BuildMatrix(TVectorD &vec);
   Bool_t        TestLocalSolution();
@@ -256,6 +262,7 @@ class AliAlgSteer : public TObject
   TString         fMPDatFileName;                         //  file name for records binary data output
   TString         fMPParFileName;                         //  file name for MP steering params
   TString         fResidFileName;                         //  file name for optional control residuals
+  Bool_t          fMilleOutBin;                           //  optionally text output for Mille debugging
   //
   TString         fOutCDBPath;                            // output OCDB path
   TString         fOutCDBComment;                         // optional comment to add to output cdb objects

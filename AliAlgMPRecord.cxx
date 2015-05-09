@@ -106,16 +106,16 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	for (int j=0;j<nParETP;j++) {       // derivatives over reference track parameters
 	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
-	  fDLoc[fNDLocTot] = deriv[j];  // store non-0 derivative
-	  fIDLoc[fNDLocTot] = j;          // and variable id
+	  fDLoc[fNDLocTot] = deriv[j];      // store non-0 derivative
+	  fIDLoc[fNDLocTot] = j;            // and variable id
 	  fNDLocTot++;
 	}
 	int lp0 = pnt->GetMinLocVarID();    // point may depend on material variables starting from this one
 	int lp1 = pnt->GetMaxLocVarID();    // and up to this one (exclusive)
-	for (int j=lp0;j<lp1;j++) {       // derivatives over material variables
+	for (int j=lp0;j<lp1;j++) {         // derivatives over material variables
 	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
-	  fDLoc[fNDLocTot] = deriv[j];  // store non-0 derivative
+	  fDLoc[fNDLocTot] = deriv[j];    // store non-0 derivative
 	  fIDLoc[fNDLocTot] = j;          // and variable id
 	  fNDLocTot++;
 	}
@@ -130,7 +130,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDGlo[ fNDGloTot] = deriv[j];        // value of derivative
-	  fIDGlo[fNDGloTot] = gloIDP[j];       // global DOF ID
+	  fIDGlo[fNDGloTot] = DOFID2Label(gloIDP[j]);       // global DOF ID
 	  fNDGloTot++;
 	}
 	fNDGlo[fNResid] = nnon0;

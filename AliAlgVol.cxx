@@ -460,8 +460,8 @@ Int_t AliAlgVol::FinalizeStat()
 void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
 {
   // contribute to params template file for PEDE
-  enum {kOff,kOn};
-  const char* comment[2] = {"  ","! "};
+  enum {kOff,kOn,kOnOn};
+  const char* comment[3] = {"  ","! ","!!"};
   const char* kKeyParam = "parameter";
   TString opts = opt;
   opts.ToLower();
@@ -482,7 +482,7 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
   if (!nDef) showDef = kFALSE;
   //
   if (nCond || showDef || showFix || showNam) 
-    fprintf(flOut,"%s%s %s\t\tDOF/Free: %d/%d (%s) %s\n",comment[cmt],kKeyParam,comment[kOn],
+    fprintf(flOut,"%s%s %s\t\tDOF/Free: %d/%d (%s) %s\n",comment[cmt],kKeyParam,comment[kOnOn],
 	    GetNDOFs(),GetNDOFFree(),fgkFrameName[fVarFrame],GetName());
   //
   if (nCond || showDef || showFix) {
@@ -492,8 +492,8 @@ void AliAlgVol::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
       else if (!IsFreeDOF(i)) {if (!showFix) continue;} // Fixed: print commented if asked
       else if (!showDef) continue;  // free-unconditioned: print commented if asked
       //
-      fprintf(flOut,"%s %6d %+e %+e\t! %s p%d\n",comment[cmt],GetParGloID(i),GetParVal(i),GetParErr(i),
-	      IsFreeDOF(i) ? "  ":"FX",i);
+      fprintf(flOut,"%s %6d %+e %+e\t%s %s p%d\n",comment[cmt],DOFID2Label(GetParGloID(i)),
+	      GetParVal(i),GetParErr(i),comment[kOnOn],IsFreeDOF(i) ? "  ":"FX",i);
     }
     fprintf(flOut,"\n");
   }
@@ -510,8 +510,8 @@ void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
 {
   // write for PEDE eventual constraints on children movement in parent frame
   //
-  enum {kOff,kOn};
-  const char* comment[2] = {"  ","! "};
+  enum {kOff,kOn,kOnOn};
+  const char* comment[3] = {"  ","! ","!!"};
   const char* kKeyConstr = "constraint";
   //
   int nch = GetNChildren();
@@ -537,15 +537,17 @@ void AliAlgVol::WriteChildrenConstraints(FILE* flOut) const
   //
   for (int ics=0;ics<kNDOFGeom;ics++) {
     if (!IsChildrenDOFConstrained(ics)) continue;
-    fprintf(flOut,"\n%s%s\t%e\t%s %s on nodes of %s\n",comment[kOff],kKeyConstr,0.0,comment[kOn],fgkDOFName[ics],GetName());
+    fprintf(flOut,"\n%s%s\t%e\t%s %s on nodes of %s\n",comment[kOff],kKeyConstr,0.0,
+	    comment[kOnOn],fgkDOFName[ics],GetName());
     for (int ich=0;ich<nch;ich++) { // contribution from this children DOFs to constraint 
       AliAlgVol* child = GetChild(ich);
       jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
       for (int ip=0;ip<kNDOFGeom;ip++) {
 	double jv = jac[ics*kNDOFGeom+ip];
-	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)) fprintf(flOut,"%6d %+.3e\t",child->GetParGloID(ip),jv);
+	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)) 
+	  fprintf(flOut,"%6d %+.3e\t",DOFID2Label(child->GetParGloID(ip)),jv);
       } // loop over DOF's of children contributing to this constraint
-      fprintf(flOut,"%s from %s\n",comment[kOn],child->GetName());
+      fprintf(flOut,"%s from %s\n",comment[kOnOn],child->GetName());
     } // loop over children
   } // loop over constraints in parent volume
   //
@@ -792,3 +794,28 @@ void AliAlgVol::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMat
   //
 }
  
+//______________________________________________________
+Bool_t AliAlgVol::OwnsDOFID(Int_t id) const
+{
+  // check if DOF ID belongs to this volume or its children
+  if (id>=fFirstParGloID && id<fFirstParGloID+fNDOFs) return kTRUE;
+  //
+  for (int iv=GetNChildren();iv--;) {
+    AliAlgVol* vol = GetChild(iv);
+    if (vol->OwnsDOFID(id)) return kTRUE;
+  }
+  return kFALSE;
+}
+
+//______________________________________________________
+AliAlgVol* AliAlgVol::GetVolOfDOFID(Int_t id) const
+{
+  // gets volume owning this DOF ID
+  if (id>=fFirstParGloID && id<fFirstParGloID+fNDOFs) return (AliAlgVol*)this;
+  //
+  for (int iv=GetNChildren();iv--;) {
+    AliAlgVol* vol = GetChild(iv);
+    if ( (vol=vol->GetVolOfDOFID(id)) ) return vol;
+  }
+  return 0;
+}

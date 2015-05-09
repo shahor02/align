@@ -57,6 +57,12 @@ class AliAlgRes: public TObject
   //
  protected:
   //
+  // -------- dummies --------
+  AliAlgRes(const AliAlgRes&);
+  AliAlgRes& operator=(const AliAlgRes&);
+  //
+ protected:
+  //
   Int_t    fRun;                    // run
   Float_t  fBz;                     // field
   UInt_t   fTimeStamp;              // event time

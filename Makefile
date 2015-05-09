@@ -1,11 +1,11 @@
 # for C++ define  CC = g++
 CC = g++
-CFLAGS = -g -Wall -fPIC -m64
+CFLAGS = -g -Wall -Weffc++ -fPIC -m64
 LFLAGS = -L$(ROOTSYS)/lib -L$(ALICE_ROOT)/lib
 INC =	-I$(ROOTSYS)/include  -I$(ALICE_ROOT)/include -I./
 TGT =	libAlg.so
-DICT=	AlgDict.cxx
-DICTO=	AlgDict.o
+DICT=	AliAlgDict.cxx
+DICTO=	AliAlgDict.o
 
 SRC = 	AliAlgAux.cxx AliAlgDetTPC.cxx AliAlgSens.cxx AliAlgSensTRD.cxx  \
 	AliAlgDet.cxx AliAlgDetTRD.cxx AliAlgSensITS.cxx \
@@ -40,7 +40,7 @@ $(TGT):	$(OBJ) $(DICTO)
 	@rm -f $*.d.tmp
 
 clean:
-	rm *.o *~ *.so *.d AlgDict.{h,cxx}
+	rm -f *.o *~ *.so *.d *Dict.{h,cxx}
 
 $(DICT): $(HDR) AlgLinkDef.h
 	rootcint -f $@ -c $(INC) $(HDR) $^

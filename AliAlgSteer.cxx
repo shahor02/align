@@ -18,6 +18,7 @@
 #include "AliAlgAux.h"
 #include "AliAlgPoint.h"
 #include "AliAlgDet.h"
+#include "AliAlgVol.h"
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
@@ -101,6 +102,7 @@ AliAlgSteer::AliAlgSteer()
   ,fMPDatFileName("mpData")
   ,fMPParFileName("mpParam.txt")
   ,fResidFileName("controlRes.root")
+  ,fMilleOutBin(kTRUE)
   //
   ,fOutCDBPath("local://outOCDB")
   ,fOutCDBComment("AliAlgSteer")
@@ -154,6 +156,13 @@ void AliAlgSteer::InitDetectors()
   fAlgTrack = new AliAlgTrack();
   //
   int dofCnt = 0;
+  // special fake sensor for vertex constraint point
+  // it has special T2L matrix adjusted for each track, no need to init it here
+  fVtxSens = new AliAlgVtx();
+  fVtxSens->PrepareMatrixL2G();
+  fVtxSens->PrepareMatrixL2GIdeal();
+  dofCnt += fVtxSens->GetNDOFs();
+  //
   for (int i=0;i<fNDet;i++) dofCnt += fDetectors[i]->InitGeom();
   if (!dofCnt) AliFatal("No DOFs found");
   //
@@ -164,18 +173,16 @@ void AliAlgSteer::InitDetectors()
   AliInfoF("Booked %d global parameters",dofCnt);
   //
   fNDOFs = 0;
+  //
+  fVtxSens->AssignDOFs(fNDOFs,fGloParVal,fGloParErr);
+  //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (!det || det->IsDisabled()) continue;
     fNDOFs += det->AssignDOFs();
   }
-  // special fake sensor for vertex constraint point
-  fVtxSens = new AliAlgVtx();
-  fVtxSens->PrepareMatrixL2G();
-  fVtxSens->PrepareMatrixL2GIdeal();
   //
   fRefPoint = new AliAlgPoint();
-  fRefPoint->SetSensor(fVtxSens);
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
@@ -195,6 +202,7 @@ void AliAlgSteer::InitDOFs()
   done = kTRUE;
   //
   int nact = 0;
+  fVtxSens->InitDOFs();
   for (int i=0;i<fNDet;i++) {
     AliAlgDet* det = GetDetector(i);
     if (det->IsDisabled()) continue;
@@ -561,7 +569,7 @@ Bool_t AliAlgSteer::FillMilleData()
   // store MP2 in Mille format
   if (!fMille) {
     TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt);
-    fMille = new Mille(mo.Data());
+    fMille = new Mille(mo.Data(),fMilleOutBin);
     if (!fMille) AliFatalF("Failed to create output file %s",mo.Data());
   }
   //
@@ -581,6 +589,7 @@ Bool_t AliAlgSteer::FillMilleData()
     if (pnt->ContainsMeasurement()) {
       int gloOffs = pnt->GetDGloOffs(); // 1st entry of global derivatives for this point
       int nDGlo   = pnt->GetNGloDOFs(); // number of global derivatives (number of DOFs it depends on)
+      if (!pnt->IsStatOK()) pnt->IncrementStat();
       // check buffer sizes
       {
 	if (fMilleDBuffer.GetSize()<nVarLoc+nDGlo) fMilleDBuffer.Set(100+nVarLoc+nDGlo);
@@ -597,7 +606,7 @@ Bool_t AliAlgSteer::FillMilleData()
 	// derivatives over reference track parameters
 	for (int j=0;j<nParETP;j++) buffDL[j] = (IsZeroAbs(deriv[j])) ? 0:deriv[j];
 	//
-	// point may depend on material variables within this limits
+	// point may depend on material variables within these limits
 	int lp0 = pnt->GetMinLocVarID(), lp1 = pnt->GetMaxLocVarID();
 	for (int j=lp0;j<lp1;j++)   buffDL[j] = (IsZeroAbs(deriv[j])) ? 0:deriv[j];
 	//
@@ -608,7 +617,7 @@ Bool_t AliAlgSteer::FillMilleData()
 	for (int j=0;j<nDGlo;j++) {
 	  if (!IsZeroAbs(deriv[j])) {
 	    buffDG[nGlo]  = deriv[j];        // value of derivative
-	    buffI[nGlo++] = gloIDP[j]+1;     // global DOF ID + 1 (Millepede needs positive labels)
+	    buffI[nGlo++] = DOFID2Label(gloIDP[j]);  // global DOF ID + 1 (Millepede needs positive labels)
 	  }
 	}
 	fMille->mille(nVarLoc,buffDL, nGlo,buffDG, buffI, 
@@ -624,7 +633,8 @@ Bool_t AliAlgSteer::FillMilleData()
       const float* expMatCov  = pnt->GetMatCorrCov(); // their diagonalized error matrix
       int offs  = pnt->GetMaxLocVarID() - nmatpar;    // start of material variables
       // here all derivatives are 1 = dx/dx
-      for (int j=0,j1=j+offs;j<nmatpar;j++) { // mat. "measurements" don't depend on global params
+      for (int j=0;j<nmatpar;j++) { // mat. "measurements" don't depend on global params
+	int j1 = j+offs;
 	buffDL[j1] = 1.0;                     // only 1 non-0 derivative	
 	fMille->mille(nVarLoc,buffDL,0,buffDG,buffI,expMatCorr[j],Sqrt(expMatCov[j]));
 	buffDL[j1] = 0.0;                     // reset buffer
@@ -782,6 +792,7 @@ void AliAlgSteer::Print(const Option_t *opt) const
     printf("Contol Resid  :\t%s  (F:%.3f)\n",fResidFileName.Data(),fControlFrac);
   printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
+  if (!opts.IsNull()) fVtxSens->Print(opt);
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (!det) continue;
@@ -808,6 +819,7 @@ void AliAlgSteer::PrintStatistics() const
 void AliAlgSteer::ResetDetectors()
 {
   // reset detectors for next track
+  fRefPoint->Clear();
   for (int idet=fNDet;idet--;) {
     AliAlgDet* det = GetDetector(idet);
     det->ResetPool();   // reset used alignment points
@@ -821,6 +833,8 @@ Bool_t AliAlgSteer::TestLocalSolution()
   TVectorD rhs;
   AliSymMatrix* mat = BuildMatrix(rhs);
   if (!mat) return kFALSE;
+  //  mat->Print("long data");
+  //  rhs.Print();
   TVectorD vsl(rhs);
   if (!mat->SolveChol(rhs,vsl,kTRUE)) {
    delete mat;
@@ -1083,6 +1097,7 @@ Bool_t AliAlgSteer::AddVertexConstraint()
   // usually translation from GLO to TRA frame should go via matrix T2G
   // but for the VertexSensor Local and Global are the same frames
   fVtxSens->GetMatrixT2L().MasterToLocal(xyz,xyzT);
+  fRefPoint->SetSensor(fVtxSens);
   fRefPoint->SetAlphaSens(fVtxSens->GetAlpTracking());
   fRefPoint->SetXYZTracking(xyzT);
   fRefPoint->SetYZErrTracking(c);
@@ -1155,9 +1170,32 @@ Bool_t AliAlgSteer::LoadRefOCDB()
 }
 
 //________________________________________________________
+AliAlgDet* AliAlgSteer::GetDetOfDOFID(int id) const
+{
+  // return detector owning DOF with this ID
+  for (int i=fNDet;i--;) {
+    AliAlgDet* det = GetDetector(i);
+    if (det->OwnsDOFID(id)) return det;
+  }
+  return 0;
+}
+
+//________________________________________________________
+AliAlgVol* AliAlgSteer::GetVolOfDOFID(int id) const
+{
+  // return volume owning DOF with this ID
+  for (int i=fNDet;i--;) {
+    AliAlgDet* det = GetDetector(i);
+    if (det->OwnsDOFID(id)) det->GetVolOfDOFID(id);
+  }
+  return 0;
+}
+
+//________________________________________________________
 void AliAlgSteer::Terminate()
 {
   // finalize processing
+  for (int i=fNDet;i--;) GetDetector(i)->Terminate();
   CloseMPRecOutput();
   CloseMilleOutput();
   CloseResidOutput();

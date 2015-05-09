@@ -35,6 +35,9 @@ namespace AliAlgAux {
   inline Bool_t IsZeroPos(double d) {return Smaller(d,kAlmostZeroD);}
   inline Bool_t IsZeroPos(float  f) {return Smaller(f,kAlmostZeroF);}
   //
+  inline Int_t  DOFID2Label(Int_t id)         {return id+1;} // MillePeded needs positive labels
+  inline Int_t  Label2DOFID(Int_t lab)        {return lab-1;} 
+  //
   void   PrintBits(ULong64_t patt, Int_t maxBits);
   //
   // OCDB related stuff

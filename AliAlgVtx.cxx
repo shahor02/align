@@ -25,7 +25,7 @@ AliAlgVtx::AliAlgVtx() : AliAlgSens("Vertex",0,0)
 {
   // def c-tor
   SetVarFrame(kLOC);
-  SetFreeDOFPattern( BIT(kDOFTX) | BIT(kDOFTY) | kDOFTZ );
+  SetFreeDOFPattern( BIT(kDOFTX) | BIT(kDOFTY) | BIT(kDOFTZ) );
   //
 }
 

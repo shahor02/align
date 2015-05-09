@@ -39,6 +39,13 @@ class AliAlgMPRecord : public TObject
   //
   virtual void Clear(const Option_t *opt="");
   virtual void Print(const Option_t *opt="") const;
+  //
+ protected:
+  //
+  // ------- dummies --------
+  AliAlgMPRecord(const AliAlgMPRecord&);
+  AliAlgMPRecord& operator=(const AliAlgMPRecord&);
+    //
  protected:
   //
   UInt_t       fTrackID;         // track in the event

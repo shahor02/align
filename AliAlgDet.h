@@ -47,6 +47,9 @@ class AliAlgDet : public TNamed
   AliAlgVol*  GetVolume(Int_t id)               const {return (AliAlgVol*)fVolumes.UncheckedAt(id);}
   AliAlgVol*  GetVolume(const char* symname)    const {return (AliAlgVol*)fVolumes.FindObject(symname);}
   //
+  Bool_t      OwnsDOFID(Int_t id)               const;
+  AliAlgVol*  GetVolOfDOFID(Int_t id)           const;
+  //
   virtual Int_t InitGeom();
   virtual Int_t AssignDOFs();
   virtual void  InitDOFs();

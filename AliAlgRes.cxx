@@ -18,6 +18,7 @@ AliAlgRes::AliAlgRes()
   ,fNPoints(0)
   ,fNBook(0)
   ,fChi2(0)
+  ,fChi2Ini(0)
   ,fQ2Pt(0)
   ,fX(0)
   ,fY(0)
@@ -165,6 +166,7 @@ Bool_t AliAlgRes::FillTrack(const AliAlgTrack* trc)
     AliAlgPoint* pnt = trc->GetPoint(i);
     int inv = pnt->IsInvDir() ? -1:1;    // Flag invertion for cosmic upper leg
     if (!pnt->ContainsMeasurement()) continue;
+    if (!pnt->IsStatOK()) pnt->IncrementStat();
     fVolID[nfill] = pnt->GetVolID();
     fAlpha[nfill] = pnt->GetAlphaSens();
     fX[nfill]     = pnt->GetXPoint()*inv;

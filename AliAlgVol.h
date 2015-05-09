@@ -128,6 +128,9 @@ class AliAlgVol : public TNamed
   void    SetInitDOFsDone()                         {SetBit(kInitDOFsDoneBit);}
   Bool_t  GetInitDOFsDone()                   const {return TestBit(kInitDOFsDoneBit);}
   //
+  Bool_t      OwnsDOFID(Int_t id)             const;
+  AliAlgVol*  GetVolOfDOFID(Int_t id)         const;
+  //
   virtual Bool_t IsSensor()                   const {return kFALSE;}
   //
   virtual void   Print(const Option_t *opt="")  const;

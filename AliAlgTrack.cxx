@@ -21,6 +21,7 @@ const Int_t kNRDClones = kRichardsonN*2     ;// number of variations for derivat
 AliAlgTrack::AliAlgTrack() :
   fNLocPar(0)
   ,fNLocExtPar(0)
+  ,fNGloPar(0)
   ,fInnerPointID(0)
   //  ,fMinX2X0Pt2Account(5/1.0)
   ,fMinX2X0Pt2Account(0.5e-3/1.0)

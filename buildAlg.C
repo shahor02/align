@@ -46,6 +46,7 @@ void buildAlg(int evID=4, int trID=2) // for beam: data -> LHC10b_000117220_vpas
     evFirst = evID;
     evLast  = evID;    
   }
+
   for (int iev=evFirst;iev<=evLast;iev++) {
     LoadEvent(iev);
     algSTEER->ProcessEvent(esdEv);
@@ -171,6 +172,8 @@ void ConfigAlign(AliAlgSteer* algSteer)
   //
   algSteer->InitDOFs();   
   //  
+  //  algSteer->SetMilleTXT(1);
+
 }
 
 //======================================================================

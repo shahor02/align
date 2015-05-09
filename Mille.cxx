@@ -30,7 +30,7 @@
  */
 Mille::Mille(const char *outFileName, bool asBinary, bool writeZero) : 
   myOutFile(outFileName, (asBinary ? (std::ios::binary | std::ios::out) : std::ios::out)),
-  myAsBinary(asBinary), myWriteZero(writeZero),
+  myAsBinary(asBinary), myWriteZero(writeZero),myBufferSize(0),
   myBufferInt(5000),myBufferFloat(5000),
   myBufferPos(-1), myHasSpecial(false)
 {
