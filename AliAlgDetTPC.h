@@ -11,7 +11,7 @@ class AliAlgDetTPC : public AliAlgDet
   //
   virtual void DefineVolumes();  
   //
-  Bool_t AcceptTrack(const AliESDtrack* trc) const;
+  Bool_t AcceptTrack(const AliESDtrack* trc, Int_t trtype) const;
   //
  protected:
   //

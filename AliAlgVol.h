@@ -134,8 +134,8 @@ class AliAlgVol : public TNamed
   virtual Bool_t IsSensor()                   const {return kFALSE;}
   //
   virtual void   Print(const Option_t *opt="")  const;
-  virtual void   WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
-  virtual void   WriteChildrenConstraints(FILE* flOut) const;
+  virtual void   WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
+  virtual void   WriteChildrenConstraints(FILE* conOut) const;
   //
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}

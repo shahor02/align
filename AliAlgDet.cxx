@@ -2,7 +2,6 @@
 #include "AliAlgSens.h"
 #include "AliAlgDet.h"
 #include "AliAlgSteer.h"
-#include "AliESDtrack.h"
 #include "AliAlgTrack.h"
 #include "AliLog.h"
 #include "AliGeomManager.h"
@@ -16,6 +15,8 @@
 
 ClassImp(AliAlgDet)
 
+using namespace AliAlgAux;
+
 //____________________________________________
 AliAlgDet::AliAlgDet()
 :  fNDOFs(0)
@@ -23,10 +24,7 @@ AliAlgDet::AliAlgDet()
   ,fVolIDMax(-1)
   ,fNSensors(0)
   ,fSID2VolID(0)
-  //
-  ,fObligatory(kTRUE)
-  ,fTrackFlagSel(0)
-  ,fNPointsSel(0)
+  ,fNProcPoints(0)
   //
   ,fUseErrorParam(0)
   ,fSensors()
@@ -41,6 +39,14 @@ AliAlgDet::AliAlgDet()
   // def c-tor
   SetUniqueID(AliAlgSteer::kUndefined); // derived detectors must override this
   fAddError[0] = fAddError[1] = 0;
+  //
+  for (int i=0;i<kNTrackTypes;i++) {
+    fDisabled[i] = kFALSE;
+    fObligatory[i] = kFALSE;
+    fTrackFlagSel[i] = 0;
+    fNPointsSel[i] = 0;
+  }
+  //
 }
 
 //____________________________________________
@@ -345,11 +351,28 @@ void AliAlgDet::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("%c%c Detector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e\n",
-	 IsDisabled() ? '-':'+',IsObligatory() ? '*':' ',
+  printf("\nDetector:%5s %5d volumes %5d sensors {VolID: %5d-%5d} Def.Sys.Err: %.4e %.4e | Stat:%d\n",
 	 GetName(),GetNVolumes(),GetNSensors(),GetVolIDMin(),
-	 GetVolIDMax(),fAddError[0],fAddError[1]);
-  if (!IsDisabled() && opts.Contains("long")) for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
+	 GetVolIDMax(),fAddError[0],fAddError[1],fNProcPoints);
+  //
+  printf("Errors assignment: ");
+  if (fUseErrorParam) printf("param %d",fUseErrorParam);
+  else printf("from TrackPoints\n");
+  //
+  printf("Allowed    in Collisions: %7s | Cosmic: %7s\n",
+	 IsDisabled(kColl)   ? "  NO ":" YES ",IsDisabled(kCosm)   ? "  NO ":" YES ");
+  //
+  printf("Obligatory in Collisions: %7s | Cosmic: %7s\n",
+	 IsObligatory(kColl) ? "  NO ":" YES ",IsObligatory(kCosm) ? "  NO ":" YES ");
+  //
+  printf("Sel. flags in Collisions: 0x%05lx | Cosmic: 0x%05lx\n",
+	 fTrackFlagSel[kColl],fTrackFlagSel[kCosm]);
+  //
+  printf("Min.points in Collisions: %7d | Cosmic: %7d\n",
+	 fNPointsSel[kColl],fNPointsSel[kCosm]);
+  //
+  if (!(IsDisabledColl()&&IsDisabledCosm()) && opts.Contains("long")) 
+    for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
 }
 
@@ -389,24 +412,25 @@ void AliAlgDet::UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackP
 }
 
 //____________________________________________
-void AliAlgDet::SetObligatory(Bool_t v)
+void AliAlgDet::SetObligatory(Int_t tp,Bool_t v)
 {
   // mark detector presence obligatory in the track
-  fObligatory = v;
-  fAlgSteer->SetObligatoryDetector(GetDetID(),v);
+  fObligatory[tp] = v;
+  fAlgSteer->SetObligatoryDetector(GetDetID(),tp,v);
 }
 
 //______________________________________________________
-void AliAlgDet::WritePedeParamFile(FILE* flOut, const Option_t *opt) const
+void AliAlgDet::WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt) const
 {
-  // contribute to params template file for PEDE
-  fprintf(flOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
+  // contribute to params and constraints template files for PEDE
+  fprintf(parOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
+  fprintf(conOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
   //
   // parameters
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {  // call for root level volumes, they will take care of their children
     AliAlgVol *vol = GetVolume(iv);
-    if (!vol->GetParent()) vol->WritePedeParamFile(flOut,opt);
+    if (!vol->GetParent()) vol->WritePedeInfo(parOut,conOut,opt);
   }
   //
 }
@@ -472,9 +496,10 @@ void AliAlgDet::Terminate()
 {
   // called at the end of processing
   int nvol = GetNVolumes();
+  fNProcPoints = 0;
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
     // call init for root level volumes, they will take care of their children
-    if (!vol->GetParent()) vol->FinalizeStat();
+    if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat();
   }
 }

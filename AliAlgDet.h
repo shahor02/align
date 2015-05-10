@@ -4,7 +4,8 @@
 #include <TNamed.h>
 #include <TObjArray.h>
 #include <stdio.h>
-class AliESDtrack;
+#include "AliAlgAux.h"
+#include "AliESDtrack.h"
 class AliAlgTrack;
 class AliAlgPoint;
 class AliAlgSens;
@@ -16,7 +17,7 @@ class AliExternalTrackParam;
 class AliAlgDet : public TNamed
 {
  public:
-  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15),kDisableBit=BIT(16)};
+  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15)};
   //
   AliAlgDet();
   AliAlgDet(const char* name, const char* title="");
@@ -64,13 +65,11 @@ class AliAlgDet : public TNamed
   virtual void  SetUseErrorParam(Int_t v=0);
   Int_t         GetUseErrorParam()                   const {return fUseErrorParam;}
   //
-  virtual Bool_t AcceptTrack(const AliESDtrack* trc) const = 0;
+  virtual Bool_t AcceptTrack(const AliESDtrack* trc,Int_t trtype) const = 0;
+  Bool_t         CheckFlags(const AliESDtrack* trc,Int_t trtype) const;
   //
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
-  //
-  void      Disable()                                     {SetBit(kDisableBit);SetObligatory(kFALSE);}
-  Bool_t    IsDisabled()                            const {return TestBit(kDisableBit);}
   //
   void      SetInitGeomDone()                             {SetBit(kInitGeomDone);}
   Bool_t    GetInitGeomDone()                       const {return TestBit(kInitGeomDone);}
@@ -80,14 +79,37 @@ class AliAlgDet : public TNamed
   //
   Int_t     GetNDOFs()                              const {return fNDOFs;}
   //
-  void      SetTrackFlagSel(ULong_t f)                    {fTrackFlagSel = f;}
-  ULong_t   GetTrackFlagSel()                       const {return fTrackFlagSel;}
-  void      SetNPointsSel(Int_t n)                        {fNPointsSel = n;}
-  Int_t     GetNPointsSel()                         const {return fNPointsSel;}
-  Bool_t    IsObligatory()                          const {return fObligatory;}
-  void      SetObligatory(Bool_t v=kTRUE);
+  void      SetDisabled(Int_t tp,Bool_t v)                {fDisabled[tp]=v;SetObligatory(tp,v);}
+  void      SetDisabled()                                 {SetDisabledColl();SetDisabledCosm();}
+  void      SetDisabledColl(Bool_t v=kTRUE)               {SetDisabled(AliAlgAux::kColl,v);}
+  void      SetDisabledCosm(Bool_t v=kTRUE)               {SetDisabled(AliAlgAux::kCosm,v);}
+  Bool_t    IsDisabled(Int_t tp)                    const {return fDisabled[tp];}
+  Bool_t    IsDisabled()                            const {return IsDisabledColl()&&IsDisabledCosm();}
+  Bool_t    IsDisabledColl()                        const {return IsDisabled(AliAlgAux::kColl);}
+  Bool_t    IsDisabledCosm()                        const {return IsDisabled(AliAlgAux::kCosm);}
   //
-  void      WritePedeParamFile(FILE* flOut, const Option_t *opt="") const;
+  void      SetTrackFlagSel(Int_t tp,ULong_t f)           {fTrackFlagSel[tp] = f;}
+  void      SetTrackFlagSelColl(ULong_t f)                {SetTrackFlagSel(AliAlgAux::kColl,f);}
+  void      SetTrackFlagSelCosm(ULong_t f)                {SetTrackFlagSel(AliAlgAux::kCosm,f);}
+  ULong_t   GetTrackFlagSel(Int_t tp)               const {return fTrackFlagSel[tp];}
+  ULong_t   GetTrackFlagSelColl()                   const {return GetTrackFlagSel(AliAlgAux::kColl);}
+  ULong_t   GetTrackFlagSelCosm()                   const {return GetTrackFlagSel(AliAlgAux::kCosm);}
+  //
+  void      SetNPointsSel(Int_t tp,Int_t n)               {fNPointsSel[tp] = n;}
+  void      SetNPointsSelColl(Int_t n)                    {SetNPointsSel(AliAlgAux::kColl,n);}
+  void      SetNPointsSelCosm(Int_t n)                    {SetNPointsSel(AliAlgAux::kCosm,n);}
+  Int_t     GetNPointsSel(Int_t tp)                 const {return fNPointsSel[tp];}
+  Int_t     GetNPointsSelColl()                     const {return GetNPointsSel(AliAlgAux::kColl);}
+  Int_t     GetNPointsSelCosm()                     const {return GetNPointsSel(AliAlgAux::kCosm);}
+  //
+  Bool_t    IsObligatory(Int_t tp)                  const {return fObligatory[tp];}
+  Bool_t    IsObligatoryColl()                      const {return IsObligatory(AliAlgAux::kColl);}
+  Bool_t    IsObligatoryCosm()                      const {return IsObligatory(AliAlgAux::kCosm);}
+  void      SetObligatory(Int_t tp,Bool_t v=kTRUE);
+  void      SetObligatoryColl(Bool_t v=kTRUE)             {SetObligatory(AliAlgAux::kColl,v);}
+  void      SetObligatoryCosm(Bool_t v=kTRUE)             {SetObligatory(AliAlgAux::kCosm,v);}
+  //
+  void      WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
   void      WriteCalibrationResults()               const;
   void      WriteAlignmentResults()                 const;
   //
@@ -104,12 +126,14 @@ class AliAlgDet : public TNamed
   Int_t     fVolIDMin;                   // min volID for this detector (for sensors only)
   Int_t     fVolIDMax;                   // max volID for this detector (for sensors only)
   Int_t     fNSensors;                   // number of sensors (i.e. volID's)
-  Int_t*    fSID2VolID;                    //[fNSensors] table of conversion from VolID to sid
+  Int_t*    fSID2VolID;                  //[fNSensors] table of conversion from VolID to sid
+  Int_t     fNProcPoints;                // total number of points processed
   //
   // Track selection
-  Bool_t    fObligatory;               // detector must be present in the track
-  ULong_t   fTrackFlagSel;             // flag for track selection
-  Int_t     fNPointsSel;               // min number of points to require                 
+  Bool_t    fDisabled[AliAlgAux::kNTrackTypes];      // detector disabled/enabled in the track
+  Bool_t    fObligatory[AliAlgAux::kNTrackTypes];    // detector must be present in the track
+  ULong_t   fTrackFlagSel[AliAlgAux::kNTrackTypes];  // flag for track selection
+  Int_t     fNPointsSel[AliAlgAux::kNTrackTypes];    // min number of points to require                 
   //
   Int_t     fUseErrorParam;          // signal that points need to be updated using track info, 0 - no
   Double_t  fAddError[2];            // additional error increment for measurement
@@ -127,5 +151,11 @@ class AliAlgDet : public TNamed
   ClassDef(AliAlgDet,1);             // base class for detector global alignment
 };
 
+//_____________________________________________________
+inline Bool_t AliAlgDet::CheckFlags(const AliESDtrack* trc,Int_t trtype) const 
+{
+  // check if flags are ok
+  return (trc->GetStatus()&fTrackFlagSel[trtype]) == fTrackFlagSel[trtype];
+}
 
 #endif

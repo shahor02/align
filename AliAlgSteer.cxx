@@ -60,26 +60,23 @@ const Char_t* AliAlgSteer::fgkStatClName[AliAlgSteer::kNStatCl] = {"Inp: ","Acc:
 const Char_t* AliAlgSteer::fgkStatName[AliAlgSteer::kMaxStat] =   
   {"runs","Ev.Coll", "Ev.Cosm", "Trc.Coll", "Trc.Cosm"};
 
+
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer()
   :fNDet(0)
   ,fNDOFs(0)
   ,fRunNumber(-1)
   ,fFieldOn(kFALSE)
-  ,fCosmicEvent(kFALSE)
+  ,fTracksType(kColl)
   ,fAlgTrack(0)
   ,fVtxSens(0)
   ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult)
-  ,fObligatoryDetPattern(0)
   ,fCosmicSelStrict(kFALSE)
-  ,fMinDetAcc(0)
-  ,fPtMin(0.3)
-  ,fEtaMax(1.5)
   ,fVtxMinCont(-1)
   ,fVtxMaxCont(-1)
   ,fVtxMinContVC(10)
   ,fMinITSClforVC(3)
-  ,fITSPattforVC(kSPDAny)
+  ,fITSPattforVC(AliAlgDetITS::kSPDAny)
   ,fMaxChi2forVC(10)
    //
   ,fGloParVal(0)
@@ -100,7 +97,9 @@ AliAlgSteer::AliAlgSteer()
   ,fMilleDBuffer()
   ,fMilleIBuffer()
   ,fMPDatFileName("mpData")
-  ,fMPParFileName("mpParam.txt")
+  ,fMPParFileName("mpParams.txt")
+  ,fMPConFileName("mpConstraints.txt")
+  ,fMPSteerFileName("mpSteer.txt")
   ,fResidFileName("controlRes.root")
   ,fMilleOutBin(kTRUE)
   //
@@ -118,12 +117,23 @@ AliAlgSteer::AliAlgSteer()
     fDetectors[i] = 0;
     fDetPos[i] = -1;
   }
-  fMinPoints[0] = 3;
-  fMinPoints[1] = 4;
+  SetPtMinColl();
+  SetPtMinCosm();
+  SetEtaMaxColl();
+  SetEtaMaxCosm();
+  SetMinDetAccColl();
+  SetMinDetAccCosm();
+  for (int i=0;i<kNTrackTypes;i++) {
+    fObligatoryDetPattern[i] = 0;
+  }
+  //
+  SetMinPointsColl();
+  SetMinPointsCosm();
+  //
   for (int i=kNCosmLegs;i--;) fESDTrack[i] = 0;
   memset(fStat,0,kNStatCl*kMaxStat*sizeof(float));
-  fMaxDCAforVC[0] = 0.1;
-  fMaxDCAforVC[1] = 0.6;
+  SetMaxDCAforVC();
+  SetMaxChi2forVC();
   SetOutCDBRunRange();
 }
 
@@ -209,8 +219,9 @@ void AliAlgSteer::InitDOFs()
     fDetectors[i]->InitDOFs();
     nact++;
   }
-  if (nact<fMinDetAcc) {
-    AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc);
+  if (nact<fMinDetAcc[fTracksType]) {
+    AliFatalF("%d detectors are active, while %d in track are asked",
+	      nact,fMinDetAcc[fTracksType]);
   }
   //
 }
@@ -239,7 +250,7 @@ void AliAlgSteer::AddDetector(UInt_t id, AliAlgDet* det)
   fDetectors[fNDet] = det;
   fDetPos[id] = fNDet;
   det->SetAlgSteer(this);
-  SetObligatoryDetector(id,det->IsObligatory());
+  for (int i=0;i<kNTrackTypes;i++) SetObligatoryDetector(id,i,det->IsObligatory(i));
   fNDet++;
   //
 }
@@ -255,7 +266,9 @@ void AliAlgSteer::AddDetector(AliAlgDet* det)
 Bool_t AliAlgSteer::CheckDetectorPattern(UInt_t patt) const 
 {
   //validate detector pattern
-  return (patt&fObligatoryDetPattern)==fObligatoryDetPattern && NumberOfBitsSet(patt)>=fMinDetAcc;
+  return  ((patt & fObligatoryDetPattern[fTracksType]) == 
+	   fObligatoryDetPattern[fTracksType]) && 
+	   NumberOfBitsSet(patt)>=fMinDetAcc[fTracksType];
 }
 
 //_________________________________________________________
@@ -265,14 +278,14 @@ Bool_t AliAlgSteer::CheckDetectorPoints(const int* npsel) const
   int ndOK = 0;
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (!det || det->IsDisabled()) continue;
-    if (npsel[idt]<det->GetNPointsSel()) {
-      if (det->IsObligatory()) return kFALSE;
+    if (!det || det->IsDisabled(fTracksType)) continue;
+    if (npsel[idt]<det->GetNPointsSel(fTracksType)) {
+      if (det->IsObligatory(fTracksType)) return kFALSE;
       continue;
     }
     ndOK++;
   }
-  return ndOK>=fMinDetAcc;
+  return ndOK>=fMinDetAcc[fTracksType];
 }
 
 //_________________________________________________________
@@ -281,19 +294,19 @@ UInt_t AliAlgSteer::AcceptTrack(const AliESDtrack* esdTr, Bool_t strict) const
   // decide if the track should be processed
   AliAlgDet* det = 0;
   UInt_t detAcc = 0;
-  if (fFieldOn && esdTr->Pt()<fPtMin) return 0;
-  if (Abs(esdTr->Eta())>fEtaMax)      return 0;
+  if (fFieldOn && esdTr->Pt()<fPtMin[fTracksType]) return 0;
+  if (Abs(esdTr->Eta())>fEtaMax[fTracksType])      return 0;
   //
   for (int idet=0;idet<kNDetectors;idet++) {
-    if (!(det=GetDetectorByDetID(idet)) || det->IsDisabled()) continue;
-    if (!det->AcceptTrack(esdTr)) {
-      if (strict && det->IsObligatory()) return 0;
+    if (!(det=GetDetectorByDetID(idet)) || det->IsDisabled(fTracksType)) continue;
+    if (!det->AcceptTrack(esdTr,fTracksType)) {
+      if (strict && det->IsObligatory(fTracksType)) return 0;
       else continue;
     }
     //
     detAcc |= 0x1<<idet;
   }
-  if (NumberOfBitsSet(detAcc)<fMinDetAcc) return 0;
+  if (NumberOfBitsSet(detAcc)<fMinDetAcc[fTracksType]) return 0;
   return detAcc;
   //
 }
@@ -329,16 +342,16 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
     return kFALSE;
   }
   //
-  SetCosmicEvent(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  SetCosmic(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
   AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d",
 	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),
-	   IsCosmicEvent() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
+	   IsCosmic() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
   //
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
-  if (!IsCosmicEvent() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
+  if (!IsCosmic() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
   //
   int ntr=0,accTr = 0;
-  if (IsCosmicEvent()) {
+  if (IsCosmic()) {
     fStat[kInpStat][kEventCosm]++;
     ntr = esdEv->GetNumberOfCosmicTracks();
     for (int itr=0;itr<ntr;itr++) {
@@ -387,11 +400,11 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   for (int idet=0;idet<kNDetectors;idet++) {
     if (!(detAcc&(0x1<<idet))) continue;
     det=GetDetectorByDetID(idet);
-    if (det->ProcessPoints(esdTr, fAlgTrack) < det->GetNPointsSel()) {
+    if (det->ProcessPoints(esdTr, fAlgTrack) < det->GetNPointsSel(kColl)) {
       detAcc &= ~(0x1<<idet); // did not survive, suppress detector in the track
-      if (det->IsObligatory()) return kFALSE;
+      if (det->IsObligatory(kColl)) return kFALSE;
     }
-    if (NumberOfBitsSet(detAcc)<fMinDetAcc) return kFALSE; // abandon track
+    if (NumberOfBitsSet(detAcc)<fMinDetAcc[kColl]) return kFALSE; // abandon track
   }
   //
   if (fAlgTrack->GetNPoints()<GetMinPoints()) return kFALSE;
@@ -508,7 +521,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
       //
       // upper leg points marked as the track going in inverse direction
       int np = det->ProcessPoints(fESDTrack[leg],fAlgTrack, leg==kCosmUp);
-      if (np<det->GetNPointsSel() && fCosmicSelStrict && det->IsObligatory()) return kFALSE;
+      if (np<det->GetNPointsSel(kCosm) && fCosmicSelStrict && 
+	  det->IsObligatory(kCosm)) return kFALSE;
       npsel[idet] += np;
       nPleg += np;
     }
@@ -662,7 +676,7 @@ Bool_t AliAlgSteer::FillMPRecData()
   fMPRecord->SetRun(fRunNumber);
   fMPRecord->SetTimeStamp(fESDEvent->GetTimeStamp());
   UInt_t tID = 0xffff & UInt_t(fESDTrack[0]->GetID());
-  if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
+  if (IsCosmic()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
   fMPRecord->SetTrackID(tID);
   fMPRecTree->Fill();
   return kTRUE;
@@ -684,7 +698,7 @@ Bool_t AliAlgSteer::FillControlData()
   fCResid->SetTimeStamp(fESDEvent->GetTimeStamp());
   fCResid->SetBz(fESDEvent->GetMagneticField());
   UInt_t tID = 0xffff & UInt_t(fESDTrack[0]->GetID());
-  if (IsCosmicEvent()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
+  if (IsCosmic()) tID |= (0xffff & UInt_t(fESDTrack[1]->GetID()))<<16; 
   fCResid->SetTrackID(tID);
   //
   fResidTree->Fill();
@@ -783,21 +797,57 @@ void AliAlgSteer::Print(const Option_t *opt) const
   // print info
   TString opts = opt; 
   opts.ToLower();
-  printf("MPData output :\t");
-  if (GetProduceMPData()) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
-  if (GetProduceMPRecord()) printf("%s%s ",fMPDatFileName.Data(),".root");
-  printf("\n");
-  printf("MP Params     :\t%s\n",fMPParFileName.Data());
-  if (GetProduceMPRecord() && fControlFrac>0) 
-    printf("Contol Resid  :\t%s  (F:%.3f)\n",fResidFileName.Data(),fControlFrac);
-  printf("\n");
   printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
-  if (!opts.IsNull()) fVtxSens->Print(opt);
+  //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (!det) continue;
     det->Print(opt);
   }
+  if (!opts.IsNull()) {
+    printf("\nSpecial sensor for Vertex Constraint\n");
+    fVtxSens->Print(opt);
+  }
+  //
+  // event selection
+  printf("\n");
+  printf("%-40s:\t",       "Alowed event specii mask"); 
+  PrintBits((ULong64_t)fSelEventSpecii,5); printf("\n");
+  printf("%-40s:\t%d/%d\n", "Min points per collisions track (BOff/ON)",
+	 fMinPoints[kColl][0],fMinPoints[kColl][1]);
+  printf("%-40s:\t%d/%d\n", "Min points per cosmic track leg (BOff/ON)",
+	 fMinPoints[kCosm][0],fMinPoints[kCosm][1]);
+  printf("%-40s:\t%d\n",    "Min detectots per collision track",fMinDetAcc[kColl]);
+
+  printf("%-40s:\t%d\n",    "Min detectots per collision track",fMinDetAcc[kColl]);
+  printf("%-40s:\t%d (%s)\n",    "Min detectots per cosmic track/leg",fMinDetAcc[kCosm],
+	 fCosmicSelStrict ? "STRICT":"SOFT");
+  printf("%-40s:\t%d/%d\n", "Min/Max vertex contrib. to accept event",fVtxMinCont,fVtxMaxCont);
+  printf("%-40s:\t%d\n",    "Min vertex contrib. for constraint",fVtxMinContVC);
+  printf("%-40s:\t%d\n",    "Min Ncl ITS for vertex constraint",fMinITSClforVC);
+  printf("%-40s:\t%s\n",    "SPD request for vertex constraint",
+	 AliAlgDetITS::GetITSPattName(fITSPattforVC));
+  printf("%-40s:\t%.4f/%.4f/%.2f\n","DCAr/DCAz/Chi2 cut for vertex constraint",
+	 fMaxDCAforVC[0],fMaxDCAforVC[1],fMaxChi2forVC);
+  printf("Collision tracks: Min pT: %5.2f |etaMax|: %5.2f\n",fPtMin[kColl],fEtaMax[kColl]);
+  printf("Cosmic    tracks: Min pT: %5.2f |etaMax|: %5.2f\n",fPtMin[kCosm],fEtaMax[kCosm]);
+  //
+  printf("%-40s:\t%s\n","Config. for reference OCDB",fRefOCDBConf.Data());
+  printf("%-40s:\t%s\n","Config. for reco-time OCDB",fRecoOCDBConf.Data());
+  //
+  printf("%-40s:\t%s\n","Output OCDB path",fOutCDBPath.Data());
+  printf("%-40s:\t%s/%s\n","Output OCDB comment/responsible",
+	 fOutCDBComment.Data(),fOutCDBResponsible.Data());
+  printf("%-40s:\t%6d:%6d\n","Output OCDB run range",fOutCDBRunRange[0],fOutCDBRunRange[1]);
+  //
+  printf("%-40s:\t%s\n","Filename for MillePede steering",fMPSteerFileName.Data());
+  printf("%-40s:\t%s\n","Filename for MillePede parameters",fMPParFileName.Data());
+  printf("%-40s:\t%s\n","Filename for MillePede constraints",fMPConFileName.Data());
+  printf("%-40s:\t%s\n","Filename for control residuals:",fResidFileName.Data());
+  printf("%-40s:\t%.3f\n","Fraction of control tracks",fControlFrac);
+  printf("MPData output :\t");
+  if (GetProduceMPData()) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
+  if (GetProduceMPRecord()) printf("%s%s ",fMPDatFileName.Data(),".root");
   //
   if (opts.Contains("stat")) PrintStatistics();
 }
@@ -1015,9 +1065,27 @@ void AliAlgSteer::SetMPDatFileName(const char* name)
 //____________________________________________
 void AliAlgSteer::SetMPParFileName(const char* name) 
 {
-  // set output file name
+  // set MP params output file name
   fMPParFileName = name; 
-  if (fMPParFileName.IsNull()) fMPParFileName = "mpParam.txt"; 
+  if (fMPParFileName.IsNull()) fMPParFileName = "mpParams.txt"; 
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::SetMPConFileName(const char* name) 
+{
+  // set MP constraints output file name
+  fMPConFileName = name; 
+  if (fMPConFileName.IsNull()) fMPConFileName = "mpConstraints.txt"; 
+  //
+}
+
+//____________________________________________
+void AliAlgSteer::SetMPSteerFileName(const char* name) 
+{
+  // set MP constraints output file name
+  fMPSteerFileName = name; 
+  if (fMPSteerFileName.IsNull()) fMPSteerFileName = "mpConstraints.txt"; 
   //
 }
 
@@ -1040,16 +1108,16 @@ void AliAlgSteer::SetOutCDBPath(const char* name)
 }
 
 //____________________________________________
-void AliAlgSteer::SetObligatoryDetector(Int_t detID, Bool_t v)
+void AliAlgSteer::SetObligatoryDetector(Int_t detID, Int_t trtype, Bool_t v)
 {
-  // mark detector presence obligatory in the track
+  // mark detector presence obligatory in the track of given type
   AliAlgDet* det = GetDetectorByDetID(detID);
   if (!det) {
     AliErrorF("Detector %d is not defined",detID);
   }
-  if (v) fObligatoryDetPattern |=  0x1<<detID;
-  else   fObligatoryDetPattern &=~(0x1<<detID);
-  if (det->IsObligatory()!=v) det->SetObligatory(v);
+  if (v) fObligatoryDetPattern[trtype] |=  0x1<<detID;
+  else   fObligatoryDetPattern[trtype] &=~(0x1<<detID);
+  if (det->IsObligatory(trtype)!=v) det->SetObligatory(trtype,v);
   //
 }
 
@@ -1061,22 +1129,8 @@ Bool_t AliAlgSteer::AddVertexConstraint()
   const AliESDtrack* esdTr = fESDTrack[0];
   if (!fVertex || !esdTr) return kFALSE;
   //
-  if (esdTr->GetNcls(0)<fMinITSClforVC) return kFALSE; // not enough its clusters
-  switch (fITSPattforVC) {
-  case kSPDBoth: 
-    if (!esdTr->HasPointOnITSLayer(0) || !esdTr->HasPointOnITSLayer(1)) return kFALSE;
-    break;
-  case kSPDAny:
-    if (!esdTr->HasPointOnITSLayer(0) && !esdTr->HasPointOnITSLayer(1)) return kFALSE;
-    break;
-  case kSPD0:
-    if (!esdTr->HasPointOnITSLayer(0)) return kFALSE;
-    break;
-  case kSPD1:    
-    if (!esdTr->HasPointOnITSLayer(1)) return kFALSE;
-    break;
-  default: break;
-  }
+  if (esdTr->GetNcls(0)<fMinITSClforVC) return kFALSE; // not enough ITS clusters
+  if (!AliAlgDetITS::CheckHitPattern(esdTr,fITSPattforVC)) return kFALSE;
   //
   AliExternalTrackParam trc = *esdTr;
   Double_t dz[2],dzCov[3];
@@ -1206,23 +1260,66 @@ void AliAlgSteer::Terminate()
 //********************* interaction with PEDE **********************
 
 //______________________________________________________
-void AliAlgSteer::GenPedeParamFile(const Option_t *opt) const
+void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
 {
-  // produce steering file template for PEDE
+  // produce steering file template for PEDE + params and constraints
   //
+  enum {kOff,kOn,kOnOn};
+  const char* cmt[3] = {"  ","! ","!!"};
+  const char* kSolMeth[] = {"inversion","diagonalization","fullGMRES","sparseGMRES","cholesky","HIP"};
+  const int kDefNIter = 3; // default number of iterations to ask
+  const float kDefDelta = 0.1; // def. delta to exit
   TString opts = opt;
   opts.ToLower();
-  AliInfoF("Generating MP2 parameters template file %s",fMPParFileName.Data());
+  AliInfoF("Generating MP2 templates:\n"
+	   "Steering   :\t%s\n"
+	   "Parameters :\t%s\n"
+	   "Constraints:\t%s\n",
+	   fMPSteerFileName.Data(),fMPParFileName.Data(),fMPConFileName.Data());
   //
-  FILE* flOut = fopen (fMPParFileName.Data(),"w+");
+  FILE* parFl = fopen (fMPParFileName.Data(),"w+");
+  FILE* conFl = fopen (fMPConFileName.Data(),"w+");
+  FILE* strFl = fopen (fMPSteerFileName.Data(),"w+");
+  //
+  // --- template of steering file
+  fprintf(strFl,"%s%-20s\t%s %s\n\n\n",cmt[kOff],"CFiles",cmt[kOnOn],"put below *.mille files list");
+  //
+  fprintf(strFl,"%s%-20s %s\n",fMPParFileName.Data(),cmt[kOnOn],"parameters template");
+  fprintf(strFl,"%s%-20s %s\n",fMPConFileName.Data(),cmt[kOnOn],"constraints template");
+  //
+  fprintf(strFl,"\n\n%s\t%s\n",cmt[kOnOn],"MUST uncomment 1 solvint methods and tune it");
+  //
+  int nm = sizeof(kSolMeth)/sizeof(char*);
+  for (int i=0;i<nm;i++) {
+    fprintf(strFl,"%s%-20s\t%2d\t%.2f\t%s\n",cmt[kOn],kSolMeth[i],kDefNIter,kDefDelta,cmt[kOnOn]);
+  }
+  //
+  const float kDefChi2F0=20.,kDefChi2F=3.; // chi2 factors for 1st and following iterations
+  const float kDefDWFrac=0.2; // cut outliers with downweighting above this factor
+  const int   kDefOutlierDW=4; // start Cauchy function downweighting from iteration
+  const int   kDefEntries=25;  // min entries per DOF to allow its variation
+  //
+  fprintf(strFl,"\n\n%s\t%s\n",cmt[kOnOn],"Optional settings");
+  fprintf(strFl,"\n%-20s\t%s\t%.2f\t%.2f\t%s %s\n",cmt[kOn],"chisqcut",kDefChi2F0,kDefChi2F,
+	  cmt[kOnOn],"chi2 cut factors for 1st and next iterations");
+  fprintf(strFl,"%s%-20s\t%2d\t%s %s\n",cmt[kOn],"outlierdownweighting",kDefOutlierDW,
+	  cmt[kOnOn],"iteration for outliers downweighting with Cauchi factor");
+  fprintf(strFl,"%s%-20s\t%.3f\t%s %s\n",cmt[kOn],"dwfractioncut",kDefDWFrac,
+	  cmt[kOnOn],"cut outliers with downweighting above this factor");
+  fprintf(strFl,"%s%-20s\t%2d\t%s %s\n",cmt[kOn],"entries",kDefEntries,
+	  cmt[kOnOn],"min entries per DOF to allow its variation");
+  //
+  if (fVtxSens) fVtxSens->WritePedeInfo(parFl,conFl,opt);
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (!det || det->IsDisabled()) continue;
-    det->WritePedeParamFile(flOut,opt);
+    det->WritePedeInfo(parFl,conFl,opt);
     //
   }
   //
-  fclose(flOut);
+  fclose(strFl);
+  fclose(conFl);
+  fclose(parFl);
 }
 

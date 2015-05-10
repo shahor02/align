@@ -16,6 +16,8 @@ namespace AliAlgAux {
   const float  kAlmostOneF = 1.-kAlmostZeroF;
   const double kTinyDist   = 1.e-7; // ignore distances less that this
   //
+  enum {kColl,kCosm,kNTrackTypes};
+  //
   inline Double_t Sector2Alpha(int sect);
   inline Int_t    Phi2Sector(double alpha);
   inline Double_t SectorDAlpha()                         {return Pi()/9;}

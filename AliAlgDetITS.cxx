@@ -9,8 +9,13 @@
 #include <TMath.h>
 
 using namespace TMath;
+using namespace AliAlgAux;
 
 ClassImp(AliAlgDetITS);
+
+const Char_t* AliAlgDetITS::fgkHitsSel[AliAlgDetITS::kNSPDSelTypes] = 
+  {"SPDNoSel","SPDBoth","SPDAny","SPD0","SPD1"};
+
 
 //____________________________________________
 AliAlgDetITS::AliAlgDetITS(const char* title)
@@ -18,7 +23,9 @@ AliAlgDetITS::AliAlgDetITS(const char* title)
   // default c-tor
   SetNameTitle(AliAlgSteer::GetDetNameByDetID(AliAlgSteer::kITS),title);
   SetDetID(AliAlgSteer::kITS);
-  SetUseErrorParam(1);
+  SetUseErrorParam();
+  SetITSSelPatternColl();
+  SetITSSelPatternCosm();
 }
 
 //____________________________________________
@@ -100,11 +107,21 @@ void AliAlgDetITS::DefineVolumes()
 }
 
 //____________________________________________
-Bool_t AliAlgDetITS::AcceptTrack(const AliESDtrack* trc) const 
+void AliAlgDetITS::Print(const Option_t *opt) const
+{
+  AliAlgDet::Print(opt);
+  printf("Sel.pattern   Collisions: %7s | Cosmic: %7s\n",
+	 GetITSPattName(fITSPatt[kColl]),GetITSPattName(fITSPatt[kCosm]));
+}
+
+//____________________________________________
+Bool_t AliAlgDetITS::AcceptTrack(const AliESDtrack* trc,Int_t trtype) const 
 {
   // test if detector had seed this track
-  if (!(trc->GetStatus()&fTrackFlagSel)) return kFALSE;
-  if (trc->GetNcls(0)<fNPointsSel) return kFALSE;
+  if (!CheckFlags(trc,trtype)) return kFALSE;
+  if (trc->GetNcls(0)<fNPointsSel[trtype]) return kFALSE;
+  if (!CheckHitPattern(trc,GetITSSelPattern(trtype))) return kFALSE;
+  //
   return kTRUE;
 }
 
@@ -137,6 +154,28 @@ void AliAlgDetITS::SetUseErrorParam(Int_t v)
 {
   // set type of points error parameterization
   fUseErrorParam = v;
+}
+
+//_________________________________________________
+Bool_t AliAlgDetITS::CheckHitPattern(const AliESDtrack* trc, Int_t sel) 
+{
+  // check if track hit pattern is ok
+  switch (sel) {
+  case kSPDBoth: 
+    if (!trc->HasPointOnITSLayer(0) || !trc->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  case kSPDAny:
+    if (!trc->HasPointOnITSLayer(0) && !trc->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  case kSPD0:
+    if (!trc->HasPointOnITSLayer(0)) return kFALSE;
+    break;
+  case kSPD1:    
+    if (!trc->HasPointOnITSLayer(1)) return kFALSE;
+    break;
+  default: break;
+  }
+  return kTRUE;
 }
 
 //_________________________________________________

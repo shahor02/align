@@ -56,10 +56,10 @@ void AliAlgDetTRD::DefineVolumes()
 }
 
 //____________________________________________
-Bool_t AliAlgDetTRD::AcceptTrack(const AliESDtrack* trc) const 
+Bool_t AliAlgDetTRD::AcceptTrack(const AliESDtrack* trc,Int_t trtype) const 
 {
   // test if detector had seed this track
-  if (!(trc->GetStatus()&fTrackFlagSel)) return kFALSE;
-  if (trc->GetTRDntracklets()<fNPointsSel) return kFALSE;
+  if (!CheckFlags(trc,trtype)) return kFALSE;
+  if (trc->GetTRDntracklets()<fNPointsSel[trtype]) return kFALSE;
   return kTRUE;
 }

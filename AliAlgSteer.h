@@ -10,6 +10,7 @@
 #include <TString.h>
 #include <TArrayF.h>
 #include <TArrayI.h>
+#include "AliAlgAux.h"
 
 class AliESDEvent;
 class AliESDtrack;
@@ -40,7 +41,6 @@ class AliAlgSteer : public TObject
   enum {kCosmLow,kCosmUp,kNCosmLegs};
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
-  enum {kSPDNoSel,kSPDBoth,kSPDAny,kSPD0,kSPD1};
   enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
   //
   AliAlgSteer();
@@ -62,8 +62,11 @@ class AliAlgSteer : public TObject
   Int_t    GetRunNumber()                                 const {return fRunNumber;}
   Bool_t   GetFieldOn()                                   const {return fFieldOn;}
   void     SetFieldOn(Bool_t v=kTRUE) {fFieldOn = v;}
-  Bool_t   IsCosmicEvent()                                const {return fCosmicEvent;}
-  void     SetCosmicEvent(Bool_t v=kTRUE) {fCosmicEvent = v;}
+  Int_t    GetTracksType()                                const {return fTracksType;}
+  void     SetTracksType(Int_t t=AliAlgAux::kColl)              {fTracksType = t;}
+  Bool_t   IsCosmic()                                     const {return fTracksType==AliAlgAux::kCosm;}
+  Bool_t   IsCollision()                                  const {return fTracksType==AliAlgAux::kColl;}
+  void     SetCosmic(Bool_t v=kTRUE)                            {fTracksType = v ? AliAlgAux::kCosm : AliAlgAux::kColl;}
   Float_t  GetStat(int cls, int tp)                       const {return fStat[cls][tp];}
   //
   void     SetESDTree(const TTree* tr)                          {fESDTree = tr;}
@@ -77,14 +80,27 @@ class AliAlgSteer : public TObject
   void     SetCosmicSelStrict(Bool_t v=kTRUE)                   {fCosmicSelStrict = v;}
   Bool_t   GetCosmicSelStrict()                           const {return fCosmicSelStrict;}
   //  
-  Int_t    GetMinPoints()                                 const {return fMinPoints[GetFieldOn()];}
-  void     SetMinPoints(Bool_t bON,int n)                       {int mn=bON?3:4; fMinPoints[bON]=n>mn?n:mn;}
-  Double_t GetPtMin()                                     const {return fPtMin;}
-  void     SetPtMin(double pt=0.3)                              {fPtMin = pt;}  
-  Double_t GetEtaMax()                                    const {return fEtaMax;}
-  void     SetEtaMax(double eta=1.5)                            {fEtaMax = eta;}  
-  Int_t    GetMinDetAcc()                                 const {return fMinDetAcc;}
-  void     SetMinDetAcc(Int_t n)                                {fMinDetAcc=n;}
+  Int_t    GetMinPoints()                                 const {return fMinPoints[fTracksType][GetFieldOn()];}
+  Int_t    GetMinPoints(Bool_t tp,Bool_t bON)             const {return fMinPoints[tp][bON];}
+  void     SetMinPoints(Bool_t tp,Bool_t bON,int n)             {int mn=bON?4:3; fMinPoints[tp][bON]=n>mn?n:mn;}
+  void     SetMinPointsColl(int vbOff=3,int vbOn=4);
+  void     SetMinPointsCosm(int vbOff=3,int vbOn=4);
+  //
+  Double_t GetPtMin(Bool_t tp)                            const {return fPtMin[tp];}
+  void     SetPtMin(Bool_t tp,double pt)                        {fPtMin[tp] = pt;}
+  void     SetPtMinColl(double pt=0.5)                          {SetPtMin(AliAlgAux::kColl,pt);}
+  void     SetPtMinCosm(double pt=1.0)                          {SetPtMin(AliAlgAux::kCosm,pt);}
+  //
+  Double_t GetEtaMax(Bool_t tp)                           const {return fEtaMax[tp];}
+  void     SetEtaMax(Bool_t tp,double eta)                      {fEtaMax[tp]=eta;}
+  void     SetEtaMaxColl(double eta=1.5)                        {SetEtaMax(AliAlgAux::kColl,eta);}
+  void     SetEtaMaxCosm(double eta=1.5)                        {SetEtaMax(AliAlgAux::kCosm,eta);}
+  //
+  Int_t    GetMinDetAcc(Bool_t tp)                        const {return fMinDetAcc[tp];}
+  void     SetMinDetAcc(Bool_t tp, int n)                       {fMinDetAcc[tp] = n;}
+  void     SetMinDetAccColl(int n=1)                            {SetMinDetAcc(AliAlgAux::kColl,n);}
+  void     SetMinDetAccCosm(int n=1)                            {SetMinDetAcc(AliAlgAux::kCosm,n);}
+  //
   Int_t    GetVtxMinCont()                                const {return fVtxMinCont;}
   void     SetVtxMinCont(int n)                                 {fVtxMinCont = n;}
   Int_t    GetVtxMaxCont()                                const {return fVtxMaxCont;}
@@ -98,13 +114,13 @@ class AliAlgSteer : public TObject
   void     SetITSPattforVC(int p)                               {fITSPattforVC=p;}
   Double_t GetMaxDCARforVC()                              const {return fMaxDCAforVC[0];}
   Double_t GetMaxDCAZforVC()                              const {return fMaxDCAforVC[1];}
-  void     SetMaxDCAforVC(double dr,double dz)                  {fMaxDCAforVC[0]=dr; fMaxDCAforVC[1]=dz;}
+  void     SetMaxDCAforVC(double dr=0.1,double dz=0.6)          {fMaxDCAforVC[0]=dr; fMaxDCAforVC[1]=dz;}
   Double_t GetMaxChi2forVC()                              const {return fMaxChi2forVC;}
-  void     SetMaxChi2forVC(double chi2)                         {fMaxChi2forVC = chi2;}
+  void     SetMaxChi2forVC(double chi2=10)                      {fMaxChi2forVC = chi2;}
   //
   Bool_t   CheckDetectorPattern(UInt_t patt)              const;
   Bool_t   CheckDetectorPoints(const int* npsel)          const;
-  void     SetObligatoryDetector(Int_t detID, Bool_t v=kTRUE);
+  void     SetObligatoryDetector(Int_t detID, Int_t tp, Bool_t v=kTRUE);
   void     SetEventSpeciiSelection(UInt_t sel)                  {fSelEventSpecii = sel;}
   UInt_t   GetEventSpeciiSelection()                      const {return fSelEventSpecii;}
   //
@@ -138,7 +154,9 @@ class AliAlgSteer : public TObject
   //----------------------------------------
   // output related
   void     SetMPDatFileName(const char* name="mpData");
-  void     SetMPParFileName(const char* name="mpParam.txt");
+  void     SetMPParFileName(const char* name="mpParams.txt");
+  void     SetMPConFileName(const char* name="mpConstraints.txt");
+  void     SetMPSteerFileName(const char* name="mpSteer.txt");
   void     SetResidFileName(const char* name="controlRes.root");
   void     SetOutCDBPath(const char* name="local://outOCDB");
   void     SetOutCDBComment(const char* cm=0)                    {fOutCDBComment = cm;}
@@ -156,6 +174,8 @@ class AliAlgSteer : public TObject
   const  char* GetMPDatFileName()                          const {return fMPDatFileName.Data();}
   const  char* GetResidFileName()                          const {return fResidFileName.Data();}
   const  char* GetMPParFileName()                          const {return fMPParFileName.Data();}
+  const  char* GetMPConFileName()                          const {return fMPConFileName.Data();}
+  const  char* GetMPSteerFileName()                        const {return fMPSteerFileName.Data();}
   //
   Bool_t   FillMPRecData();
   Bool_t   FillMilleData();
@@ -179,7 +199,7 @@ class AliAlgSteer : public TObject
   Bool_t   GetMilleTXT()                                   const {return !fMilleOutBin;}
   void     SetMilleTXT(Bool_t v=kTRUE)                           {fMilleOutBin = !v;}
   //
-  void     GenPedeParamFile(const Option_t *opt="")         const;
+  void     GenPedeSteerFile(const Option_t *opt="")         const;
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
@@ -208,7 +228,7 @@ class AliAlgSteer : public TObject
   Int_t         fNDOFs;                                   // number of degrees of freedom
   Int_t         fRunNumber;                               // current run number
   Bool_t        fFieldOn;                                 // field on flag
-  Bool_t        fCosmicEvent;                             // cosmic event flag
+  Int_t         fTracksType;                              // collision/cosmic event type
   AliAlgTrack*  fAlgTrack;                                // current alignment track 
   AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
@@ -216,12 +236,12 @@ class AliAlgSteer : public TObject
   //
   // Track selection
   UInt_t        fSelEventSpecii;                          // consider only these event specii
-  UInt_t        fObligatoryDetPattern;                    // pattern of obligatory detectors
+  UInt_t        fObligatoryDetPattern[AliAlgAux::kNTrackTypes]; // pattern of obligatory detectors
   Bool_t        fCosmicSelStrict;                         // if true, each cosmic track leg selected like separate track
-  Int_t         fMinPoints[2];                            // require min points per leg (case Boff,Bon)
-  Int_t         fMinDetAcc;                               // min number of detector required in track
-  Double_t      fPtMin;                                   // min pT of tracks to consider
-  Double_t      fEtaMax;                                  // eta cut on tracks
+  Int_t         fMinPoints[AliAlgAux::kNTrackTypes][2];   // require min points per leg (case Boff,Bon)
+  Int_t         fMinDetAcc[AliAlgAux::kNTrackTypes];      // min number of detector required in track
+  Double_t      fPtMin[AliAlgAux::kNTrackTypes];          // min pT of tracks to consider
+  Double_t      fEtaMax[AliAlgAux::kNTrackTypes];         // eta cut on tracks
   Int_t         fVtxMinCont;                              // require min number of contributors in Vtx
   Int_t         fVtxMaxCont;                              // require max number of contributors in Vtx  
   Int_t         fVtxMinContVC;                            // min number of contributors to use as constraint
@@ -260,7 +280,9 @@ class AliAlgSteer : public TObject
   TArrayF         fMilleDBuffer;                          //! buffer for Mille Derivatives output
   TArrayI         fMilleIBuffer;                          //! buffer for Mille Indecis output
   TString         fMPDatFileName;                         //  file name for records binary data output
-  TString         fMPParFileName;                         //  file name for MP steering params
+  TString         fMPParFileName;                         //  file name for MP params
+  TString         fMPConFileName;                         //  file name for MP constraints
+  TString         fMPSteerFileName;                       //  file name for MP steering
   TString         fResidFileName;                         //  file name for optional control residuals
   Bool_t          fMilleOutBin;                           //  optionally text output for Mille debugging
   //
@@ -281,5 +303,21 @@ class AliAlgSteer : public TObject
   //
   ClassDef(AliAlgSteer,1)
 };
+
+//__________________________________________________________
+inline void AliAlgSteer::SetMinPointsColl(int vbOff,int vbOn)
+{
+  // ask min number of points per track
+  SetMinPoints(AliAlgAux::kColl,kFALSE,vbOff);
+  SetMinPoints(AliAlgAux::kColl,kTRUE,vbOn);
+}
+
+//__________________________________________________________
+inline void AliAlgSteer::SetMinPointsCosm(int vbOff,int vbOn)
+{
+  // ask min number of points per track
+  SetMinPoints(AliAlgAux::kColl,kFALSE,vbOff);
+  SetMinPoints(AliAlgAux::kColl,kTRUE,vbOn);
+}
 
 #endif
