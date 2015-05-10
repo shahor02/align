@@ -102,7 +102,7 @@ void ConfigTPC(AliAlgSteer* algSteer)
   det->SetObligatoryColl(kFALSE);
   det->SetObligatoryCosm(kFALSE);
   //
-  det->SetTrackFlagSelColl(AliESDtrack::kTPCrefit | AliESDtracks::kITSrefit);
+  det->SetTrackFlagSelColl(AliESDtrack::kTPCrefit | AliESDtrack::kITSrefit);
   det->SetTrackFlagSelCosm(AliESDtrack::kTPCin);
   //
   det->SetNPointsSelColl(70);
