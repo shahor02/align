@@ -1299,7 +1299,7 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
   //
   int nm = sizeof(kSolMeth)/sizeof(char*);
   for (int i=0;i<nm;i++) {
-    fprintf(strFl,"%s%-20s\t%2d\t%.2f\t%s\n",cmt[kOn],kSolMeth[i],kDefNIter,kDefDelta,cmt[kOnOn]);
+    fprintf(strFl,"%s%s\t%-20s\t%2d\t%.2f\t%s\n",cmt[kOn],"method",kSolMeth[i],kDefNIter,kDefDelta,cmt[kOnOn]);
   }
   //
   const float kDefChi2F0=20.,kDefChi2F=3.; // chi2 factors for 1st and following iterations
