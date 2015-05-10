@@ -62,7 +62,7 @@ const Char_t* AliAlgSteer::fgkStatName[AliAlgSteer::kMaxStat] =
 
 
 //________________________________________________________________
-AliAlgSteer::AliAlgSteer()
+AliAlgSteer::AliAlgSteer(const char* configMacro)
   :fNDet(0)
   ,fNDOFs(0)
   ,fRunNumber(-1)
@@ -107,6 +107,7 @@ AliAlgSteer::AliAlgSteer()
   ,fOutCDBComment("AliAlgSteer")
   ,fOutCDBResponsible("")
    //
+  ,fConfMacroName(configMacro)
   ,fRecoOCDBConf("configRecoOCDB.C")
   ,fRefOCDBConf("configRefOCDB.C")
   ,fRefOCDBLoaded(0)
@@ -135,6 +136,14 @@ AliAlgSteer::AliAlgSteer()
   SetMaxDCAforVC();
   SetMaxChi2forVC();
   SetOutCDBRunRange();
+  //
+  // run config macro if provided
+  if (!fConfMacroName.IsNull()) {
+    gROOT->ProcessLine(Form(".x %s+g((AliAlgSteer*)%p)",fConfMacroName.Data(),this));
+    if (!GetNDOFs()) AliFatalF("No DOFs found, initialization with %s failed",
+			       fConfMacroName.Data());
+  }  
+
 }
 
 //________________________________________________________________
@@ -797,7 +806,9 @@ void AliAlgSteer::Print(const Option_t *opt) const
   // print info
   TString opts = opt; 
   opts.ToLower();
-  printf("%5d DOFs in %d detectors\n",fNDOFs,fNDet);
+  printf("%5d DOFs in %d detectors",fNDOFs,fNDet);
+  if (!fConfMacroName.IsNull()) printf("(condig: %s)",fConfMacroName.Data());
+  printf("\n");
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);

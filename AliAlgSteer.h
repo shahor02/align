@@ -43,7 +43,7 @@ class AliAlgSteer : public TObject
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
   enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
   //
-  AliAlgSteer();
+  AliAlgSteer(const char* configMacro=0);
   virtual ~AliAlgSteer();
   Bool_t   LoadRefOCDB();
   Bool_t   LoadRecoTimeOCDB();
@@ -151,6 +151,8 @@ class AliAlgSteer : public TObject
   //
   void       ResetDetectors();
   Int_t      GetNDOFs()                                   const {return fNDOFs;}
+  //
+  const char* GetConfMacroName()                          const {return fConfMacroName.Data();}
   //----------------------------------------
   // output related
   void     SetMPDatFileName(const char* name="mpData");
@@ -292,6 +294,7 @@ class AliAlgSteer : public TObject
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
   //
   // input related
+  TString         fConfMacroName;                         // optional configuration macro
   TString         fRecoOCDBConf;                          // optional macro name for reco-time OCDB setup: void fun(int run)
   TString         fRefOCDBConf;                           // optional macro name for prealignment OCDB setup: void fun()
   Int_t           fRefOCDBLoaded;                         // flag/counter for ref.OCDB loading

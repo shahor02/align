@@ -36,9 +36,9 @@ void buildAlg(int evID=4, int trID=2) // for beam: data -> LHC10b_000117220_vpas
   //
   int nEv = esdTree->GetEntries();
   //
-  algSTEER = new AliAlgSteer();
+  algSTEER = new AliAlgSteer("alignConf.C");
   //
-  ConfigAlign(algSTEER);
+  //  ConfigAlign(algSTEER);
   //
   algSTEER->SetESDTree(esdTree);
   int evFirst=0,evLast = esdTree->GetEntries()-1;
