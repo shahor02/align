@@ -2,7 +2,7 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-void configRefOCDB(int run = 117220) 
+void configRefOCDB(int run = 188503) 
 {
   //
   AliCDBManager* man = AliCDBManager::Instance();

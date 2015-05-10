@@ -422,7 +422,6 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   fRefPoint->SetContainsMaterial(kFALSE);
   fAlgTrack->AddPoint(fRefPoint); // reference point which the track will refer to
   //
-  fAlgTrack->Set(esdTr->GetX(),esdTr->GetAlpha(),esdTr->GetParameter(),esdTr->GetCovariance());
   fAlgTrack->CopyFrom(esdTr);
   fAlgTrack->SetFieldON( GetFieldOn() );
   fAlgTrack->SortPoints();

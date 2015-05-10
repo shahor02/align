@@ -147,12 +147,13 @@ class AliAlgTrack: public AliExternalTrackParam
 inline void AliAlgTrack::SetParams(AliExternalTrackParam& tr, double x, double alp, const double* par,Bool_t add)
 {
   // set track params
+  const float kDefQ2PtCosm = 1., kDefG2PtColl = 1./0.6;
   tr.SetParamOnly(x,alp,par);
   double *parTr = (double*) tr.GetParameter();
   if (add) { // par is correction to reference params
     for (int i=kNKinParBON;i--;) parTr[i] += GetParameter()[i];
   }
-  if (!GetFieldON()) parTr[4] = 0.; // only 4 params are valid
+  if (!GetFieldON()) parTr[4] = IsCosmic() ? kDefQ2PtCosm : kDefG2PtColl; // only 4 params are valid
   //
 }
 
