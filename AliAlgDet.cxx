@@ -356,14 +356,14 @@ void AliAlgDet::Print(const Option_t *opt) const
 	 GetVolIDMax(),fAddError[0],fAddError[1],fNProcPoints);
   //
   printf("Errors assignment: ");
-  if (fUseErrorParam) printf("param %d",fUseErrorParam);
+  if (fUseErrorParam) printf("param %d\n",fUseErrorParam);
   else printf("from TrackPoints\n");
   //
   printf("Allowed    in Collisions: %7s | Cosmic: %7s\n",
 	 IsDisabled(kColl)   ? "  NO ":" YES ",IsDisabled(kCosm)   ? "  NO ":" YES ");
   //
   printf("Obligatory in Collisions: %7s | Cosmic: %7s\n",
-	 IsObligatory(kColl) ? "  NO ":" YES ",IsObligatory(kCosm) ? "  NO ":" YES ");
+	 IsObligatory(kColl) ? " YES ":"  NO ",IsObligatory(kCosm) ? " YES ":"  NO ");
   //
   printf("Sel. flags in Collisions: 0x%05lx | Cosmic: 0x%05lx\n",
 	 fTrackFlagSel[kColl],fTrackFlagSel[kCosm]);

@@ -818,8 +818,6 @@ void AliAlgSteer::Print(const Option_t *opt) const
   printf("%-40s:\t%d/%d\n", "Min points per cosmic track leg (BOff/ON)",
 	 fMinPoints[kCosm][0],fMinPoints[kCosm][1]);
   printf("%-40s:\t%d\n",    "Min detectots per collision track",fMinDetAcc[kColl]);
-
-  printf("%-40s:\t%d\n",    "Min detectots per collision track",fMinDetAcc[kColl]);
   printf("%-40s:\t%d (%s)\n",    "Min detectots per cosmic track/leg",fMinDetAcc[kCosm],
 	 fCosmicSelStrict ? "STRICT":"SOFT");
   printf("%-40s:\t%d/%d\n", "Min/Max vertex contrib. to accept event",fVtxMinCont,fVtxMaxCont);

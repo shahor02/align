@@ -79,7 +79,7 @@ class AliAlgDet : public TNamed
   //
   Int_t     GetNDOFs()                              const {return fNDOFs;}
   //
-  void      SetDisabled(Int_t tp,Bool_t v)                {fDisabled[tp]=v;SetObligatory(tp,v);}
+  void      SetDisabled(Int_t tp,Bool_t v)                {fDisabled[tp]=v;SetObligatory(tp,!v);}
   void      SetDisabled()                                 {SetDisabledColl();SetDisabledCosm();}
   void      SetDisabledColl(Bool_t v=kTRUE)               {SetDisabled(AliAlgAux::kColl,v);}
   void      SetDisabledCosm(Bool_t v=kTRUE)               {SetDisabled(AliAlgAux::kCosm,v);}

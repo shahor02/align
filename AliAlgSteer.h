@@ -316,8 +316,8 @@ inline void AliAlgSteer::SetMinPointsColl(int vbOff,int vbOn)
 inline void AliAlgSteer::SetMinPointsCosm(int vbOff,int vbOn)
 {
   // ask min number of points per track
-  SetMinPoints(AliAlgAux::kColl,kFALSE,vbOff);
-  SetMinPoints(AliAlgAux::kColl,kTRUE,vbOn);
+  SetMinPoints(AliAlgAux::kCosm,kFALSE,vbOff);
+  SetMinPoints(AliAlgAux::kCosm,kTRUE,vbOn);
 }
 
 #endif
