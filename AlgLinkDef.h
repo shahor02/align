@@ -22,5 +22,6 @@
 #pragma link C++ class AliAlgVol+;
 #pragma link C++ class AliAlgVtx+;
 #pragma link C++ class AliAlgRes+;
+#pragma link C++ class AliAlgAux;
 
 #endif

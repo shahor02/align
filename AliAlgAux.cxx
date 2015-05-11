@@ -6,7 +6,7 @@
 #include <TMap.h>
 #include <TObjString.h>
 #include <TPRegexp.h>
-
+#include <TGrid.h>
 
 //_______________________________________________________________
 void AliAlgAux::PrintBits(ULong64_t patt, Int_t maxBits)
@@ -63,14 +63,13 @@ Bool_t AliAlgAux::PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList)
   TObjString *ostr,*okey;
   TString uriDef,uri,key;
   //
-  AliCDBManager* man = AliCDBManager::Instance();  
-  man->UnsetDefaultStorage();
-  man->UnsetSnapshotMode();
+  CleanOCDB();
   //
   ostr = (TObjString*)cdbMap->GetValue("default");
   RectifyOCDBUri( uriDef=ostr->GetString() );
   AliInfoGeneralF("","Default storage %s",uriDef.Data());
   //
+  AliCDBManager* man = AliCDBManager::Instance();  
   man->SetDefaultStorage(uriDef.Data());
   man->SetRun(run);
   //
@@ -106,4 +105,13 @@ Bool_t AliAlgAux::PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList)
   }
   //
   return kTRUE;
+}
+
+//_________________________________________________________
+void AliAlgAux::CleanOCDB()
+{
+  // brings OCDB to virgin state
+  Bool_t isGrid = gGrid!=0;
+  AliCDBManager::Destroy();
+  if (isGrid && !gGrid) TGrid::Connect("alien://");
 }

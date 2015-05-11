@@ -43,6 +43,7 @@ namespace AliAlgAux {
   void   PrintBits(ULong64_t patt, Int_t maxBits);
   //
   // OCDB related stuff
+  void      CleanOCDB();
   AliCDBId* FindCDBId(const TList* cdbList,const TString& key);
   void      RectifyOCDBUri(TString& inp);
   Bool_t    PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList);

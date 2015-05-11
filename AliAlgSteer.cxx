@@ -753,9 +753,7 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   }
   //
   // bring to virgin state
-  // AliCDBManager* man = AliCDBManager::Instance();
-  // man->UnsetDefaultStorage();
-  // man->UnsetSnapshotMode();
+  // CleanOCDB();
   //
   // LoadRefOCDB(); //??? we need to get back reference OCDB ???
   //
@@ -771,14 +769,12 @@ Bool_t AliAlgSteer::LoadRecoTimeOCDB()
   // loaded/cached but just added as specific paths with version
   AliInfoF("Preloading Reco-Time OCDB for run %d from ESD UserInfo list",fRunNumber);
   //
-  AliCDBManager* man = AliCDBManager::Instance();  
-  man->UnsetDefaultStorage();
-  man->UnsetSnapshotMode();
+  CleanOCDB();
   //
   if (!fRecoOCDBConf.IsNull() && !gSystem->AccessPathName(fRecoOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reco-time OCDB setup macro %s",fRecoOCDBConf.Data());
     gROOT->ProcessLine(Form(".x %s(%d)",fRecoOCDBConf.Data(),fRunNumber));
-    if (man->IsDefaultStorageSet()) return kTRUE;
+    if (AliCDBManager::Instance()->IsDefaultStorageSet()) return kTRUE;
     AliFatalF("macro %s failed to configure reco-time OCDB",fRecoOCDBConf.Data());
   }
   else AliWarningF("No reco-time OCDB config macro %s is found, will use ESD:UserInfo",
@@ -1183,11 +1179,8 @@ Bool_t AliAlgSteer::AddVertexConstraint()
 void AliAlgSteer::WriteCalibrationResults() const
 {
   // writes output calibration
-  AliCDBManager* man = AliCDBManager::Instance();
-  man->UnsetDefaultStorage();
-  man->UnsetSnapshotMode();
-  //
-  man->SetDefaultStorage(fOutCDBPath.Data());
+  CleanOCDB();
+  AliCDBManager::Instance()->SetDefaultStorage(fOutCDBPath.Data());
   //
   AliAlgDet* det;
   for (int idet=0;idet<kNDetectors;idet++) {
@@ -1214,9 +1207,8 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   //
   //
   AliInfo("Loading reference OCDB");
+  CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();
-  man->UnsetDefaultStorage();
-  man->UnsetSnapshotMode();
   // 
   if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());

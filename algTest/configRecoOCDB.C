@@ -4,13 +4,16 @@
 void configRecoOCDB(int run = 188503) 
 {
   //
+  AliAlgAux::CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();
-  man->ClearCache();
-  if (man->IsDefaultStorageSet()) man->UnsetDefaultStorage();
-  man->SetDefaultStorage("raw://");
-  man->SetRun(run);
-  if (gSystem->AccessPathName("OCDB.root", kFileExists)==0) {
-    man->SetSnapshotMode("OCDB.root");
+  //
+  if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {
+    man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");
+    man->SetRun(run);
+    man->SetSnapshotMode("data/OCDB.root");
+  }
+  else {
+    AliFatalGeneralF("","Failed to setup Reco-Time OCDB for run %d",run);
   }
   //
 }

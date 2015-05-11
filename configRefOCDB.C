@@ -5,9 +5,8 @@
 void configRefOCDB(int run = 188503) 
 {
   //
+  AliAlgAux::CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();
-  man->UnsetDefaultStorage();
-  man->UnsetSnapshotMode();
   //
   if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
     man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
