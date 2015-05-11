@@ -7,7 +7,7 @@
 #include <TArrayD.h>
 #include <TArrayI.h>
 
-#define DEBUG 4
+//#define DEBUG 4
 
 class AliAlgTrack: public AliExternalTrackParam
 {

@@ -357,7 +357,9 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   if (esdEv->GetRunNumber() != GetRunNumber()) SetRunNumber(esdEv->GetRunNumber());
   //
   if (!(esdEv->GetEventSpecie()&fSelEventSpecii)) {
+#if DEBUG>2    
     AliInfoF("Reject: specie does not match, allowed 0x%0x",fSelEventSpecii);
+#endif
     return kFALSE;
   }
   //
