@@ -752,9 +752,12 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
     if (!det->IsDisabled()) det->AcknowledgeNewRun(run);
   }
   //
-  AliCDBManager::Destroy();
+  // bring to virgin state
+  // AliCDBManager* man = AliCDBManager::Instance();
+  // man->UnsetDefaultStorage();
+  // man->UnsetSnapshotMode();
   //
-  //  LoadRefOCDB(); //??? we need to get back reference OCDB ???
+  // LoadRefOCDB(); //??? we need to get back reference OCDB ???
   //
   fStat[kInpStat][kRun]++;
   //
@@ -768,11 +771,13 @@ Bool_t AliAlgSteer::LoadRecoTimeOCDB()
   // loaded/cached but just added as specific paths with version
   AliInfoF("Preloading Reco-Time OCDB for run %d from ESD UserInfo list",fRunNumber);
   //
-  AliCDBManager::Destroy();
+  AliCDBManager* man = AliCDBManager::Instance();  
+  man->UnsetDefaultStorage();
+  man->UnsetSnapshotMode();
+  //
   if (!fRecoOCDBConf.IsNull() && !gSystem->AccessPathName(fRecoOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reco-time OCDB setup macro %s",fRecoOCDBConf.Data());
     gROOT->ProcessLine(Form(".x %s(%d)",fRecoOCDBConf.Data(),fRunNumber));
-    AliCDBManager* man = AliCDBManager::Instance();
     if (man->IsDefaultStorageSet()) return kTRUE;
     AliFatalF("macro %s failed to configure reco-time OCDB",fRecoOCDBConf.Data());
   }
@@ -860,6 +865,7 @@ void AliAlgSteer::Print(const Option_t *opt) const
   printf("MPData output :\t");
   if (GetProduceMPData()) printf("%s%s ",fMPDatFileName.Data(),fgkMPDataExt);
   if (GetProduceMPRecord()) printf("%s%s ",fMPDatFileName.Data(),".root");
+  printf("\n");
   //
   if (opts.Contains("stat")) PrintStatistics();
 }
@@ -1177,8 +1183,10 @@ Bool_t AliAlgSteer::AddVertexConstraint()
 void AliAlgSteer::WriteCalibrationResults() const
 {
   // writes output calibration
-  AliCDBManager::Destroy();
   AliCDBManager* man = AliCDBManager::Instance();
+  man->UnsetDefaultStorage();
+  man->UnsetSnapshotMode();
+  //
   man->SetDefaultStorage(fOutCDBPath.Data());
   //
   AliAlgDet* det;
@@ -1206,7 +1214,10 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   //
   //
   AliInfo("Loading reference OCDB");
-  AliCDBManager::Destroy();
+  AliCDBManager* man = AliCDBManager::Instance();
+  man->UnsetDefaultStorage();
+  man->UnsetSnapshotMode();
+  // 
   if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());
     gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
@@ -1214,7 +1225,6 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   else {
     AliWarningF("No reference OCDB config macro %s is found, assume raw:// with run %d",
 		fRefOCDBConf.Data(),AliCDBRunRange::Infinity());
-    AliCDBManager* man = AliCDBManager::Instance();
     man->SetRaw(kTRUE);
     man->SetRun(AliCDBRunRange::Infinity());
   }

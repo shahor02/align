@@ -59,14 +59,18 @@ Bool_t AliAlgAux::PreloadOCDB(int run, const TMap* cdbMap, const TList* cdbList)
   // as they are usually stored in the UserInfo list of esdTree
   // In order to avoid unnecessary uploads, the objects are not actually 
   // loaded/cached but just added as specific paths with version
-  AliCDBManager::Destroy();
   //  
   TObjString *ostr,*okey;
   TString uriDef,uri,key;
-  AliCDBManager* man = AliCDBManager::Instance();
+  //
+  AliCDBManager* man = AliCDBManager::Instance();  
+  man->UnsetDefaultStorage();
+  man->UnsetSnapshotMode();
+  //
   ostr = (TObjString*)cdbMap->GetValue("default");
   RectifyOCDBUri( uriDef=ostr->GetString() );
   AliInfoGeneralF("","Default storage %s",uriDef.Data());
+  //
   man->SetDefaultStorage(uriDef.Data());
   man->SetRun(run);
   //
