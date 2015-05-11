@@ -86,7 +86,10 @@ void AliGloAlgTask::UserExec(Option_t *)
   AliESDfriend *esdFr = handler->GetESDfriend(); // get the input friend
   //
   if(!esdEv) {AliInfo("no ESD"); return;} 
-  if(!esdFr || esdFr->GetNumberOfTracks()<esdEv->GetNumberOfTracks()) {AliInfo("no ESDFriend"); return;}
+  if(!esdFr || esdFr->GetNumberOfTracks()<esdEv->GetNumberOfTracks()) {
+    AliDebug(3,"no ESDFriend"); 
+    return;
+  }
   //  AliInfo(Form("Number of ESD tracks in input = %d ",esdEv->GetNumberOfTracks()));
   //  AliInfo(Form("Number of tracks in input friends = %d ",esdFr->GetNumberOfTracks()));
   //
@@ -99,6 +102,16 @@ void AliGloAlgTask::Terminate(Option_t *)
 {
   Printf("Terminating...");
   fAlgSteer->Terminate();
+  //
+  TH1* hstat;
+  hstat = fAlgSteer->GetHistoDOF();
+  if (hstat) fOutput->Add(hstat);
+  fAlgSteer->DetachHistoDOF();
+  //
+  hstat = fAlgSteer->GetHistoStat();
+  if (hstat) fOutput->Add(hstat);
+  fAlgSteer->DetachHistoStat();
+  //
 }
 
 //_________________________________________________________________________

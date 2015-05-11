@@ -44,6 +44,23 @@ class AliAlgSteer : public TObject
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
   enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
   //
+  enum {             // STAT histo entries
+    kRunDone         // input runs
+    ,kEvInp          // input events
+    ,kEvVtx          // after vtx selection
+    ,kTrackInp       // input tracks
+    ,kTrackFitInp    // input to ini fit
+    ,kTrackFitInpVC  // those with vertex constraint
+    ,kTrackProcMatInp// input to process materials
+    ,kTrackResDerInp // input to resid/deriv calculation
+    ,kTrackStore     // stored tracks
+    ,kTrackAcc       // tracks accepted
+    ,kTrackControl   // control tracks filled
+    //
+    ,kNHVars
+  };
+
+  //
   AliAlgSteer(const char* configMacro=0);
   virtual ~AliAlgSteer();
   Bool_t   LoadRefOCDB();
@@ -205,6 +222,11 @@ class AliAlgSteer : public TObject
   //
   void     GenPedeSteerFile(const Option_t *opt="")        const;
   TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
+  void     DetachHistoDOF()                                      {fHistoDOF = 0;}
+  TH1*     GetHistoStat()                                  const {return fHistoStat;}
+  void     DetachHistoStat()                                     {fHistoStat = 0;}
+  void     FillStatHisto(int type, float w=1);
+  void     CreateStatHisto();
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
@@ -298,6 +320,7 @@ class AliAlgSteer : public TObject
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
   //
   TH1F*           fHistoDOF;                              // histo with entries per dof
+  TH1F*           fHistoStat;                             // histo with general statistics
   //
   // input related
   TString         fConfMacroName;                         // optional configuration macro
@@ -308,6 +331,7 @@ class AliAlgSteer : public TObject
   //
   static const Int_t   fgkSkipLayers[kNLrSkip];           // detector layers for which we don't need module matrices
   static const Char_t* fgkDetectorName[kNDetectors];      // names of detectors
+  static const Char_t* fgkHStatName[kNHVars];             // names for stat.bins in the stat histo
   static const Char_t* fgkMPDataExt;                      // extension for MP2 binary data 
   //
   ClassDef(AliAlgSteer,1)

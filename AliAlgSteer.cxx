@@ -62,6 +62,10 @@ const Char_t* AliAlgSteer::fgkStatName[AliAlgSteer::kMaxStat] =
   {"runs","Ev.Coll", "Ev.Cosm", "Trc.Coll", "Trc.Cosm"};
 
 
+const Char_t* AliAlgSteer::fgkHStatName[AliAlgSteer::kNHVars] = {
+  "Runs","Ev.Inp","Ev.VtxOK","Tr.Inp","Tr.2Fit","Tr.2FitVC","Tr.2PrMat","Tr.2ResDer","Tr.Stored","Tr.Acc","Tr.ContRes"};
+
+
 //________________________________________________________________
 AliAlgSteer::AliAlgSteer(const char* configMacro)
   :fNDet(0)
@@ -109,6 +113,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fOutCDBResponsible("")
   //
   ,fHistoDOF(0)
+  ,fHistoStat(0)
   //
   ,fConfMacroName(configMacro)
   ,fRecoOCDBConf("configRecoOCDB.C")
@@ -164,6 +169,7 @@ AliAlgSteer::~AliAlgSteer()
   delete fVtxSens;
   delete fRefPoint;
   delete fHistoDOF;
+  delete fHistoStat;
   //
 }
 
@@ -356,17 +362,22 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   }
   //
   SetCosmic(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  //
+  FillStatHisto( kEvInp );
+  //
   AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d",
 	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),
 	   IsCosmic() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
   //
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   if (!IsCosmic() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
+  FillStatHisto( kEvVtx );
   //
   int ntr=0,accTr = 0;
   if (IsCosmic()) {
     fStat[kInpStat][kEventCosm]++;
     ntr = esdEv->GetNumberOfCosmicTracks();
+    FillStatHisto( kTrackInp, ntr);
     for (int itr=0;itr<ntr;itr++) {
       accTr += ProcessTrack(esdEv->GetCosmicTrack(itr));      
     }
@@ -375,11 +386,14 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   else {
     fStat[kInpStat][kEventColl]++;
     ntr = esdEv->GetNumberOfTracks();
+    FillStatHisto( kTrackInp, ntr);
     for (int itr=0;itr<ntr;itr++) {
       accTr += ProcessTrack(esdEv->GetTrack(itr));      
     }
     if (accTr) fStat[kAccStat][kEventColl]++;
   }    
+  //
+  FillStatHisto( kTrackAcc, accTr);
   //
   AliInfoF("Processed event %d of ev.specie %d -> Accepted: %4d of %4d tracks",
 	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),accTr,ntr);
@@ -445,11 +459,15 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
     fRefPoint->SetXYZTracking(0,0,0);
     fRefPoint->SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
   }
+  else FillStatHisto( kTrackFitInpVC );
   //
+  FillStatHisto( kTrackFitInp );
   if (!fAlgTrack->IniFit()) return kFALSE;
+  FillStatHisto( kTrackProcMatInp );
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
   //
+  FillStatHisto( kTrackResDerInp );
   if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
   if (!StoreProcessedTrack( fMPOutType&~kContR )) return kFALSE; // store derivatives for MP
@@ -458,6 +476,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
       (fMPOutType==kContR || gRandom->Rndm()<fControlFrac) ) { // output requested
     if ( !TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
   }
+  //
+  FillStatHisto( kTrackStore );
   //
   fStat[kAccStat][kTrackColl]++;
   //
@@ -559,11 +579,14 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   }
   fRefPoint->SetAlphaSens(Sector2Alpha(fAlgTrack->GetPoint(pntMeas)->GetAliceSector()));
   // 
+  FillStatHisto( kTrackFitInp );
   if (!fAlgTrack->IniFit()) return kFALSE;
   //
+  FillStatHisto( kTrackProcMatInp );
   if (!fAlgTrack->ProcessMaterials()) return kFALSE;
   fAlgTrack->DefineDOFs();
   //
+  FillStatHisto( kTrackResDerInp );
   if (!fAlgTrack->CalcResidDeriv()) return kFALSE;
   //
   if (!StoreProcessedTrack( fMPOutType&~kContR )) return kFALSE; // store derivatives for MP
@@ -573,6 +596,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
     if ( !TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
   }
   //
+  FillStatHisto( kTrackStore );
   fStat[kAccStat][kTrackCosm]++;
   return kTRUE;
 }
@@ -714,6 +738,7 @@ Bool_t AliAlgSteer::FillControlData()
   fCResid->SetTrackID(tID);
   //
   fResidTree->Fill();
+  FillStatHisto( kTrackControl );
   //
   return kTRUE;
 }
@@ -731,7 +756,10 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
 {
   // load needed info for new run
   if (run==fRunNumber) return;  // nothing to do
-  if (fRunNumber>0) fStat[kAccStat][kRun]++;
+  if (run>0) {
+    fStat[kAccStat][kRun]++;
+  }
+  if (fRunNumber>0) FillStatHisto( kRunDone );
   fRunNumber = run;
   AliInfoF("Processing new run %d",fRunNumber);
   //
@@ -1263,6 +1291,7 @@ AliAlgVol* AliAlgSteer::GetVolOfDOFID(int id) const
 void AliAlgSteer::Terminate(Bool_t dohisto)
 {
   // finalize processing
+  if (fRunNumber>0) FillStatHisto( kRunDone );
   if (dohisto) {
     fHistoDOF = new TH1F("DOFstat","DOF statistics",fNDOFs,0.5,fNDOFs+0.5);
     fHistoDOF->SetDirectory(0);
@@ -1463,4 +1492,24 @@ void AliAlgSteer::MPRec2Mille(TTree* mprTree,const char* millefile,Bool_t bindat
   delete mille;
   br->SetAddress(0);
   delete rec;
+}
+
+//____________________________________________________________
+void AliAlgSteer::FillStatHisto(int type, float w)
+{
+  if (!fHistoStat) CreateStatHisto();
+  fHistoStat->Fill( (IsCosmic() ? kNHVars:0) + type, w);
+}
+
+//____________________________________________________________
+void AliAlgSteer::CreateStatHisto()
+{
+  fHistoStat = new TH1F("stat","stat",2*kNHVars,-0.5,2*kNHVars-0.5);
+  fHistoStat->SetDirectory(0);
+  TAxis *xax = fHistoStat->GetXaxis();
+  for (int j=0;j<2;j++) {
+    for (int i=0;i<kNHVars;i++) {
+      xax->SetBinLabel(j*kNHVars+i+1, Form("%s.%s",j?"CSM":"COL",fgkHStatName[i]));
+    }
+  }
 }

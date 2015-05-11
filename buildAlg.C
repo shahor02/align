@@ -28,8 +28,8 @@ void ConfigTOF(AliAlgSteer* algSteer);
 AliAlgSteer * algSTEER = 0;
 
 //void buildAlg(int evID=4062, int trID=0) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-//void buildAlg(int evID=6594, int trID=0) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
-void buildAlg(int evID=4, int trID=2) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
+void buildAlg(int evID=6594, int trID=0) // for cosm: data -> LHC15c_000218623_cosmics_15000218623020_10
+//void buildAlg(int evID=4, int trID=2) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000117220022_30
 {
   LoadESD();
   LoadEvent(evID>=0 ? evID : 0);

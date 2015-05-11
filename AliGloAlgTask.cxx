@@ -102,6 +102,16 @@ void AliGloAlgTask::Terminate(Option_t *)
 {
   Printf("Terminating...");
   fAlgSteer->Terminate();
+  //
+  TH1* hstat;
+  hstat = fAlgSteer->GetHistoDOF();
+  if (hstat) fOutput->Add(hstat);
+  fAlgSteer->DetachHistoDOF();
+  //
+  hstat = fAlgSteer->GetHistoStat();
+  if (hstat) fOutput->Add(hstat);
+  fAlgSteer->DetachHistoStat();
+  //
 }
 
 //_________________________________________________________________________

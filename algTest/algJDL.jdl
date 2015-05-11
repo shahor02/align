@@ -41,7 +41,7 @@ Split = "se";
 TTL = "28000";
 
 # Maximum number of input files to be processed per subjob
-SplitMaxInputFileNumber = "10";
+SplitMaxInputFileNumber = "20";
 
 # Format of input data
 InputDataListFormat = "xml-single";
