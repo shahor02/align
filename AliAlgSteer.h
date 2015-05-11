@@ -10,6 +10,7 @@
 #include <TString.h>
 #include <TArrayF.h>
 #include <TArrayI.h>
+#include <TH1F.h>
 #include "AliAlgAux.h"
 
 class AliESDEvent;
@@ -52,7 +53,7 @@ class AliAlgSteer : public TObject
 
   void     InitDetectors();
   void     InitDOFs();  
-  void     Terminate();
+  void     Terminate(Bool_t dohisto=kTRUE);
   //
   void     AddDetector(UInt_t id, AliAlgDet* det=0);
   void     AddDetector(AliAlgDet* det);
@@ -128,6 +129,7 @@ class AliAlgSteer : public TObject
   const AliESDVertex* GetVertex()                         const {return fVertex;}
   //
   //----------------------------------------
+  Bool_t     ReadParameters(const char* parfile="millepede.res", Bool_t useErrors=kTRUE);
   Float_t*   GetGloParVal()                               const {return (Float_t*)fGloParVal;}
   Float_t*   GetGloParErr()                               const {return (Float_t*)fGloParErr;}
   AliAlgVol* GetVolOfDOFID(int id)                        const;
@@ -201,7 +203,8 @@ class AliAlgSteer : public TObject
   Bool_t   GetMilleTXT()                                   const {return !fMilleOutBin;}
   void     SetMilleTXT(Bool_t v=kTRUE)                           {fMilleOutBin = !v;}
   //
-  void     GenPedeSteerFile(const Option_t *opt="")         const;
+  void     GenPedeSteerFile(const Option_t *opt="")        const;
+  TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
@@ -213,7 +216,8 @@ class AliAlgSteer : public TObject
   virtual void Print(const Option_t *opt="")              const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
-  
+  static void    MPRec2Mille(const char* mprecfile,const char* millefile="mpData.mille",Bool_t bindata=kTRUE);
+  static void    MPRec2Mille(TTree* mprTree,const char* millefile="mpData.mille",Bool_t bindata=kTRUE);
   //
   AliSymMatrix* BuildMatrix(TVectorD &vec);
   Bool_t        TestLocalSolution();
@@ -292,6 +296,8 @@ class AliAlgSteer : public TObject
   TString         fOutCDBComment;                         // optional comment to add to output cdb objects
   TString         fOutCDBResponsible;                     // optional responsible for output metadata
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
+  //
+  TH1F*           fHistoDOF;                              // histo with entries per dof
   //
   // input related
   TString         fConfMacroName;                         // optional configuration macro

@@ -175,22 +175,22 @@ void AliAlgMPRecord::Resize(Int_t nresid, Int_t nloc, Int_t nglo)
     delete[] fResErr;
     fNDLoc = new Short_t[nresid];
     fNDGlo = new Int_t[nresid];
-    fResid   = new Double32_t[nresid];
-    fResErr  = new Double32_t[nresid];
+    fResid   = new Float_t[nresid];
+    fResErr  = new Float_t[nresid];
     fNResidBook = nresid;
   }
   if (nloc>fNDLocTotBook) {
     delete[] fIDLoc;
     delete[] fDLoc;
     fIDLoc = new Short_t[nloc];
-    fDLoc= new Double32_t[nloc];
+    fDLoc= new Float_t[nloc];
     fNDLocTotBook = nloc;
   }
   if (nglo>fNDGloTotBook) {
     delete[] fIDGlo;
     delete[] fDGlo;
     fIDGlo = new Int_t[nglo];
-    fDGlo= new Double32_t[nglo];
+    fDGlo= new Float_t[nglo];
     fNDGloTotBook = nglo;
   }
   //

@@ -13,6 +13,7 @@ class AliAlgVol;
 class AliAlgSteer;
 class AliTrackPointArray;
 class AliExternalTrackParam;
+class TH1;
 
 class AliAlgDet : public TNamed
 {
@@ -54,7 +55,7 @@ class AliAlgDet : public TNamed
   virtual Int_t InitGeom();
   virtual Int_t AssignDOFs();
   virtual void  InitDOFs();
-  virtual void  Terminate();
+  virtual void  Terminate(TH1* hdof=0);
   virtual void  AddVolume(AliAlgVol* vol);
   virtual void  DefineVolumes();
   virtual void  DefineMatrices();

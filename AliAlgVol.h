@@ -6,6 +6,7 @@
 #include <TGeoMatrix.h>
 
 class TObjArray;
+class TH1;
 
 
 /*--------------------------------------------------------
@@ -68,7 +69,8 @@ class AliAlgVol : public TNamed
   Double_t   GetAlpTracking()                    const {return fAlp;}
   //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
-  Int_t      FinalizeStat();
+  Int_t      FinalizeStat(TH1* h=0);
+  void       FillDOFHisto(TH1* h)                const;
   //
   Float_t*   GetParVals()                        const {return fParVals;}
   Double_t   GetParVal(int par)                  const {return fParVals[par];}
@@ -133,6 +135,7 @@ class AliAlgVol : public TNamed
   //
   virtual Bool_t IsSensor()                   const {return kFALSE;}
   //
+  virtual const char* GetDOFName(int i)       const;
   virtual void   Print(const Option_t *opt="")  const;
   virtual void   WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
   virtual void   WriteChildrenConstraints(FILE* conOut) const;

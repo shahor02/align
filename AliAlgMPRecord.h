@@ -29,9 +29,13 @@ class AliAlgMPRecord : public TObject
   //
   Int_t        GetNDLoc(int id)        const {return fNDLoc[id];}
   Int_t        GetNDGlo(int id)        const {return fNDGlo[id];}
-  Double_t     GetResid(int id)        const {return fResid[id];}
-  Double_t     GetResErr(int id)       const {return fResErr[id];}
+  Float_t      GetResid(int id)        const {return fResid[id];}
+  Float_t      GetResErr(int id)       const {return fResErr[id];}
   //
+  const Float_t* GetArrGlo()           const {return fDGlo;}
+  const Float_t* GetArrLoc()           const {return fDLoc;}
+  const Short_t* GetArrLabLoc()        const {return fIDLoc;}
+  const Int_t*   GetArrLabGlo()        const {return fIDGlo;}
   //
   Bool_t       FillTrack(const AliAlgTrack* trc);
   //
@@ -58,13 +62,13 @@ class AliAlgMPRecord : public TObject
   //
   Short_t*     fNDLoc;           //[fNResid] number of non-0 local derivatives per residual
   Int_t*       fNDGlo;           //[fNResid] number of non-0 global derivatives per residual
-  Double32_t*  fResid;           //[fNResid] residuals
-  Double32_t*  fResErr;          //[fNResid] error associated to residual
+  Float_t*     fResid;           //[fNResid] residuals
+  Float_t*     fResErr;          //[fNResid] error associated to residual
   //
   Short_t*     fIDLoc;           //[fNDLocTot] ID of local variables for non-0 local derivatives
   Int_t*       fIDGlo;           //[fNDGloTot] ID of global variables for non-0 global derivatives  
-  Double32_t*  fDLoc;            //[fNDLocTot] non-0 local derivatives
-  Double32_t*  fDGlo;            //[fNDGloTot] non-0 global derivatives
+  Float_t*     fDLoc;            //[fNDLocTot] non-0 local derivatives
+  Float_t*     fDGlo;            //[fNDGloTot] non-0 global derivatives
   //
   // aux info
   Int_t        fNResidBook;      //! number of slots booked for residuals

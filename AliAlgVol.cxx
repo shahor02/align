@@ -105,6 +105,8 @@
 #include <TClonesArray.h>
 #include <TGeoManager.h>
 #include <TGeoPhysicalNode.h>
+#include <TH1.h>
+#include <TAxis.h>
 
 ClassImp(AliAlgVol)
 
@@ -444,15 +446,17 @@ Bool_t AliAlgVol::IsCondDOF(Int_t i) const
 }
 
 //______________________________________________________
-Int_t AliAlgVol::FinalizeStat()
+Int_t AliAlgVol::FinalizeStat(TH1* h)
 {
   // finalize statistics on processed points
-  if (IsSensor()) return fNProcPoints;
-  fNProcPoints = 0;
-  for (int ich=GetNChildren();ich--;) {
-    AliAlgVol* child = GetChild(ich);
-    fNProcPoints += child->FinalizeStat();
+  if (!IsSensor()) {
+    fNProcPoints = 0;
+    for (int ich=GetNChildren();ich--;) {
+      AliAlgVol* child = GetChild(ich);
+      fNProcPoints += child->FinalizeStat(h);
+    }
   }
+  if (h) FillDOFHisto(h);
   return fNProcPoints;
 }
 
@@ -818,4 +822,28 @@ AliAlgVol* AliAlgVol::GetVolOfDOFID(Int_t id) const
     if ( (vol=vol->GetVolOfDOFID(id)) ) return vol;
   }
   return 0;
+}
+
+//______________________________________________________
+const char* AliAlgVol::GetDOFName(int i) const
+{
+  // get name of DOF
+  if (i<kNDOFGeom) return fgkDOFName[i];
+  return 0;
+}
+
+//______________________________________________________
+void AliAlgVol::FillDOFHisto(TH1* h) const
+{
+  // fill statistics info hist
+  if (!h) return;
+  int ndf = GetNDOFs();
+  int dof0 = GetFirstParGloID();
+  int stat = GetNProcessedPoints();
+  for (int idf=0;idf<ndf;idf++) {
+    int dof = idf+dof0+1;
+    h->SetBinContent(dof,stat);
+    h->GetXaxis()->SetBinLabel(dof,Form("%d_%s_%s",dof,GetSymName(),GetDOFName(idf)));
+  }
+  //
 }

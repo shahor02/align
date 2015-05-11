@@ -43,6 +43,7 @@
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TRandom.h>
+#include <TH1F.h>
 #include <stdio.h>
 #include <TGeoGlobalMagField.h>
 
@@ -106,7 +107,9 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fOutCDBPath("local://outOCDB")
   ,fOutCDBComment("AliAlgSteer")
   ,fOutCDBResponsible("")
-   //
+  //
+  ,fHistoDOF(0)
+  //
   ,fConfMacroName(configMacro)
   ,fRecoOCDBConf("configRecoOCDB.C")
   ,fRefOCDBConf("configRefOCDB.C")
@@ -160,6 +163,7 @@ AliAlgSteer::~AliAlgSteer()
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
   delete fVtxSens;
   delete fRefPoint;
+  delete fHistoDOF;
   //
 }
 
@@ -1254,10 +1258,17 @@ AliAlgVol* AliAlgSteer::GetVolOfDOFID(int id) const
 }
 
 //________________________________________________________
-void AliAlgSteer::Terminate()
+void AliAlgSteer::Terminate(Bool_t dohisto)
 {
   // finalize processing
-  for (int i=fNDet;i--;) GetDetector(i)->Terminate();
+  if (dohisto) {
+    fHistoDOF = new TH1F("DOFstat","DOF statistics",fNDOFs,0.5,fNDOFs+0.5);
+    fHistoDOF->SetDirectory(0);
+    AliInfoF("Preparing histo with stat/DOF %s",fHistoDOF->GetName());
+  }
+  if (fVtxSens) fVtxSens->FillDOFHisto(fHistoDOF);
+  //
+  for (int i=fNDet;i--;) GetDetector(i)->Terminate(fHistoDOF);
   CloseMPRecOutput();
   CloseMilleOutput();
   CloseResidOutput();
@@ -1331,3 +1342,123 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
   fclose(parFl);
 }
 
+//___________________________________________________________
+Bool_t AliAlgSteer::ReadParameters(const char* parfile, Bool_t useErrors)
+{
+  // read parameters file (millepede output)
+  if (fNDOFs<1 || !fGloParVal || !fGloParErr) {
+    AliErrorF("Something is wrong in init: fNDOFs=%d fGloParVal=%p fGloParErr=%p",
+	      fNDOFs,fGloParVal,fGloParErr);
+  }
+  ifstream inpf(parfile);
+  if (!inpf.good()) {
+    printf("Failed on input filename %s\n",parfile);
+    return kFALSE;
+  }
+  memset(fGloParVal,0,fNDOFs*sizeof(float));
+  if (useErrors) memset(fGloParErr,0,fNDOFs*sizeof(float));
+  int cnt = 0;
+  TString fline;
+  fline.ReadLine(inpf);
+  fline = fline.Strip(TString::kBoth,' ');
+  fline.ToLower();
+  if (!fline.BeginsWith("parameter")) {
+    AliErrorF("First line is not parameter keyword:\n%s",fline.Data());
+    return kFALSE;
+  }
+  double v0,v1,v2;
+  int lab,asg=0,asg0=0;
+  while (fline.ReadLine(inpf)) {
+    cnt++;
+    fline = fline.Strip(TString::kBoth,' ');
+    if (fline.BeginsWith("!") || fline.BeginsWith("*")) continue; // ignore comment
+    int nr = sscanf(fline.Data(),"%d%lf%lf%lf",&lab,&v0,&v1,&v2);
+    if (nr<3) {
+      AliErrorF("Expected to read at least 3 numbers, got %d, this is NOT milleped output",nr);
+      AliErrorF("line (%d) was:\n%s",cnt,fline.Data());
+      return kFALSE;
+    }
+    if (nr==3) asg0++; 
+    if (lab<1 || lab>fNDOFs) {
+      AliErrorF("Expected labels in the range 1:%d, got %d at line %d",fNDOFs,lab,cnt);
+      return kFALSE;
+    }
+    lab--; // millepede uses as labels ID+1
+    fGloParVal[lab] = v0;
+    if (useErrors) fGloParErr[lab] = v1;
+    asg++;
+    //
+  };
+  AliInfoF("Read %d lines, assigned %d values, %d dummy",cnt,asg,asg0);
+  //
+  return kTRUE;
+}
+
+//___________________________________________________________
+void AliAlgSteer::MPRec2Mille(const char* mprecfile,const char* millefile,Bool_t bindata)
+{
+  // converts MPRecord tree to millepede binary format
+  TFile* flmpr = TFile::Open(mprecfile);
+  if (!flmpr) {
+    AliErrorClassF("Failed to open MPRecord file %s",mprecfile);
+    return;
+  }
+  TTree* mprTree = (TTree*)flmpr->Get("mpTree");
+  if (!mprTree) {
+    AliErrorClassF("No mpTree in xMPRecord file %s",mprecfile);
+    return;
+  }
+  MPRec2Mille(mprTree,millefile,bindata);
+  delete mprTree;
+  flmpr->Close();
+  delete flmpr;
+}
+
+//___________________________________________________________
+void AliAlgSteer::MPRec2Mille(TTree* mprTree,const char* millefile,Bool_t bindata)
+{
+  // converts MPRecord tree to millepede binary format
+  //
+  TBranch* br = mprTree->GetBranch("mprec");
+  if (!br) {
+    AliErrorClass("provided tree does not contain branch mprec");
+    return;
+  }
+  AliAlgMPRecord* rec = new AliAlgMPRecord();
+  br->SetAddress(&rec);
+  int nent = mprTree->GetEntries();
+  TString mlname = millefile;
+  if (mlname.IsNull()) mlname = "mpRec2mpData";
+  if (!mlname.EndsWith(fgkMPDataExt)) mlname += fgkMPDataExt;
+  Mille* mille = new Mille(mlname,bindata);
+  TArrayF buffDLoc;
+  for (int i=0;i<nent;i++) {
+    br->GetEntry(i);
+    int nr = rec->GetNResid(); // number of residual records
+    int nloc = rec->GetNVarLoc();
+    if (buffDLoc.GetSize()<nloc) buffDLoc.Set(nloc+100);
+    float *buffLocV = buffDLoc.GetArray();
+    const float *recDGlo = rec->GetArrGlo();
+    const float *recDLoc = rec->GetArrLoc();
+    const short *recLabLoc = rec->GetArrLabLoc();
+    const int   *recLabGlo = rec->GetArrLabGlo();
+    //
+    for (int ir=0;ir<nr;ir++) {
+      memset(buffLocV,0,nloc*sizeof(float));
+      int ndglo = rec->GetNDGlo(ir);
+      int ndloc = rec->GetNDLoc(ir);
+      // fill 0-suppressed array from MPRecord to non-0-suppressed array of Mille
+      for (int l=ndloc;l--;) buffLocV[recLabLoc[l]] = recDLoc[l]; 
+      //
+      mille->mille(nloc,buffLocV,ndglo,recDGlo,recLabGlo,rec->GetResid(ir),rec->GetResErr(ir));
+      //
+      recLabGlo += ndglo; // next record
+      recDGlo   += ndglo; 
+      recDLoc   += ndloc;
+    }
+    mille->end();
+  }
+  delete mille;
+  br->SetAddress(0);
+  delete rec;
+}

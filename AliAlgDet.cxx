@@ -12,6 +12,7 @@
 #include "AliCDBId.h"
 #include "AliExternalTrackParam.h"
 #include <TString.h>
+#include <TH1.h>
 
 ClassImp(AliAlgDet)
 
@@ -492,7 +493,7 @@ AliAlgVol* AliAlgDet::GetVolOfDOFID(Int_t id) const
 }
 
 //______________________________________________________
-void AliAlgDet::Terminate()
+void AliAlgDet::Terminate(TH1* h)
 {
   // called at the end of processing
   int nvol = GetNVolumes();
@@ -500,6 +501,6 @@ void AliAlgDet::Terminate()
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
     // call init for root level volumes, they will take care of their children
-    if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat();
+    if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat(h);
   }
 }
