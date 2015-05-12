@@ -84,6 +84,7 @@ class AliAlgRes: public TObject
   Float_t* fSigYZ;                  //[fNPoints] YZ err
   Float_t* fSigZ2;                  //[fNPoints] Z err^2
   Int_t*   fVolID;                  //[fNPoints] volume id (0 for vertex constraint)
+  Int_t*   fLabel;                  //[fNPoints] label of the volume
   //
   ClassDef(AliAlgRes,1);
 };

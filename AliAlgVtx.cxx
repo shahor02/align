@@ -21,7 +21,7 @@ using namespace TMath;
 ClassImp(AliAlgVtx)
 
 //_________________________________________________________
-AliAlgVtx::AliAlgVtx() : AliAlgSens("Vertex",0,0)
+AliAlgVtx::AliAlgVtx() : AliAlgSens("Vertex",0,1)
 {
   // def c-tor
   SetVarFrame(kLOC);

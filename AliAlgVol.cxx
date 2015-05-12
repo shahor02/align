@@ -122,9 +122,10 @@ UInt_t      AliAlgVol::fgDefGeomFree =
 const char* AliAlgVol::fgkDOFName[AliAlgVol::kNDOFGeom]={"TX","TY","TZ","PSI","THT","PHI"};
 
 //_________________________________________________________
-AliAlgVol::AliAlgVol(const char* symname) :
+AliAlgVol::AliAlgVol(const char* symname, int iid) :
   TNamed(symname,"")
   ,fVarFrame(kTRA)
+  ,fIntID(iid)
   ,fX(0)
   ,fAlp(0)
   ,fNDOFs(0)
@@ -140,6 +141,7 @@ AliAlgVol::AliAlgVol(const char* symname) :
   ,fFirstParGloID(-1)
   ,fParVals(0)
   ,fParErrs(0)
+  ,fParLabs(0)
   //
   ,fMatL2GReco()
   ,fMatL2G()
@@ -251,8 +253,8 @@ void AliAlgVol::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f | Used Points: %d\n",
-	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp,fNProcPoints);
+  printf("Lev:%2d IntID:%7d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f | Used Points: %d\n",
+	 CountParents(),GetInternalID(),GetSymName(),GetNChildren(),fX,fAlp,fNProcPoints);
   printf("     DOFs: Tot: %d (offs: %5d) Free: %d  Geom: %d {",fNDOFs,fFirstParGloID,fNDOFFree,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame.",fgkFrameName[fVarFrame]);
@@ -366,17 +368,19 @@ void AliAlgVol::SetTrackingFrame()
 }
 
 //__________________________________________________________________
-void AliAlgVol::AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs)
+void AliAlgVol::AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs, Int_t *labs)
 {
   // Assigns offset of the DOFS of this volume in global array of DOFs, attaches arrays to volumes
   //
   fParVals = pars + cntDOFs;
   fParErrs = errs + cntDOFs;
+  fParLabs = labs + cntDOFs;
   SetFirstParGloID(cntDOFs);
+  for (int i=0;i<fNDOFs;i++) fParLabs[i] = GetInternalID()+i;
   cntDOFs += fNDOFs; // increment total DOFs count
   //
   int nch = GetNChildren();   // go over childs
-  for (int ich=0;ich<nch;ich++) GetChild(ich)->AssignDOFs(cntDOFs,pars,errs);
+  for (int ich=0;ich<nch;ich++) GetChild(ich)->AssignDOFs(cntDOFs,pars,errs,labs);
   //
   return;
 }
@@ -496,7 +500,7 @@ void AliAlgVol::WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt) co
       else if (!IsFreeDOF(i)) {if (!showFix) continue;} // Fixed: print commented if asked
       else if (!showDef) continue;  // free-unconditioned: print commented if asked
       //
-      fprintf(parOut,"%s %6d %+e %+e\t%s %s p%d\n",comment[cmt],DOFID2Label(GetParGloID(i)),
+      fprintf(parOut,"%s %7d %+e %+e\t%s %s p%d\n",comment[cmt],GetParLab(i),
 	      GetParVal(i),GetParErr(i),comment[kOnOn],IsFreeDOF(i) ? "  ":"FX",i);
     }
     fprintf(parOut,"\n");
@@ -549,7 +553,7 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
       for (int ip=0;ip<kNDOFGeom;ip++) {
 	double jv = jac[ics*kNDOFGeom+ip];
 	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)) 
-	  fprintf(conOut,"%6d %+.3e\t",DOFID2Label(child->GetParGloID(ip)),jv);
+	  fprintf(conOut,"%6d %+.3e\t",child->GetParLab(ip),jv);
       } // loop over DOF's of children contributing to this constraint
       fprintf(conOut,"%s from %s\n",comment[kOnOn],child->GetName());
     } // loop over children
@@ -843,7 +847,7 @@ void AliAlgVol::FillDOFHisto(TH1* h) const
   for (int idf=0;idf<ndf;idf++) {
     int dof = idf+dof0+1;
     h->SetBinContent(dof,stat);
-    h->GetXaxis()->SetBinLabel(dof,Form("%d_%s_%s",dof,GetSymName(),GetDOFName(idf)));
+    h->GetXaxis()->SetBinLabel(dof,Form("%d_%s_%s",GetParLab(idf),GetSymName(),GetDOFName(idf)));
   }
   //
 }

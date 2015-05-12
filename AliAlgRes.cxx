@@ -1,6 +1,7 @@
 #include "AliAlgRes.h"
 #include "AliAlgTrack.h"
 #include "AliAlgPoint.h"
+#include "AliAlgSens.h"
 #include "AliLog.h"
 #include <TString.h>
 #include <TMath.h>
@@ -32,6 +33,7 @@ AliAlgRes::AliAlgRes()
   ,fSigYZ(0)
   ,fSigZ2(0)
   ,fVolID(0)
+  ,fLabel(0)
 {
   // def c-tor
 }
@@ -52,6 +54,7 @@ AliAlgRes::~AliAlgRes()
   delete[] fSigYZ;
   delete[] fSigZ2;
   delete[] fVolID;
+  delete[] fLabel;
 }
 
 //________________________________________________
@@ -71,6 +74,7 @@ void AliAlgRes::Resize(Int_t np)
     delete[] fSigYZ;
     delete[] fSigZ2;
     delete[] fVolID;
+    delete[] fLabel;
     //
     fNBook = 100+np;
     fX       = new Float_t[fNBook];
@@ -85,6 +89,7 @@ void AliAlgRes::Resize(Int_t np)
     fSigYZ   = new Float_t[fNBook];
     fSigZ2   = new Float_t[fNBook];
     fVolID   = new Int_t[fNBook];
+    fLabel   = new Int_t[fNBook];
     //
     memset(fX    , 0,fNBook*sizeof(Float_t));
     memset(fY    , 0,fNBook*sizeof(Float_t));
@@ -98,6 +103,7 @@ void AliAlgRes::Resize(Int_t np)
     memset(fSigYZ, 0,fNBook*sizeof(Float_t));
     memset(fSigZ2, 0,fNBook*sizeof(Float_t));
     memset(fVolID, 0,fNBook*sizeof(Int_t));
+    memset(fLabel, 0,fNBook*sizeof(Int_t));
   }
   //
 }
@@ -138,8 +144,8 @@ void AliAlgRes::Print(const Option_t *opt) const
 	y = GetYLab(i);
 	z = GetZLab(i);
       }
-      printf("%5d %+5.2f %+7.2f %+7.2f %+7.2f %+5.2f %+5.2f %+9.2e %+9.2e\n",
-	     fVolID[i],fAlpha[i],x,y,z,fSnp[i],fTgl[i],fDY[i],fDZ[i]);
+      printf("%5d %7d %+5.2f %+7.2f %+7.2f %+7.2f %+5.2f %+5.2f %+9.2e %+9.2e\n",
+	     fVolID[i],fLabel[i],fAlpha[i],x,y,z,fSnp[i],fTgl[i],fDY[i],fDZ[i]);
     }
   }
 }
@@ -168,6 +174,7 @@ Bool_t AliAlgRes::FillTrack(const AliAlgTrack* trc)
     if (!pnt->ContainsMeasurement()) continue;
     if (!pnt->IsStatOK()) pnt->IncrementStat();
     fVolID[nfill] = pnt->GetVolID();
+    fLabel[nfill] = pnt->GetSensor()->GetInternalID();
     fAlpha[nfill] = pnt->GetAlphaSens();
     fX[nfill]     = pnt->GetXPoint()*inv;
     fY[nfill]     = pnt->GetYTracking();

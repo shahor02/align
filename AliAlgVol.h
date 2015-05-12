@@ -25,16 +25,18 @@ class AliAlgVol : public TNamed
   enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15)};
   enum {kDefChildConstr=0xff};
   //
-  AliAlgVol(const char* symname=0);
+  AliAlgVol(const char* symname=0, int iid=0);
   virtual ~AliAlgVol();
   //
   const char* GetSymName()                       const {return GetName();}
   //
   Int_t      GetVolID()                          const {return (Int_t)GetUniqueID();}
   void       SetVolID(Int_t v)                         {SetUniqueID(v);}
+  Int_t      GetInternalID()                     const {return fIntID;}
+  void       SetInternalID(Int_t v)                    {fIntID = v;}
   //
   //
-  void       AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs);
+  void       AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs, Int_t *labs);
   void       InitDOFs();
   //
   Frame_t    GetVarFrame()                       const {return fVarFrame;}
@@ -75,6 +77,7 @@ class AliAlgVol : public TNamed
   Float_t*   GetParVals()                        const {return fParVals;}
   Double_t   GetParVal(int par)                  const {return fParVals[par];}
   Double_t   GetParErr(int par)                  const {return fParErrs[par];}
+  Int_t      GetParLab(int par)                  const {return fParLabs[par];}
   //
   void       SetParVals(Int_t npar,Double_t *vl,Double_t *er);
   void       SetParVal(Int_t par,Double_t v=0)          {fParVals[par] = v;}
@@ -153,6 +156,7 @@ class AliAlgVol : public TNamed
  protected:
   //
   Frame_t    fVarFrame;               // Variation frame for this volume
+  Int_t      fIntID;                  // internal id within the detector
   Double_t   fX;                      // tracking frame X offset
   Double_t   fAlp;                    // tracking frame alpa
   //
@@ -169,6 +173,7 @@ class AliAlgVol : public TNamed
   Int_t      fFirstParGloID;          // ID of the 1st parameter in the global results array
   Float_t*   fParVals;                // values of the fitted params
   Float_t*   fParErrs;                // errors of the fitted params
+  Int_t*     fParLabs;                // labels for parameters
   //
   TGeoHMatrix fMatL2GReco;            // local to global matrix used for reco of data being processed
   TGeoHMatrix fMatL2G;                // local to global matrix, including current alignment

@@ -306,11 +306,12 @@ Int_t AliAlgDet::AssignDOFs()
   int gloCount0(fAlgSteer->GetNDOFs()), gloCount(fAlgSteer->GetNDOFs());
   Float_t* pars = fAlgSteer->GetGloParVal(); 
   Float_t* errs = fAlgSteer->GetGloParErr(); 
+  Int_t*   labs = fAlgSteer->GetGloParLab();
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
     // call init for root level volumes, they will take care of their children
-    if (!vol->GetParent()) vol->AssignDOFs(gloCount,pars,errs);
+    if (!vol->GetParent()) vol->AssignDOFs(gloCount,pars,errs,labs);
   }
   //
   if (fNDOFs != gloCount-gloCount0) AliFatalF("Mismatch between declared %d and initialized %d DOFs for %s",

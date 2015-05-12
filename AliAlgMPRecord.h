@@ -19,7 +19,7 @@ class AliAlgMPRecord : public TObject
   UInt_t       GetTrackID()            const {return fTrackID;}
   void         SetTrackID(UInt_t t)          {fTrackID = t;}
   Bool_t       IsCosmic()              const {return TestBit(kCosmicBit);}
-  void         SetCosmic(Bool_t v=kTRUE)     {SetBit(kCosmicBit);}
+  void         SetCosmic(Bool_t v=kTRUE)     {SetBit(kCosmicBit,v);}
   //
   Int_t        GetNVarGlo()            const {return fNVarGlo;}
   void         SetNVarGlo(int n)             {fNVarGlo = n;}
@@ -32,12 +32,14 @@ class AliAlgMPRecord : public TObject
   Float_t      GetResid(int id)        const {return fResid[id];}
   Float_t      GetResErr(int id)       const {return fResErr[id];}
   //
+  Int_t        GetNDLocTot()           const {return fNDLocTot;}
+  Int_t        GetNDGloTot()           const {return fNDGloTot;}
   const Float_t* GetArrGlo()           const {return fDGlo;}
   const Float_t* GetArrLoc()           const {return fDLoc;}
   const Short_t* GetArrLabLoc()        const {return fIDLoc;}
   const Int_t*   GetArrLabGlo()        const {return fIDGlo;}
   //
-  Bool_t       FillTrack(const AliAlgTrack* trc);
+  Bool_t       FillTrack(const AliAlgTrack* trc, const Int_t *id2Lab=0);
   //
   void         Resize(Int_t nresid, Int_t nloc, Int_t nglo);
   //

@@ -26,8 +26,6 @@ class AliAlgSens : public AliAlgVol
   //
   void       SetDetector(const AliAlgDet* det)         {fDet = det;}
   const AliAlgDet* GetDetector()                 const {return fDet;}
-  Int_t GetInternalID()                          const {return fIntID;}
-  void  SetInternalID(Int_t v)                         {fIntID = v;}
   //
   void  IncrementStat()                                {fNProcPoints++;}
   //
@@ -64,7 +62,6 @@ class AliAlgSens : public AliAlgVol
   //
  protected:
   //
-  Int_t    fIntID;                    // internal id within the detector
   Double_t fAddError[2];              // additional error increment for measurement
   const AliAlgDet* fDet;              // pointer on detector
   //

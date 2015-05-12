@@ -157,8 +157,9 @@ void Mille::kill()
 
 //___________________________________________________________________________
 /// Write buffer (set of derivatives with same local parameters) to file.
-void Mille::end()
+int Mille::end()
 {
+  int wrote = 0;
   if (myBufferPos > 0) { // only if anything stored...
     const int numWordsToWrite = (myBufferPos + 1)*2;
     float* bufferFloat = myBufferFloat.GetArray();
@@ -183,8 +184,10 @@ void Mille::end()
       }
       myOutFile << "\n";
     }
+    wrote = (myBufferPos+1)*(sizeof(bufferFloat[0])+sizeof(bufferInt[0]))+sizeof(int);
   }
   myBufferPos = -1; // reset buffer for next set of derivatives
+  return wrote;
 }
 
 //___________________________________________________________________________

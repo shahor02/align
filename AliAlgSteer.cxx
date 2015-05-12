@@ -86,6 +86,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
    //
   ,fGloParVal(0)
   ,fGloParErr(0)
+  ,fGloParLab(0)
   ,fRefPoint(0)
   ,fESDTree(0)
   ,fESDEvent(0)
@@ -166,6 +167,7 @@ AliAlgSteer::~AliAlgSteer()
   delete fAlgTrack;
   delete[] fGloParVal;
   delete[] fGloParErr;
+  delete[] fGloParLab;
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
   delete fVtxSens;
   delete fRefPoint;
@@ -190,6 +192,7 @@ void AliAlgSteer::InitDetectors()
   // special fake sensor for vertex constraint point
   // it has special T2L matrix adjusted for each track, no need to init it here
   fVtxSens = new AliAlgVtx();
+  fVtxSens->SetInternalID(1);
   fVtxSens->PrepareMatrixL2G();
   fVtxSens->PrepareMatrixL2GIdeal();
   dofCnt += fVtxSens->GetNDOFs();
@@ -206,8 +209,10 @@ void AliAlgSteer::InitDetectors()
   //
   fGloParVal = new Float_t[dofCnt];
   fGloParErr = new Float_t[dofCnt];
+  fGloParLab = new Int_t[dofCnt];  
   memset(fGloParVal,0,dofCnt*sizeof(Float_t));
   memset(fGloParErr,0,dofCnt*sizeof(Float_t));
+  memset(fGloParLab,0,dofCnt*sizeof(Int_t));
   AliInfoF("Booked %d global parameters, actual DOFs will be assigned after InitDOFs",dofCnt);
   //
 }
@@ -223,7 +228,7 @@ void AliAlgSteer::InitDOFs()
   //
   fNDOFs = 0;
   //
-  fVtxSens->AssignDOFs(fNDOFs,fGloParVal,fGloParErr);
+  fVtxSens->AssignDOFs(fNDOFs,fGloParVal,fGloParErr,fGloParLab);
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
@@ -243,6 +248,7 @@ void AliAlgSteer::InitDOFs()
     if (nact<fMinDetAcc[i])
       AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc[i]);
   //
+  AliInfoF("%d global parameters in %d active detectors",fNDOFs,nact);
 }
 
 //________________________________________________________________
@@ -618,7 +624,7 @@ Bool_t AliAlgSteer::StoreProcessedTrack(Int_t what)
 //_________________________________________________________
 Bool_t AliAlgSteer::FillMilleData()
 {
-  // store MP2 in Mille format
+  // store MP2 data in Mille format
   if (!fMille) {
     TString mo = Form("%s%s",fMPDatFileName.Data(),fgkMPDataExt);
     fMille = new Mille(mo.Data(),fMilleOutBin);
@@ -669,7 +675,7 @@ Bool_t AliAlgSteer::FillMilleData()
 	for (int j=0;j<nDGlo;j++) {
 	  if (!IsZeroAbs(deriv[j])) {
 	    buffDG[nGlo]  = deriv[j];        // value of derivative
-	    buffI[nGlo++] = DOFID2Label(gloIDP[j]);  // global DOF ID + 1 (Millepede needs positive labels)
+	    buffI[nGlo++] = GetGloParLab(gloIDP[j]);  // global DOF ID + 1 (Millepede needs positive labels)
 	  }
 	}
 	fMille->mille(nVarLoc,buffDL, nGlo,buffDG, buffI, 
@@ -710,7 +716,7 @@ Bool_t AliAlgSteer::FillMPRecData()
   if (!fMPRecord) InitMPRecOutput();
   //
   fMPRecord->Clear();
-  if (!fMPRecord->FillTrack(fAlgTrack)) return kFALSE;
+  if (!fMPRecord->FillTrack(fAlgTrack,fGloParLab)) return kFALSE;
   fMPRecord->SetRun(fRunNumber);
   fMPRecord->SetTimeStamp(fESDEvent->GetTimeStamp());
   UInt_t tID = 0xffff & UInt_t(fESDTrack[0]->GetID());
@@ -1284,8 +1290,9 @@ AliAlgVol* AliAlgSteer::GetVolOfDOFID(int id) const
   // return volume owning DOF with this ID
   for (int i=fNDet;i--;) {
     AliAlgDet* det = GetDetector(i);
-    if (det->OwnsDOFID(id)) det->GetVolOfDOFID(id);
+    if (det->OwnsDOFID(id)) return det->GetVolOfDOFID(id);
   }
+  if (fVtxSens && fVtxSens->OwnsDOFID(id)) return fVtxSens;
   return 0;
 }
 
@@ -1334,16 +1341,14 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
   FILE* strFl = fopen (fMPSteerFileName.Data(),"w+");
   //
   // --- template of steering file
-  fprintf(strFl,"%s%-20s\t%s %s\n\n\n",cmt[kOff],"CFiles",cmt[kOnOn],"put below *.mille files list");
+  fprintf(strFl,"%-20s%s %s\n",fMPParFileName.Data(),cmt[kOnOn],"parameters template");
+  fprintf(strFl,"%-20s%s %s\n",fMPConFileName.Data(),cmt[kOnOn],"constraints template");
   //
-  fprintf(strFl,"%s%-20s %s\n",fMPParFileName.Data(),cmt[kOnOn],"parameters template");
-  fprintf(strFl,"%s%-20s %s\n",fMPConFileName.Data(),cmt[kOnOn],"constraints template");
-  //
-  fprintf(strFl,"\n\n%s\t%s\n",cmt[kOnOn],"MUST uncomment 1 solvint methods and tune it");
+  fprintf(strFl,"\n\n%s %s\n",cmt[kOnOn],"MUST uncomment 1 solving methods and tune it");
   //
   int nm = sizeof(kSolMeth)/sizeof(char*);
   for (int i=0;i<nm;i++) {
-    fprintf(strFl,"%s%s\t%-20s\t%2d\t%.2f\t%s\n",cmt[kOn],"method",kSolMeth[i],kDefNIter,kDefDelta,cmt[kOnOn]);
+    fprintf(strFl,"%s%s %-20s %2d %.2f %s\n",cmt[kOn],"method",kSolMeth[i],kDefNIter,kDefDelta,cmt[kOnOn]);
   }
   //
   const float kDefChi2F0=20.,kDefChi2F=3.; // chi2 factors for 1st and following iterations
@@ -1351,15 +1356,17 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
   const int   kDefOutlierDW=4; // start Cauchy function downweighting from iteration
   const int   kDefEntries=25;  // min entries per DOF to allow its variation
   //
-  fprintf(strFl,"\n\n%s\t%s\n",cmt[kOnOn],"Optional settings");
-  fprintf(strFl,"\n%-20s\t%s\t%.2f\t%.2f\t%s %s\n",cmt[kOn],"chisqcut",kDefChi2F0,kDefChi2F,
+  fprintf(strFl,"\n\n%s %s\n",cmt[kOnOn],"Optional settings");
+  fprintf(strFl,"\n%s%-20s %.2f %.2f %s %s\n",cmt[kOn],"chisqcut",kDefChi2F0,kDefChi2F,
 	  cmt[kOnOn],"chi2 cut factors for 1st and next iterations");
-  fprintf(strFl,"%s%-20s\t%2d\t%s %s\n",cmt[kOn],"outlierdownweighting",kDefOutlierDW,
+  fprintf(strFl,"%s%-20s %2d %s %s\n",cmt[kOn],"outlierdownweighting",kDefOutlierDW,
 	  cmt[kOnOn],"iteration for outliers downweighting with Cauchi factor");
-  fprintf(strFl,"%s%-20s\t%.3f\t%s %s\n",cmt[kOn],"dwfractioncut",kDefDWFrac,
+  fprintf(strFl,"%s%-20s %.3f %s %s\n",cmt[kOn],"dwfractioncut",kDefDWFrac,
 	  cmt[kOnOn],"cut outliers with downweighting above this factor");
-  fprintf(strFl,"%s%-20s\t%2d\t%s %s\n",cmt[kOn],"entries",kDefEntries,
+  fprintf(strFl,"%s%-20s %2d %s %s\n",cmt[kOn],"entries",kDefEntries,
 	  cmt[kOnOn],"min entries per DOF to allow its variation");
+  //
+  fprintf(strFl,"\n\n\n%s%-20s %s %s\n\n\n",cmt[kOff],"CFiles",cmt[kOnOn],"put below *.mille files list");
   //
   if (fVtxSens) fVtxSens->WritePedeInfo(parFl,conFl,opt);
   //
@@ -1412,13 +1419,14 @@ Bool_t AliAlgSteer::ReadParameters(const char* parfile, Bool_t useErrors)
       return kFALSE;
     }
     if (nr==3) asg0++; 
+    int parID = Label2ParID(lab);
     if (lab<1 || lab>fNDOFs) {
-      AliErrorF("Expected labels in the range 1:%d, got %d at line %d",fNDOFs,lab,cnt);
+      AliErrorF("Invalid label %d at line %d -> ParID=%d",lab,cnt,parID);
       return kFALSE;
     }
     lab--; // millepede uses as labels ID+1
-    fGloParVal[lab] = v0;
-    if (useErrors) fGloParErr[lab] = v1;
+    fGloParVal[parID] = v0;
+    if (useErrors) fGloParErr[parID] = v1;
     asg++;
     //
   };
@@ -1514,4 +1522,24 @@ void AliAlgSteer::CreateStatHisto()
       xax->SetBinLabel(j*kNHVars+i+1, Form("%s.%s",j?"CSM":"COL",fgkHStatName[i]));
     }
   }
+}
+
+//____________________________________________________________
+void AliAlgSteer::PrintLabels() const
+{
+  // print global IDs and Labels
+  for (int i=0;i<fNDOFs;i++) {
+    AliAlgVol* vol = GetVolOfDOFID(i);
+    if (!vol) {printf("DOF %d is orphan: Lb:%d\n",i,fGloParLab[i]); continue;}
+    printf("%5d %7d ! %s %s\n",i,fGloParLab[i],vol->GetSymName(),
+	   vol->GetDOFName(i-vol->GetFirstParGloID()));
+  }
+}
+
+//____________________________________________________________
+Int_t AliAlgSteer::Label2ParID(int lab) const
+{
+  // convert Mille label to ParID (slow)
+  for (int i=fNDOFs;i--;) if (fGloParLab[i]==lab) return i;
+  return -1;
 }

@@ -33,9 +33,11 @@ void AliAlgDetTPC::DefineVolumes()
   const char* kROC[kIOROC] = {"Inner","Outer"};
   //  AliAlgSensTPC *chamb=0;
   //
-  AliAlgVol* volTPC = new AliAlgVol("ALIC_1/TPC_M_1");
+  int labDet = (GetDetID()+1)*1000000;
+  AliAlgVol* volTPC = new AliAlgVol("ALIC_1/TPC_M_1",labDet);
   AddVolume( volTPC ); 
   //
+  
   for (int roc=0;roc<kIOROC;roc++) { // inner/outer
     for (int side=0;side<kAC;side++) { // A/C
       for (int isc=0;isc<kNSect;isc++) { // sector ID
@@ -46,6 +48,7 @@ void AliAlgDetTPC::DefineVolumes()
 	}
 	Int_t iid = side*kNSect+isc;
 	UShort_t vid = AliGeomManager::LayerToVolUID(AliGeomManager::kTPC1+roc,iid);
+	iid = labDet + (1+side)*10000 + (1+isc)*100+(1+roc);
 	AliAlgSensTPC* sens = new AliAlgSensTPC(symname,vid,iid,isc);
 	sens->SetParent(volTPC);
 	AddVolume(sens);

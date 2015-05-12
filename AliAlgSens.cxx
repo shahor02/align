@@ -28,8 +28,7 @@ using namespace TMath;
 
 //_________________________________________________________
 AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid) 
-  : AliAlgVol(name)
-  ,fIntID(iid)
+  : AliAlgVol(name,iid)
   ,fDet(0)
 {
   // def c-tor
@@ -305,8 +304,8 @@ void AliAlgSens::Print(const Option_t *opt) const
   // print info
   TString opts = opt;
   opts.ToLower();
-  printf("Lev:%2d %s VId:%6d (IntID:%4d) X:%8.4f Alp:%+.4f | Err: %.4e %.4e | Used Points: %d\n",
-	 CountParents(), GetSymName(), GetVolID(), GetInternalID(),fX, fAlp, 
+  printf("Lev:%2d IntID:%7d %s VId:%6d X:%8.4f Alp:%+.4f | Err: %.4e %.4e | Used Points: %d\n",
+	 CountParents(), GetInternalID(), GetSymName(), GetVolID(), fX, fAlp, 
 	 fAddError[0],fAddError[1],fNProcPoints);
   printf("     DOFs: Tot: %d (offs: %5d) Free: %d  Geom: %d {",fNDOFs,fFirstParGloID,fNDOFFree,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
@@ -330,7 +329,10 @@ void AliAlgSens::PrepareMatrixT2L()
 {
   // extract from geometry T2L matrix
   const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(GetVolID());
-  if (!t2l) AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
+  if (!t2l) {
+    Print("long");
+    AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
+  }
   SetMatrixT2L(*t2l);  
   //
 }

@@ -49,9 +49,9 @@ AliAlgMPRecord::~AliAlgMPRecord()
 }
 
 //_________________________________________________________
-Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
+Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc, const Int_t *id2Lab)
 {
-  // fill track info
+  // fill track info, optionally substitutind glopar par ID by label
   //
   if (!trc->GetDerivDone()) {
     AliError("Track derivatives are not yet evaluated");
@@ -130,7 +130,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc)
 	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDGlo[ fNDGloTot] = deriv[j];        // value of derivative
-	  fIDGlo[fNDGloTot] = DOFID2Label(gloIDP[j]);       // global DOF ID
+	  fIDGlo[fNDGloTot] = id2Lab ? id2Lab[gloIDP[j]] : gloIDP[j];       // global DOF ID
 	  fNDGloTot++;
 	}
 	fNDGlo[fNResid] = nnon0;

@@ -149,6 +149,10 @@ class AliAlgSteer : public TObject
   Bool_t     ReadParameters(const char* parfile="millepede.res", Bool_t useErrors=kTRUE);
   Float_t*   GetGloParVal()                               const {return (Float_t*)fGloParVal;}
   Float_t*   GetGloParErr()                               const {return (Float_t*)fGloParErr;}
+  Int_t*     GetGloParLab()                               const {return (Int_t*)fGloParLab;}
+  Int_t      GetGloParLab(int i)                          const {return (Int_t)fGloParLab[i];}
+  Int_t      ParID2Label(int i)                           const {return GetGloParLab(i);}
+  Int_t      Label2ParID(int lab)                         const;
   AliAlgVol* GetVolOfDOFID(int id)                        const;
   AliAlgDet* GetDetOfDOFID(int id)                        const;
   //
@@ -236,6 +240,7 @@ class AliAlgSteer : public TObject
   Int_t  GetRefOCDBLoaded()                               const {return fRefOCDBLoaded;}
   //
   virtual void Print(const Option_t *opt="")              const;
+  void         PrintLabels()                              const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
   static void    MPRec2Mille(const char* mprecfile,const char* millefile="mpData.mille",Bool_t bindata=kTRUE);
@@ -280,8 +285,9 @@ class AliAlgSteer : public TObject
   Double_t      fMaxChi2forVC;                            // track-vertex chi2 cut to allow vertex constraint
   //
   //
-  Float_t*      fGloParVal;                               //[fNDOFs] parameters for free DOFs
-  Float_t*      fGloParErr;                               //[fNDOFs] parameters for free DOFs
+  Float_t*      fGloParVal;                               //[fNDOFs] parameters for DOFs
+  Float_t*      fGloParErr;                               //[fNDOFs] errors for DOFs
+  Int_t*        fGloParLab;                               //[fNDOFs] labels for DOFs
   //
   AliAlgPoint*   fRefPoint;                               // reference point for track definition
   //
