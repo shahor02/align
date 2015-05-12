@@ -1531,7 +1531,7 @@ void AliAlgSteer::PrintLabels() const
   for (int i=0;i<fNDOFs;i++) {
     AliAlgVol* vol = GetVolOfDOFID(i);
     if (!vol) {printf("DOF %d is orphan: Lb:%d\n",i,fGloParLab[i]); continue;}
-    printf("%5d %7d ! %s %s\n",i,fGloParLab[i],vol->GetSymName(),
+    printf("%5d %9d ! %s %s\n",i,fGloParLab[i],vol->GetSymName(),
 	   vol->GetDOFName(i-vol->GetFirstParGloID()));
   }
 }

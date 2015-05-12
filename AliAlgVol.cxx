@@ -376,7 +376,7 @@ void AliAlgVol::AssignDOFs(Int_t &cntDOFs, Float_t *pars, Float_t *errs, Int_t *
   fParErrs = errs + cntDOFs;
   fParLabs = labs + cntDOFs;
   SetFirstParGloID(cntDOFs);
-  for (int i=0;i<fNDOFs;i++) fParLabs[i] = GetInternalID()+i;
+  for (int i=0;i<fNDOFs;i++) fParLabs[i] = GetInternalID()*100+i;
   cntDOFs += fNDOFs; // increment total DOFs count
   //
   int nch = GetNChildren();   // go over childs
@@ -500,7 +500,7 @@ void AliAlgVol::WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt) co
       else if (!IsFreeDOF(i)) {if (!showFix) continue;} // Fixed: print commented if asked
       else if (!showDef) continue;  // free-unconditioned: print commented if asked
       //
-      fprintf(parOut,"%s %7d %+e %+e\t%s %s p%d\n",comment[cmt],GetParLab(i),
+      fprintf(parOut,"%s %9d %+e %+e\t%s %s p%d\n",comment[cmt],GetParLab(i),
 	      GetParVal(i),GetParErr(i),comment[kOnOn],IsFreeDOF(i) ? "  ":"FX",i);
     }
     fprintf(parOut,"\n");
@@ -553,7 +553,7 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
       for (int ip=0;ip<kNDOFGeom;ip++) {
 	double jv = jac[ics*kNDOFGeom+ip];
 	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)) 
-	  fprintf(conOut,"%6d %+.3e\t",child->GetParLab(ip),jv);
+	  fprintf(conOut,"%9d %+.3e\t",child->GetParLab(ip),jv);
       } // loop over DOF's of children contributing to this constraint
       fprintf(conOut,"%s from %s\n",comment[kOnOn],child->GetName());
     } // loop over children
