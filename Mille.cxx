@@ -29,7 +29,8 @@
  * \param[in] writeZero    flag for keeping of zeros
  */
 Mille::Mille(const char *outFileName, bool asBinary, bool writeZero) : 
-  myOutFile(outFileName, (asBinary ? (std::ios::binary | std::ios::out) : std::ios::out)),
+  myOutFile(outFileName, 
+	    (asBinary ? (std::ios::binary | std::ios::out | std::ios::trunc) : (std::ios::out | std::ios::trunc ))),
   myAsBinary(asBinary), myWriteZero(writeZero),myBufferSize(0),
   myBufferInt(5000),myBufferFloat(5000),
   myBufferPos(-1), myHasSpecial(false)
