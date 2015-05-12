@@ -253,7 +253,7 @@ void AliAlgVol::Print(const Option_t *opt) const
   opts.ToLower();
   printf("Lev:%2d %s | %2d nodes | Effective X:%8.4f Alp:%+.4f | Used Points: %d\n",
 	 CountParents(),GetSymName(),GetNChildren(),fX,fAlp,fNProcPoints);
-  printf("     DOFs: Tot: %d Free: %d (offs: %5d) Geom: %d {",fNDOFs,fNDOFFree,fFirstParGloID,fNDOFGeomFree);
+  printf("     DOFs: Tot: %d (offs: %5d) Free: %d  Geom: %d {",fNDOFs,fFirstParGloID,fNDOFFree,fNDOFGeomFree);
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame.",fgkFrameName[fVarFrame]);
   if (GetNChildren()) {

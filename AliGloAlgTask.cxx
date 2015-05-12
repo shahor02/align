@@ -129,5 +129,7 @@ void AliGloAlgTask::LocalInit()
   fAlgSteer = new AliAlgSteer();
   gROOT->ProcessLine(Form(".x %s+g((AliAlgSteer*)%p)",fConfMacroName.Data(),fAlgSteer));
   //
+  fAlgSteer->InitDOFs();
+  //
   fAlgSteer->Print();
 }
