@@ -33,7 +33,7 @@ void alignConf(AliAlgSteer* algSteer)
   algSteer->AddDetector(AliAlgSteer::kTOF);
   algSteer->InitDetectors();
   //
-  // algSteer->GetDetectorByDetID(AliAlgSteer::kTPC)->SetDisabled();
+  algSteer->GetDetectorByDetID(AliAlgSteer::kTPC)->SetDisabled();
   //  algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
   //  algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
