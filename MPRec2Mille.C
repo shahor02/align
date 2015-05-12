@@ -114,7 +114,8 @@ int ConvertAndStore(AliAlgMPRecord* rec, Mille* mille)
     mille->mille(nloc,buffLocV,ndglo,recDGlo,recLabGlo,rec->GetResid(ir),rec->GetResErr(ir));
     //
     recLabGlo += ndglo; // next record
-    recDGlo   += ndglo; 
+    recDGlo   += ndglo;
+    recLabLoc += ndloc;
     recDLoc   += ndloc;
   }
   return mille->end(); // bytes written
@@ -4044,18 +4045,16 @@ Bool_t  ProcessMPRec(AliAlgMPRecord* rec)
 {
   // put here user code
   int* idglo = (int*)rec->GetArrLabGlo();
+  //  short* idloc = (short*)rec->GetArrLabLoc();
   int nglo = rec->GetNDGloTot();
+  // int nloc = rec->GetNDLocTot();
   for (int i=nglo;i--;) {
-    if (idglo[i]>0) {
-     int lbnew = lab[idglo[i]-1];
-     if (lbnew<1) {
-       printf("BAD CONV: %d %d -> %d\n",i,idglo[i]-1,lbnew);
-     }
-     idglo[i] = lab[idglo[i]-1];
-    }
+    if (idglo[i]>0) idglo[i] = lab[idglo[i]-1];
     else printf("Wrong ID :%d\n",idglo[i]);
-    if (idglo[i]<1) printf("Got bad label %d\n",idglo[i]);
   }
+  //printf("nl %d %p\n",nloc,idloc);
+
+  //
   return kTRUE;
 }
 

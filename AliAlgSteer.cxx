@@ -1494,7 +1494,8 @@ void AliAlgSteer::MPRec2Mille(TTree* mprTree,const char* millefile,Bool_t bindat
       mille->mille(nloc,buffLocV,ndglo,recDGlo,recLabGlo,rec->GetResid(ir),rec->GetResErr(ir));
       //
       recLabGlo += ndglo; // next record
-      recDGlo   += ndglo; 
+      recDGlo   += ndglo;
+      recLabLoc += ndloc; 
       recDLoc   += ndloc;
     }
     mille->end();

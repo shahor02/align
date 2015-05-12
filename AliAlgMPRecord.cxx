@@ -130,7 +130,7 @@ Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc, const Int_t *id2Lab)
 	  if (IsZeroAbs(deriv[j])) continue;
 	  nnon0++;
 	  fDGlo[ fNDGloTot] = deriv[j];        // value of derivative
-	  fIDGlo[fNDGloTot] = id2Lab ? id2Lab[gloIDP[j]] : gloIDP[j];       // global DOF ID
+	  fIDGlo[fNDGloTot] = id2Lab ? id2Lab[gloIDP[j]] : gloIDP[j]+1;       // global DOF ID
 	  fNDGloTot++;
 	}
 	fNDGlo[fNResid] = nnon0;
