@@ -506,3 +506,15 @@ void AliAlgDet::Terminate(TH1* h)
     if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat(h);
   }
 }
+
+//______________________________________________________
+void AliAlgDet::CheckConstraints() const
+{
+  // check how the constraints are satisfied with current params
+  int nvol = GetNVolumes();
+  for (int iv=0;iv<nvol;iv++) {  // call for root level volumes, they will take care of their children
+    AliAlgVol *vol = GetVolume(iv);
+    if (!vol->GetParent()) vol->CheckConstraints();
+  }
+  //
+}

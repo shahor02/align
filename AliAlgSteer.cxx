@@ -1420,11 +1420,10 @@ Bool_t AliAlgSteer::ReadParameters(const char* parfile, Bool_t useErrors)
     }
     if (nr==3) asg0++; 
     int parID = Label2ParID(lab);
-    if (lab<1 || lab>fNDOFs) {
+    if (parID<0 || parID>=fNDOFs) {
       AliErrorF("Invalid label %d at line %d -> ParID=%d",lab,cnt,parID);
       return kFALSE;
     }
-    lab--; // millepede uses as labels ID+1
     fGloParVal[parID] = v0;
     if (useErrors) fGloParErr[parID] = v1;
     asg++;
@@ -1433,6 +1432,24 @@ Bool_t AliAlgSteer::ReadParameters(const char* parfile, Bool_t useErrors)
   AliInfoF("Read %d lines, assigned %d values, %d dummy",cnt,asg,asg0);
   //
   return kTRUE;
+}
+
+//______________________________________________________
+void AliAlgSteer::CheckConstraints(const char* params)
+{
+  // check how the constraints are satisfied with already uploaded or provided params
+  //
+  if (params && !ReadParameters(params)) {
+    AliErrorF("Failed to load parameters from %s",params);
+    return;
+  }
+  //
+  for (int idet=0;idet<fNDet;idet++) {
+    AliAlgDet* det = GetDetector(idet);
+    if (det->IsDisabled()) continue;
+    det->CheckConstraints();
+  }
+  //
 }
 
 //___________________________________________________________
@@ -1544,3 +1561,4 @@ Int_t AliAlgSteer::Label2ParID(int lab) const
   for (int i=fNDOFs;i--;) if (fGloParLab[i]==lab) return i;
   return -1;
 }
+

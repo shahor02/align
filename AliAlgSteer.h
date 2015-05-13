@@ -225,6 +225,7 @@ class AliAlgSteer : public TObject
   void     SetMilleTXT(Bool_t v=kTRUE)                           {fMilleOutBin = !v;}
   //
   void     GenPedeSteerFile(const Option_t *opt="")        const;
+  void     CheckConstraints(const char* params=0);
   TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
   void     DetachHistoDOF()                                      {fHistoDOF = 0;}
   TH1*     GetHistoStat()                                  const {return fHistoStat;}

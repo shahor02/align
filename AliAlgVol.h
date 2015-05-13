@@ -142,6 +142,7 @@ class AliAlgVol : public TNamed
   virtual void   Print(const Option_t *opt="")  const;
   virtual void   WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
   virtual void   WriteChildrenConstraints(FILE* conOut) const;
+  virtual void   CheckConstraints()           const;
   //
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}

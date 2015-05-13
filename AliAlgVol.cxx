@@ -562,6 +562,86 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
   delete[] cstrArr;
 }
 
+//______________________________________________________
+void AliAlgVol::CheckConstraints() const
+{
+  // check how the constraints are satysfied
+  //
+  int nch = GetNChildren();
+  if (!nch) return;
+  //
+  float *cstrArr = new float[nch*kNDOFGeom*kNDOFGeom];
+  // we need for each children the matrix for vector transformation from children frame 
+  // (in which its DOFs are defined, LOC or TRA) to this parent variation frame
+  // matRel = mPar^-1*mChild
+  TGeoHMatrix mPar;
+  if (IsFrameTRA()) GetMatrixT2G(mPar); // tracking to global
+  else              mPar = GetMatrixL2G(); // local to global
+  mPar = mPar.Inverse();
+  //
+  float *jac = cstrArr;
+  double parsTotEx[kNDOFGeom] = {0}; // explicitly calculated total modification
+  double parsTotAn[kNDOFGeom] = {0}; // analyticaly calculated total modification
+  //
+  printf("\n\n ----- Constraints Validation for %s ------\n",GetSymName());
+  printf(" chld| ");
+  for (int jp=0;jp<kNDOFGeom;jp++) printf("  %3s:%3s An/Ex  |",GetDOFName(jp),IsChildrenDOFConstrained(jp) ? "ON ":"OFF");
+  printf(" | ");
+  for (int jp=0;jp<kNDOFGeom;jp++) printf(" D%3s   ",GetDOFName(jp));  
+  printf(" ! %s\n",GetSymName());
+  for (int ich=0;ich<nch;ich++) {
+    AliAlgVol* child = GetChild(ich);
+    TGeoHMatrix matRel;
+    if (child->IsFrameTRA()) child->GetMatrixT2G(matRel); // tracking to global
+    else                     matRel = child->GetMatrixL2G(); // local to global
+    //
+    matRel.MultiplyLeft(&mPar);
+    ConstrCoefGeom(matRel,jac); // Jacobian for analytical constraint used by MillePeded
+    //
+    double parsC[kNDOFGeom]={0},parsPAn[kNDOFGeom]={0},parsPEx[kNDOFGeom]={0};
+    for (int jc=kNDOFGeom;jc--;) parsC[jc] = child->GetParVal(jc); // child params in child frame
+    TGeoHMatrix tau; 
+    child->Delta2Matrix(tau,parsC); // child correction matrix in the child frame
+    tau.Multiply(&matRel.Inverse());
+    tau.MultiplyLeft(&matRel);     //  child correction matrix in the parent frame
+    AliAlignObjParams tmpPar;
+    tmpPar.SetMatrix(tau);
+    tmpPar.GetTranslation(&parsPEx[0]);
+    tmpPar.GetAngles(&parsPEx[3]);    // explicitly calculated child params in parent frame
+    //
+    // analytically calculated child params in parent frame
+    printf("#%3d | ",ich);
+    for (int jp=0;jp<kNDOFGeom;jp++) {
+      for (int jc=0;jc<kNDOFGeom;jc++) parsPAn[jp] += jac[jp*kNDOFGeom+jc]*parsC[jc];
+      parsTotAn[jp] += parsPAn[jp];   // analyticaly calculated total modification
+      parsTotEx[jp] += parsPEx[jp];   // explicitly calculated total modification
+      //
+      printf("%+.1e/%+.1e ",parsPAn[jp],parsPEx[jp]);
+      //
+    }
+    printf(" | ");
+    for (int jc=0;jc<kNDOFGeom;jc++) printf("%+.1e ",parsC[jc]); // child proper corrections
+    printf(" ! %s\n",child->GetSymName());
+    //
+    jac += kNDOFGeom*kNDOFGeom; // matrix for next slot
+  }
+  // 
+  printf(" Tot | ");
+  for (int jp=0;jp<kNDOFGeom;jp++) printf("%+.1e/%+.1e ",parsTotAn[jp],parsTotEx[jp]);
+  printf(" | ");
+  for (int jp=0;jp<kNDOFGeom;jp++) printf("%+.1e ",GetParVal(jp)); // parent proper corrections
+  printf(" ! <----- %s\n",GetSymName());
+  //
+  delete[] cstrArr;
+  //
+  // no go to children volumes
+  for (int ich=0;ich<nch;ich++) {
+    AliAlgVol* child = GetChild(ich);
+    child->CheckConstraints();
+  }
+
+}
+
 //_________________________________________________________________
 void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const
 {
