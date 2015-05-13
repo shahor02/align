@@ -587,7 +587,7 @@ void AliAlgVol::CheckConstraints() const
   printf(" chld| ");
   for (int jp=0;jp<kNDOFGeom;jp++) printf("  %3s:%3s An/Ex  |",GetDOFName(jp),IsChildrenDOFConstrained(jp) ? "ON ":"OFF");
   printf(" | ");
-  for (int jp=0;jp<kNDOFGeom;jp++) printf(" D%3s   ",GetDOFName(jp));  
+  for (int jp=0;jp<kNDOFGeom;jp++) printf("  D%3s   ",GetDOFName(jp));  
   printf(" ! %s\n",GetSymName());
   for (int ich=0;ich<nch;ich++) {
     AliAlgVol* child = GetChild(ich);
@@ -612,7 +612,7 @@ void AliAlgVol::CheckConstraints() const
     // analytically calculated child params in parent frame
     printf("#%3d | ",ich);
     for (int jp=0;jp<kNDOFGeom;jp++) {
-      for (int jc=0;jc<kNDOFGeom;jc++) parsPAn[jp] += jac[jp*kNDOFGeom+jc]*parsC[jc];
+      for (int jc=0;jc<kNDOFGeom;jc++) 	parsPAn[jp] += jac[jp*kNDOFGeom+jc]*parsC[jc];
       parsTotAn[jp] += parsPAn[jp];   // analyticaly calculated total modification
       parsTotEx[jp] += parsPEx[jp];   // explicitly calculated total modification
       //
@@ -667,6 +667,16 @@ void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom]
   //
   // the angles are in degrees, while we use sinX->X approximation...
   const double cf[kNDOFGeom] = {1,1,1,DegToRad(),DegToRad(),DegToRad()};
+  // 
+  // since the TAU is supposed to convert local corrections in the child frame to corrections
+  // in the parent frame, we scale angular degrees of freedom back to degrees and assign the 
+  // sign of S in the S*sin(angle) in the matrix, so that the final correction has a correct
+  // sign, due to the choice of euler angles in the AliAlignObj::AnglesToMatrix
+  //   costhe*cosphi;                        -costhe*sinphi;                               sinthe;
+  //   sinpsi*sinthe*cosphi + cospsi*sinphi; -sinpsi*sinthe*sinphi + cospsi*cosphi; -costhe*sinpsi;
+  //  -cospsi*sinthe*cosphi + sinpsi*sinphi;  cospsi*sinthe*sinphi + sinpsi*cosphi;  costhe*cospsi;
+  //
+  const double sgc[kNDOFGeom] = {1.,1.,1.,-RadToDeg(),RadToDeg(),-RadToDeg()};
   //
   double dDPar[kNDOFGeom][4][4] = {
     // dDX[4][4] 
@@ -694,7 +704,7 @@ void AliAlgVol::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom]
   //
   for (int cs=0;cs<kNDOFGeom;cs++) {
     int i=ij[cs][0],j=ij[cs][1];
-    for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = dDPar[ip][i][j]*cf[ip]; // [cs][ip]
+    for (int ip=0;ip<kNDOFGeom;ip++) jac[cs*kNDOFGeom+ip] = sgc[cs]*dDPar[ip][i][j]*cf[ip]; // [cs][ip]
   }
 }
 
