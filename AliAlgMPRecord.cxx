@@ -65,6 +65,8 @@ void AliAlgMPRecord::DummyRecord(Float_t res, Float_t err, Float_t dGlo, Int_t l
   fIDLoc[0] = 0;
   fNDLoc[0] = 0;
   fDLoc[0] = 0;
+  fNDGloTot = 1;
+  fNDLocTot = 0;
   //
 }
 
@@ -198,6 +200,10 @@ void AliAlgMPRecord::Resize(Int_t nresid, Int_t nloc, Int_t nglo)
     fResid   = new Float_t[nresid];
     fResErr  = new Float_t[nresid];
     fNResidBook = nresid;
+    memset(fNDLoc,0,nresid*sizeof(Short_t));
+    memset(fNDGlo,0,nresid*sizeof(Int_t));
+    memset(fResid,0,nresid*sizeof(Float_t));
+    memset(fResErr,0,nresid*sizeof(Float_t));
   }
   if (nloc>fNDLocTotBook) {
     delete[] fIDLoc;
