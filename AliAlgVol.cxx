@@ -259,10 +259,11 @@ void AliAlgVol::Print(const Option_t *opt) const
   for (int i=0;i<kNDOFGeom;i++) printf("%d",IsFreeDOF(i) ? 1:0); 
   printf("} in %s frame.",fgkFrameName[fVarFrame]);
   if (GetNChildren()) {
-    printf(" Children constraints: {");
+    printf(" Child.Constr: {");
     for (int i=0;i<kNDOFGeom;i++) printf("%d",IsChildrenDOFConstrained(i) ? 1:0); 
     printf("}");
   }
+  if (GetExcludeFromParentConstraint()) printf(" Excl.from parent constr.");
   printf("\n");
   //
   if (opts.Contains("mat")) { // print matrices
@@ -533,6 +534,7 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
   mPar = mPar.Inverse();
   //
   float *jac = cstrArr;
+  int nchConstr = 0;
   for (int ich=0;ich<nch;ich++) {
     AliAlgVol* child = GetChild(ich);
     TGeoHMatrix matRel;
@@ -541,6 +543,13 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
     matRel.MultiplyLeft(&mPar);
     ConstrCoefGeom(matRel,jac);
     jac += kNDOFGeom*kNDOFGeom; // matrix for next slot
+    if (!child->GetExcludeFromParentConstraint()) nchConstr++;
+  }
+  //
+  if (nchConstr<1) {
+    fprintf(conOut,"\n%s%s\n",comment[kOn],"No children allowed to participate in the constraint\n");
+    delete[] cstrArr;
+    return;
   }
   //
   for (int ics=0;ics<kNDOFGeom;ics++) {
@@ -549,6 +558,7 @@ void AliAlgVol::WriteChildrenConstraints(FILE* conOut) const
 	    comment[kOnOn],fgkDOFName[ics],GetName());
     for (int ich=0;ich<nch;ich++) { // contribution from this children DOFs to constraint 
       AliAlgVol* child = GetChild(ich);
+      if (child->GetExcludeFromParentConstraint()) continue;
       jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
       for (int ip=0;ip<kNDOFGeom;ip++) {
 	double jv = jac[ics*kNDOFGeom+ip];
@@ -613,15 +623,17 @@ void AliAlgVol::CheckConstraints() const
     printf("#%3d | ",ich);
     for (int jp=0;jp<kNDOFGeom;jp++) {
       for (int jc=0;jc<kNDOFGeom;jc++) 	parsPAn[jp] += jac[jp*kNDOFGeom+jc]*parsC[jc];
-      parsTotAn[jp] += parsPAn[jp];   // analyticaly calculated total modification
-      parsTotEx[jp] += parsPEx[jp];   // explicitly calculated total modification
+      if (!child->GetExcludeFromParentConstraint()) {
+	parsTotAn[jp] += parsPAn[jp];   // analyticaly calculated total modification
+	parsTotEx[jp] += parsPEx[jp];   // explicitly calculated total modification
+      }
       //
       printf("%+.1e/%+.1e ",parsPAn[jp],parsPEx[jp]);
       //
     }
     printf(" | ");
     for (int jc=0;jc<kNDOFGeom;jc++) printf("%+.1e ",parsC[jc]); // child proper corrections
-    printf(" ! %s\n",child->GetSymName());
+    printf(" ! %3s %s\n", child->GetExcludeFromParentConstraint() ? "Out":" In", child->GetSymName());
     //
     jac += kNDOFGeom*kNDOFGeom; // matrix for next slot
   }

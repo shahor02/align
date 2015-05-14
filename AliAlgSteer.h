@@ -43,6 +43,7 @@ class AliAlgSteer : public TObject
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
   enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
+  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15)};
   //
   enum {             // STAT histo entries
     kRunDone         // input runs
@@ -71,6 +72,14 @@ class AliAlgSteer : public TObject
   void     InitDetectors();
   void     InitDOFs();  
   void     Terminate(Bool_t dohisto=kTRUE);
+  //
+  void     SetInitGeomDone()                                    {SetBit(kInitGeomDone);}
+  Bool_t   GetInitGeomDone()                              const {return TestBit(kInitGeomDone);}
+  //
+  void     SetInitDOFsDone()                                    {SetBit(kInitDOFsDone);}
+  Bool_t   GetInitDOFsDone()                              const {return TestBit(kInitDOFsDone);}
+  //
+  void     AssignDOFs();
   //
   void     AddDetector(UInt_t id, AliAlgDet* det=0);
   void     AddDetector(AliAlgDet* det);

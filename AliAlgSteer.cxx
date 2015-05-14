@@ -181,9 +181,7 @@ void AliAlgSteer::InitDetectors()
 {
   // init all detectors geometry
   //
-  static Bool_t done = kFALSE;
-  if (done) return;
-  done = kTRUE;
+  if (GetInitGeomDone()) return;
   //
   fAlgTrack = new AliAlgTrack();
   fRefPoint = new AliAlgPoint();
@@ -215,6 +213,8 @@ void AliAlgSteer::InitDetectors()
   memset(fGloParLab,0,dofCnt*sizeof(Int_t));
   AliInfoF("Booked %d global parameters, actual DOFs will be assigned after InitDOFs",dofCnt);
   //
+  SetInitGeomDone();
+  //
 }
 
 //________________________________________________________________
@@ -222,19 +222,14 @@ void AliAlgSteer::InitDOFs()
 {
   // scan all free global parameters, link detectors to array of params
   //
-  static Bool_t done = kFALSE;
-  if (done) return;
-  done = kTRUE;
+  if (GetInitDOFsDone()) {
+    AliInfoF("InitDOFs was already done, just reassigning %d DOFs arrays/labels",fNDOFs);
+    AssignDOFs();
+    return;
+  }
   //
   fNDOFs = 0;
-  //
-  fVtxSens->AssignDOFs(fNDOFs,fGloParVal,fGloParErr,fGloParLab);
-  //
-  for (int idt=0;idt<kNDetectors;idt++) {
-    AliAlgDet* det = GetDetectorByDetID(idt);
-    if (!det || det->IsDisabled()) continue;
-    fNDOFs += det->AssignDOFs();
-  }
+  AssignDOFs();
   //
   int nact = 0;
   fVtxSens->InitDOFs();
@@ -249,6 +244,29 @@ void AliAlgSteer::InitDOFs()
       AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc[i]);
   //
   AliInfoF("%d global parameters in %d active detectors",fNDOFs,nact);
+  //
+  SetInitDOFsDone();
+}
+
+//________________________________________________________________
+void AliAlgSteer::AssignDOFs()
+{
+  // add parameters/labels arrays to volumes. If the AliAlgSteer is read from the file, this method need
+  // to be called (of InitDOFs should be called)
+  //
+  int ndfOld = -1;
+  if (fNDOFs>0) ndfOld = fNDOFs;
+  fNDOFs = 0;
+  //
+  fVtxSens->AssignDOFs(fNDOFs,fGloParVal,fGloParErr,fGloParLab);
+  //
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (!det || det->IsDisabled()) continue;
+    fNDOFs += det->AssignDOFs();
+  }
+  AliInfoF("Assigned parameters/labels arrays for %d DOFs",fNDOFs);
+  if (ndfOld>-1 && ndfOld != fNDOFs) AliErrorF("Recalculated NDOFs=%d not equal to saved NDOFs=%d",fNDOFs,ndfOld);
 }
 
 //________________________________________________________________
@@ -847,7 +865,7 @@ void AliAlgSteer::Print(const Option_t *opt) const
   TString opts = opt; 
   opts.ToLower();
   printf("%5d DOFs in %d detectors",fNDOFs,fNDet);
-  if (!fConfMacroName.IsNull()) printf("(condig: %s)",fConfMacroName.Data());
+  if (!fConfMacroName.IsNull()) printf("(config: %s)",fConfMacroName.Data());
   printf("\n");
   //
   for (int idt=0;idt<kNDetectors;idt++) {

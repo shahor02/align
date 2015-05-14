@@ -22,7 +22,7 @@ class AliAlgVol : public TNamed
   enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS,kNDOFGeom,kAllGeomDOF=0x3F};
   enum {kNDOFMax=32};
   enum Frame_t {kLOC,kTRA,kNVarFrames};  // variation frames defined
-  enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15)};
+  enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15),kExclFromParentConstraintBit=BIT(16)};
   enum {kDefChildConstr=0xff};
   //
   AliAlgVol(const char* symname=0, int iid=0);
@@ -130,6 +130,9 @@ class AliAlgVol : public TNamed
   void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
   Bool_t  GetSkip()                           const {return TestBit(kSkipBit);}
   //
+  void    ExcludeFromParentConstraint(Bool_t v=kTRUE) {SetBit(kExclFromParentConstraintBit,v);}
+  Bool_t  GetExcludeFromParentConstraint()    const {return TestBit(kExclFromParentConstraintBit);}
+ //
   void    SetInitDOFsDone()                         {SetBit(kInitDOFsDoneBit);}
   Bool_t  GetInitDOFsDone()                   const {return TestBit(kInitDOFsDoneBit);}
   //
@@ -172,9 +175,9 @@ class AliAlgVol : public TNamed
   //
   Int_t      fNProcPoints;            // n of processed points
   Int_t      fFirstParGloID;          // ID of the 1st parameter in the global results array
-  Float_t*   fParVals;                // values of the fitted params
-  Float_t*   fParErrs;                // errors of the fitted params
-  Int_t*     fParLabs;                // labels for parameters
+  Float_t*   fParVals;                //! values of the fitted params
+  Float_t*   fParErrs;                //! errors of the fitted params
+  Int_t*     fParLabs;                //! labels for parameters
   //
   TGeoHMatrix fMatL2GReco;            // local to global matrix used for reco of data being processed
   TGeoHMatrix fMatL2G;                // local to global matrix, including current alignment
