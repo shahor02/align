@@ -40,6 +40,7 @@ class AliAlgMPRecord : public TObject
   const Int_t*   GetArrLabGlo()        const {return fIDGlo;}
   //
   Bool_t       FillTrack(const AliAlgTrack* trc, const Int_t *id2Lab=0);
+  void         DummyRecord(Float_t res, Float_t err, Float_t dGlo, Int_t labGlo);
   //
   void         Resize(Int_t nresid, Int_t nloc, Int_t nglo);
   //

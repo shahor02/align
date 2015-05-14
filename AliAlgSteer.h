@@ -159,6 +159,7 @@ class AliAlgSteer : public TObject
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)fRefPoint;}
   //
   AliAlgMPRecord* GetMPRecord()                           const {return (AliAlgMPRecord*)fMPRecord;}
+  TTree*    GetMPRecTree()                                const {return fMPRecTree;}
   AliAlgTrack* GetAlgTrack()                              const {return (AliAlgTrack*)fAlgTrack;}
   Bool_t     ProcessEvent(const AliESDEvent* esdEv); 
   Bool_t     ProcessTrack(const AliESDtrack* esdTr);

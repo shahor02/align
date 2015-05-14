@@ -49,6 +49,20 @@ AliAlgMPRecord::~AliAlgMPRecord()
 }
 
 //_________________________________________________________
+void AliAlgMPRecord::DummyRecord(Float_t res, Float_t err, Float_t dGlo, Int_t labGlo)
+{
+  // create dummy residuals record
+  if (!fNDGlo) Resize(1,1,1);
+  fNResid = 1;
+  fNVarLoc = 0;
+  fNVarGlo = 1;
+  fIDGlo[0] = labGlo;
+  fDGlo[0] = dGlo;
+  fResid[0] = res;
+  fResErr[0] = err;
+}
+
+//_________________________________________________________
 Bool_t AliAlgMPRecord::FillTrack(const AliAlgTrack* trc, const Int_t *id2Lab)
 {
   // fill track info, optionally substitutind glopar par ID by label
