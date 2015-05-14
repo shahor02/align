@@ -422,17 +422,16 @@ void AliAlgDet::SetObligatory(Int_t tp,Bool_t v)
 }
 
 //______________________________________________________
-void AliAlgDet::WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt) const
+void AliAlgDet::WritePedeInfo(FILE* parOut, const Option_t *opt) const
 {
   // contribute to params and constraints template files for PEDE
   fprintf(parOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
-  fprintf(conOut,"\n!!\t\tDetector:\t%s\tNDOFs: %d\n",GetName(),GetNDOFs());
   //
   // parameters
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {  // call for root level volumes, they will take care of their children
     AliAlgVol *vol = GetVolume(iv);
-    if (!vol->GetParent()) vol->WritePedeInfo(parOut,conOut,opt);
+    if (!vol->GetParent()) vol->WritePedeInfo(parOut,opt);
   }
   //
 }
@@ -507,14 +506,13 @@ void AliAlgDet::Terminate(TH1* h)
   }
 }
 
-//______________________________________________________
-void AliAlgDet::CheckConstraints() const
+//________________________________________
+void AliAlgDet::AddAutoConstraints() const
 {
-  // check how the constraints are satisfied with current params
+  // adds automatic constraints
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {  // call for root level volumes, they will take care of their children
     AliAlgVol *vol = GetVolume(iv);
-    if (!vol->GetParent()) vol->CheckConstraints();
+    if (!vol->GetParent()) vol->AddAutoConstraints((TObjArray*)fAlgSteer->GetConstraints());
   }
-  //
 }

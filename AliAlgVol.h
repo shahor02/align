@@ -52,10 +52,11 @@ class AliAlgVol : public TNamed
   UInt_t     GetFreeDOFPattern()                 const {return fDOF;}
   UInt_t     GetFreeDOFGeomPattern()             const {return fDOF&kAllGeomDOF;}
   //
+  void       AddAutoConstraints(TObjArray* constrArr);
   Bool_t     IsChildrenDOFConstrained(Int_t dof) const {return fConstrChild&0x1<<dof;}
-  UChar_t    GetChildrenConstrainPattern()       const {return fConstrChild;}
-  void       ContrainChildrenDOF(Int_t dof)            {fConstrChild |= 0x1<<dof;}
-  void       UContrainChildrenDOF(Int_t dof)           {fConstrChild &=~(0x1<<dof);}
+  UChar_t    GetChildrenConstraintPattern()      const {return fConstrChild;}
+  void       ConstrainChildrenDOF(Int_t dof)            {fConstrChild |= 0x1<<dof;}
+  void       UConstrainChildrenDOF(Int_t dof)           {fConstrChild &=~(0x1<<dof);}
   void       SetChildrenConstrainPattern(UInt_t pat)   {fConstrChild = pat;}
   Bool_t     HasChildrenConstraint()             const {return  fConstrChild;}
   //
@@ -125,7 +126,7 @@ class AliAlgVol : public TNamed
   void CreateAlignmenMatrix(TGeoHMatrix& alg) const;
   void CreateAlignmentObjects(TClonesArray* arr) const;
   //
-  void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/) const;
+  static void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/);
   //
   void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
   Bool_t  GetSkip()                           const {return TestBit(kSkipBit);}
@@ -143,10 +144,9 @@ class AliAlgVol : public TNamed
   //
   virtual const char* GetDOFName(int i)       const;
   virtual void   Print(const Option_t *opt="")  const;
-  virtual void   WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
-  virtual void   WriteChildrenConstraints(FILE* conOut) const;
-  virtual void   CheckConstraints()           const;
+  virtual void   WritePedeInfo(FILE* parOut, const Option_t *opt="") const;
   //
+  static const char*   GetGeomDOFName(int i)     {return i<kNDOFGeom ? fgkDOFName[i] : 0;}
   static void    SetDefGeomFree(UChar_t patt)    {fgDefGeomFree = patt;}
   static UChar_t GetDefGeomFree()                {return fgDefGeomFree;}
   //
@@ -157,6 +157,7 @@ class AliAlgVol : public TNamed
   // ------- dummies -------
   AliAlgVol(const AliAlgVol&);
   AliAlgVol& operator=(const AliAlgVol&);
+  //
  protected:
   //
   Frame_t    fVarFrame;               // Variation frame for this volume

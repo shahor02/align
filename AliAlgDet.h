@@ -110,8 +110,8 @@ class AliAlgDet : public TNamed
   void      SetObligatoryColl(Bool_t v=kTRUE)             {SetObligatory(AliAlgAux::kColl,v);}
   void      SetObligatoryCosm(Bool_t v=kTRUE)             {SetObligatory(AliAlgAux::kCosm,v);}
   //
-  virtual void      CheckConstraints()              const;
-  virtual void      WritePedeInfo(FILE* parOut,FILE* conOut, const Option_t *opt="") const;
+  void      AddAutoConstraints()                    const;
+  virtual void      WritePedeInfo(FILE* parOut,const Option_t *opt="") const;
   virtual void      WriteCalibrationResults()       const;
   virtual void      WriteAlignmentResults()         const;
   //

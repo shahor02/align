@@ -26,6 +26,7 @@
 #include "AliAlgVtx.h"
 #include "AliAlgMPRecord.h"
 #include "AliAlgRes.h"
+#include "AliAlgConstraint.h"
 #include "AliTrackerBase.h"
 #include "AliESDCosmicTrack.h"
 #include "AliESDtrack.h"
@@ -75,6 +76,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fTracksType(kColl)
   ,fAlgTrack(0)
   ,fVtxSens(0)
+  ,fConstraints()
   ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult)
   ,fCosmicSelStrict(kFALSE)
   ,fVtxMinCont(-1)
@@ -244,6 +246,8 @@ void AliAlgSteer::InitDOFs()
       AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc[i]);
   //
   AliInfoF("%d global parameters in %d active detectors",fNDOFs,nact);
+  //
+  AddAutoConstraints();
   //
   SetInitDOFsDone();
 }
@@ -1355,7 +1359,6 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
 	   fMPSteerFileName.Data(),fMPParFileName.Data(),fMPConFileName.Data());
   //
   FILE* parFl = fopen (fMPParFileName.Data(),"w+");
-  FILE* conFl = fopen (fMPConFileName.Data(),"w+");
   FILE* strFl = fopen (fMPSteerFileName.Data(),"w+");
   //
   // --- template of steering file
@@ -1386,18 +1389,20 @@ void AliAlgSteer::GenPedeSteerFile(const Option_t *opt) const
   //
   fprintf(strFl,"\n\n\n%s%-20s %s %s\n\n\n",cmt[kOff],"CFiles",cmt[kOnOn],"put below *.mille files list");
   //
-  if (fVtxSens) fVtxSens->WritePedeInfo(parFl,conFl,opt);
+  if (fVtxSens) fVtxSens->WritePedeInfo(parFl,opt);
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
     if (!det || det->IsDisabled()) continue;
-    det->WritePedeInfo(parFl,conFl,opt);
+    det->WritePedeInfo(parFl,opt);
     //
   }
   //
+  WritePedeConstraints();
+  //
   fclose(strFl);
-  fclose(conFl);
   fclose(parFl);
+  //
 }
 
 //___________________________________________________________
@@ -1462,10 +1467,10 @@ void AliAlgSteer::CheckConstraints(const char* params)
     return;
   }
   //
-  for (int idet=0;idet<fNDet;idet++) {
-    AliAlgDet* det = GetDetector(idet);
-    if (det->IsDisabled()) continue;
-    det->CheckConstraints();
+  int ncon = GetNConstraints();
+  for (int icon=0;icon<ncon;icon++) {
+    const AliAlgConstraint* con = GetConstraint(icon);
+    con->CheckConstraint();
   }
   //
 }
@@ -1580,3 +1585,26 @@ Int_t AliAlgSteer::Label2ParID(int lab) const
   return -1;
 }
 
+//____________________________________________________________
+void AliAlgSteer::AddAutoConstraints()
+{
+  // add default constraints on children cumulative corrections within the volumes
+  for (int idet=0;idet<fNDet;idet++) {
+    AliAlgDet* det = GetDetector(idet);
+    if (det->IsDisabled()) continue;
+    det->AddAutoConstraints();
+  }
+  AliInfoF("Added %d automatic constraints",GetNConstraints());
+}
+
+//____________________________________________________________
+void AliAlgSteer::WritePedeConstraints() const
+{
+  // write constraints file
+  FILE* conFl = fopen (fMPConFileName.Data(),"w+");
+  //
+  int nconstr = GetNConstraints();
+  for (int icon=0;icon<nconstr;icon++) GetConstraint(icon)->WriteChildrenConstraints(conFl);
+  //
+  fclose(conFl);
+}

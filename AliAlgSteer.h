@@ -7,6 +7,7 @@
 
 #include <TMatrixDSym.h>
 #include <TVectorD.h>
+#include <TObjArray.h>
 #include <TString.h>
 #include <TArrayF.h>
 #include <TArrayI.h>
@@ -23,6 +24,7 @@ class AliAlgVtx;
 class AliAlgPoint;
 class AliAlgMPRecord;
 class AliAlgRes;
+class AliAlgConstraint;
 class TTree;
 class TFile;
 //
@@ -83,6 +85,12 @@ class AliAlgSteer : public TObject
   //
   void     AddDetector(UInt_t id, AliAlgDet* det=0);
   void     AddDetector(AliAlgDet* det);
+  //
+  void     AddConstraint(const AliAlgConstraint* cs)            {fConstraints.AddLast((TObject*)cs);}
+  Int_t    GetNConstraints()                              const {return fConstraints.GetEntriesFast();}
+  const    TObjArray*        GetConstraints()             const {return &fConstraints;}
+  const    AliAlgConstraint* GetConstraint(int i)         const {return (AliAlgConstraint*)fConstraints[i];}
+  void     AddAutoConstraints();
   //
   void     AcknowledgeNewRun(Int_t run);
   void     SetRunNumber(Int_t run);
@@ -235,6 +243,7 @@ class AliAlgSteer : public TObject
   void     SetMilleTXT(Bool_t v=kTRUE)                           {fMilleOutBin = !v;}
   //
   void     GenPedeSteerFile(const Option_t *opt="")        const;
+  void     WritePedeConstraints()                          const;
   void     CheckConstraints(const char* params=0);
   TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
   void     DetachHistoDOF()                                      {fHistoDOF = 0;}
@@ -277,6 +286,7 @@ class AliAlgSteer : public TObject
   AliAlgDet*    fDetectors[kNDetectors];                  // detectors participating in the alignment
   Int_t         fDetPos[kNDetectors];                     // entry of detector in the fDetectors array
   AliAlgVtx*    fVtxSens;                                 // fake sensor for the vertex
+  TObjArray     fConstraints;                             // array of constraints
   //
   // Track selection
   UInt_t        fSelEventSpecii;                          // consider only these event specii
