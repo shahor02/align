@@ -7,7 +7,7 @@
 
 // show DOFs with statistics below given threshold
 
-void showLowStat(const char* stfile, int thr=30)
+void showLowStat(const char* stfile, int thr=30, const char* dummyes=0)
 {
   // show degrees of freedom with low stat
   TFile* fl = TFile::Open(stfile);
