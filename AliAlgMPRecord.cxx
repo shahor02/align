@@ -58,8 +58,14 @@ void AliAlgMPRecord::DummyRecord(Float_t res, Float_t err, Float_t dGlo, Int_t l
   fNVarGlo = 1;
   fIDGlo[0] = labGlo;
   fDGlo[0] = dGlo;
+  fNDGlo[0] = 1;
   fResid[0] = res;
   fResErr[0] = err;
+  //
+  fIDLoc[0] = 0;
+  fNDLoc[0] = 0;
+  fDLoc[0] = 0;
+  //
 }
 
 //_________________________________________________________

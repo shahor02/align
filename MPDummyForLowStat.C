@@ -6,6 +6,7 @@
 #include <TAxis.h>
 #include <TString.h>
 #include "AliAlgMPRecord.h"
+#include "AliAlgSteer.h"
 #include "Mille.h"
 #endif
 
@@ -38,8 +39,8 @@ void MPDummyForLowStat(const char* stfile, int thr=30, int nGen=40,Bool_t bin=kT
   if (bin) ml = new Mille(Form("%s.%s",mpDummy.Data(),"mille"));
   else {
     algSteer = new AliAlgSteer();
-    algSteer->SetSetMPDatFileName(mpDummy.Data());
-    algSteer->SetSetMPOutType(AliAlgSteer::kMPRec);
+    algSteer->SetMPDatFileName(mpDummy.Data());
+    algSteer->SetMPOutType(AliAlgSteer::kMPRec);
     algSteer->InitMPRecOutput();
     mpRec = algSteer->GetMPRecord();
   }
