@@ -3,6 +3,10 @@
 
 #include "AliAlgDet.h"
 
+/*--------------------------------------------------------
+  Wrapper for TOF detector
+  -------------------------------------------------------*/
+
 class AliAlgDetTOF : public AliAlgDet
 {
  public:

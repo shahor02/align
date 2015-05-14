@@ -4,6 +4,11 @@
 #include "AliAlgDet.h"
 #include "AliAlgAux.h"
 
+/*--------------------------------------------------------
+  ITS detector wrapper
+  -------------------------------------------------------*/
+
+
 class AliAlgDetITS : public AliAlgDet
 {
  public:

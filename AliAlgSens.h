@@ -11,8 +11,7 @@ class AliExternalTrackParam;
 
 
 /*--------------------------------------------------------
-  Smallest alignment volume in detector branch, where the actual measurement is done.
-  Apart from local2global matrix has also Tracking2Local matrix
+  End-chain alignment volume in detector branch, where the actual measurement is done.
   -------------------------------------------------------*/
 
 class AliAlgSens : public AliAlgVol

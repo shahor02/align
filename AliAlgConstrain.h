@@ -5,6 +5,11 @@
 #include <TObjArray.h>
 #include "AliAlgVol.h"
 
+/*--------------------------------------------------------
+  Base class for detector: wrapper for set of volumes
+  -------------------------------------------------------*/
+
+
 class AliAlgConstraint : public TNamed
 {
  public:

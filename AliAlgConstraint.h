@@ -5,6 +5,14 @@
 #include <TObjArray.h>
 #include "AliAlgVol.h"
 
+/*--------------------------------------------------------
+  Descriptor of geometrical constraint: the cumulative
+  corrections of children for requested DOFs in the frame of 
+  parent (of LAB if parent is not defined) forced to be 0.
+  The parent - child relationship need not to be real
+  -------------------------------------------------------*/
+
+
 class AliAlgConstraint : public TNamed
 {
  public:

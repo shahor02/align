@@ -15,6 +15,10 @@ class AliTrackPointArray;
 class AliExternalTrackParam;
 class TH1;
 
+/*--------------------------------------------------------
+  Base class for detector: wrapper for set of volumes
+  -------------------------------------------------------*/
+
 class AliAlgDet : public TNamed
 {
  public:

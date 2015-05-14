@@ -7,6 +7,12 @@
 #include <TArrayD.h>
 #include <TArrayI.h>
 
+/*--------------------------------------------------------
+  Track model for the alignment: AliExternalTrackParam for kinematics
+  proper with number of multiple scattering kinks.
+  Full support for derivatives and residuals calculation
+  -------------------------------------------------------*/
+
 //#define DEBUG 4
 
 class AliAlgTrack: public AliExternalTrackParam

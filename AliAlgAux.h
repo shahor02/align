@@ -9,6 +9,10 @@ class TList;
 
 using namespace TMath;
 
+/*--------------------------------------------------------
+  Collection of auxillary methods
+  -------------------------------------------------------*/
+
 namespace AliAlgAux {
   const double kAlmostZeroD = 1e-15;
   const float  kAlmostZeroF = 1e-11;

@@ -5,6 +5,11 @@
 #include <TString.h>
 class AliAlgSteer;
 
+/*--------------------------------------------------------
+  Task to produce data for millepede alignment
+  -------------------------------------------------------*/
+
+
 class AliGloAlgTask : public AliAnalysisTaskSE {
  public:
   //

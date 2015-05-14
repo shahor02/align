@@ -4,6 +4,11 @@
 #include <TObject.h>
 class AliAlgTrack;
 
+/*--------------------------------------------------------
+  Millepede record in root format (can be converted to proper 
+  pede binary format.
+  -------------------------------------------------------*/
+
 class AliAlgMPRecord : public TObject
 {
  public:

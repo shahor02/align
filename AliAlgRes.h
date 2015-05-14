@@ -2,8 +2,12 @@
 #define ALIALGRES_H
 
 #include <TObject.h>
-
 class AliAlgTrack;
+
+/*--------------------------------------------------------
+  Container for control residuals
+  -------------------------------------------------------*/
+
 
 class AliAlgRes: public TObject
 {

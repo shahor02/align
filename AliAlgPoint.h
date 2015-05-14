@@ -8,6 +8,13 @@
 
 class AliExternalTrackParam;
 
+/*--------------------------------------------------------
+  Meausered point in the sensor. 
+  The measurement is in the tracking frame.
+  Apart from measurement may contain also material information.
+  Cashes residuals and track positions at its reference X
+  -------------------------------------------------------*/
+
 class AliAlgPoint : public TObject
 {
  public:

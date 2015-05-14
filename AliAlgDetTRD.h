@@ -3,6 +3,10 @@
 
 #include "AliAlgDet.h"
 
+/*--------------------------------------------------------
+  TRD detector wrapper
+  -------------------------------------------------------*/
+
 class AliAlgDetTRD : public AliAlgDet
 {
  public:

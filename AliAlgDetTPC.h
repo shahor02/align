@@ -3,6 +3,11 @@
 
 #include "AliAlgDet.h"
 
+/*--------------------------------------------------------
+  TPC detector wrapper
+  -------------------------------------------------------*/
+
+
 class AliAlgDetTPC : public AliAlgDet
 {
  public:
