@@ -14,6 +14,9 @@ class AliExternalTrackParam;
   End-chain alignment volume in detector branch, where the actual measurement is done.
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSens : public AliAlgVol
 {
  public:

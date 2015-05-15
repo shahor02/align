@@ -7,6 +7,8 @@
   Wrapper for TOF detector
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
 class AliAlgDetTOF : public AliAlgDet
 {
  public:

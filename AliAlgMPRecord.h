@@ -9,6 +9,9 @@ class AliAlgTrack;
   pede binary format.
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgMPRecord : public TObject
 {
  public:

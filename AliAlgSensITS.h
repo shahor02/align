@@ -11,6 +11,9 @@ class TObjArray;
   ITS sensor
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSensITS : public AliAlgSens
 {
  public:

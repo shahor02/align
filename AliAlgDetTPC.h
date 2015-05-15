@@ -7,6 +7,7 @@
   TPC detector wrapper
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
 
 class AliAlgDetTPC : public AliAlgDet
 {

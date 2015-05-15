@@ -15,6 +15,9 @@ class AliExternalTrackParam;
   Cashes residuals and track positions at its reference X
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgPoint : public TObject
 {
  public:

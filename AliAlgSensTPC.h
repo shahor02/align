@@ -11,6 +11,9 @@ class TObjArray;
   TPC sensor (chamber)
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSensTPC : public AliAlgSens
 {
  public:

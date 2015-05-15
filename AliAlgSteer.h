@@ -36,6 +36,9 @@ class Mille;
   to participating detectors and preparation of the millepede input.
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSteer : public TObject
 {
  public:

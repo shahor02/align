@@ -16,6 +16,9 @@ class TH1;
   AliGeomManager can trace to geometry.
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgVol : public TNamed
 {
  public:

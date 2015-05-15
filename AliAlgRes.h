@@ -8,6 +8,9 @@ class AliAlgTrack;
   Container for control residuals
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 
 class AliAlgRes: public TObject
 {

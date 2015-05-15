@@ -11,6 +11,10 @@
   defined in the frame with X axis along the tracks, the T2L
   matrix of this sensor need to be recalculated for each track!
   -------------------------------------------------------*/
+
+// Author: ruben.shahoyan@cern.ch
+
+
 #include "AliAlgSens.h"
 
 class AliAlgVtx : public AliAlgSens

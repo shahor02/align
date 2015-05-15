@@ -13,6 +13,8 @@
   Full support for derivatives and residuals calculation
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
 //#define DEBUG 4
 
 class AliAlgTrack: public AliExternalTrackParam

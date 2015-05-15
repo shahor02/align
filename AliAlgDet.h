@@ -19,6 +19,8 @@ class TH1;
   Base class for detector: wrapper for set of volumes
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
 class AliAlgDet : public TNamed
 {
  public:

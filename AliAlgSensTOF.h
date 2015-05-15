@@ -11,6 +11,9 @@ class TObjArray;
   TOF sensor
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSensTOF : public AliAlgSens
 {
  public:

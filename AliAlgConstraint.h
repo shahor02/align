@@ -12,6 +12,8 @@
   The parent - child relationship need not to be real
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
 
 class AliAlgConstraint : public TNamed
 {

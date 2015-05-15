@@ -8,6 +8,8 @@
   ITS detector wrapper
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
 
 class AliAlgDetITS : public AliAlgDet
 {

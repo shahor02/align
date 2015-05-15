@@ -11,6 +11,9 @@ class TObjArray;
   TRD sensor
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgSensTRD : public AliAlgSens
 {
  public:

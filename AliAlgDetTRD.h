@@ -7,6 +7,9 @@
   TRD detector wrapper
   -------------------------------------------------------*/
 
+// Author: ruben.shahoyan@cern.ch
+
+
 class AliAlgDetTRD : public AliAlgDet
 {
  public:
