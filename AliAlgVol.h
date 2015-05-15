@@ -4,6 +4,7 @@
 #include <TNamed.h>
 #include <TObjArray.h>
 #include <TGeoMatrix.h>
+#include <stdio.h>
 
 class TObjArray;
 class TH1;

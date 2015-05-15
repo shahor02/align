@@ -22,6 +22,7 @@
 #include "AliESDtrack.h"
 #include "AliCheb3DCalc.h"
 #include <TMath.h>
+#include <stdio.h>
 
 using namespace TMath;
 using namespace AliAlgAux;

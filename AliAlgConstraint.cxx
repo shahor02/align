@@ -18,6 +18,7 @@
 #include "AliAlgAux.h"
 #include <TGeoMatrix.h>
 #include <TMath.h>
+#include <stdio.h>
 
 ClassImp(AliAlgConstraint);
 

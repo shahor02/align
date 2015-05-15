@@ -1,6 +1,7 @@
 #ifndef ALIALGCONSTRAINT_H
 #define ALIALGCONSTRAINT_H
 
+#include <stdio.h>
 #include <TNamed.h>
 #include <TObjArray.h>
 #include "AliAlgVol.h"

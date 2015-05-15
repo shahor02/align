@@ -108,6 +108,7 @@
 #include <TGeoPhysicalNode.h>
 #include <TH1.h>
 #include <TAxis.h>
+#include <stdio.h>
 
 ClassImp(AliAlgVol)
 

@@ -13,6 +13,7 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
+#include <stdio.h>
 #include "AliAlgSens.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"

@@ -22,6 +22,7 @@
 #include <TObjString.h>
 #include <TPRegexp.h>
 #include <TGrid.h>
+#include <stdio.h>
 
 //_______________________________________________________________
 void AliAlgAux::PrintBits(ULong64_t patt, Int_t maxBits)

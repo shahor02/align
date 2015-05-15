@@ -28,6 +28,7 @@
 #include "AliExternalTrackParam.h"
 #include <TString.h>
 #include <TH1.h>
+#include <stdio.h>
 
 ClassImp(AliAlgDet)
 

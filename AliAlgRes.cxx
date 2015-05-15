@@ -20,6 +20,7 @@
 #include "AliLog.h"
 #include <TString.h>
 #include <TMath.h>
+#include <stdio.h>
 
 using namespace TMath;
 

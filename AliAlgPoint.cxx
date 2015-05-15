@@ -13,6 +13,7 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
+#include <stdio.h>
 #include <TMath.h>
 #include <TString.h>
 #include "AliAlgPoint.h"

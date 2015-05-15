@@ -13,6 +13,7 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
+#include <stdio.h>
 #include "AliAlgTrack.h"
 #include "AliTrackerBase.h"
 #include "AliLog.h"
