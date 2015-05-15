@@ -130,8 +130,6 @@ class AliAlgVol : public TNamed
   void CreateAlignmenMatrix(TGeoHMatrix& alg) const;
   void CreateAlignmentObjects(TClonesArray* arr) const;
   //
-  static void ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kNDOFGeom][kNDOFGeom]*/);
-  //
   void    SetSkip(Bool_t v=kTRUE)                   {SetBit(kSkipBit,v);}
   Bool_t  GetSkip()                           const {return TestBit(kSkipBit);}
   //
