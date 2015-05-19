@@ -23,10 +23,12 @@ void runGloAlgTask
   gSystem->SetIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include -I./");
   
   if (gClassTable->GetID("AliAlgSteer")<0) {
-    gSystem->Load("libAlg.so");
+    gSystem->Load("libALIGN.so");
   }
   //
-  gROOT->ProcessLine(".L AliGloAlgTask.cxx++g");
+  if (gClassTable->GetID("AliGloAlgTask")<0) {
+    gROOT->ProcessLine(".L AliGloAlgTask.cxx++g");
+  }
   //
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   if (!mgr) mgr = new AliAnalysisManager("mgr");
