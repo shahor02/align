@@ -10,7 +10,7 @@ XNet.ReadAheadSize: 1000000
 # Paths are different for Unix and Windows. The example shows the defaults
 # for all ROOT applications for either Unix or Windows.
 Unix.*.Root.DynamicPath:    .:$(ROOTSYS)/lib:$(LD_LIBRARY_PATH)
-Unix.*.Root.MacroPath:      .:$(ROOTSYS)/macros:$(ALICESW)/mymacros:$(ALICE_ROOT)/macros:$(ALICE_ROOT)/EVE/macros:$(ALICE_ROOT)/ITS/UPGRADE/testITSU:$(ALICE_ROOT)/ITS/UPGRADE:$(ALICE_ROOT)/macros:$(ALICE_ROOT)/EVE/macros:$(ALICE_ROOT)/ITS/UPGRADE/testITSU:$(ALICE_ROOT)/ITS/UPGRADE:$(ALICE_ROOT)/PWGPP/CalibMacros/CPass0:$(ALICE_ROOT)/PWGPP/CalibMacros/CPass1
+Unix.*.Root.MacroPath:      .:$(ROOTSYS)/macros:$(ALICESW)/mymacros:$(ALICE_ROOT)/macros:$(ALICE_ROOT)/EVE/macros:$(ALICE_ROOT)/ITS/UPGRADE/testITSU:$(ALICE_ROOT)/PWGPP/CalibMacros/CPass0:$(ALICE_ROOT)/PWGPP/CalibMacros/CPass1:./utils
 Unix.*.Root.IncludePath:    -I$(HOME)/ALICE/mymacros -I$(ALICE_ROOT)/include -I$(ALICE_ROOT)/ITS/UPGRADE
 WinNT.*.Root.DynamicPath:   ./;$(ROOTSYS);$(ROOTSYS)/bin;$(PATH)
 WinNT.*.Root.MacroPath:     ./;$(ROOTSYS)/macros
