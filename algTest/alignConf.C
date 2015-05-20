@@ -55,12 +55,11 @@ void alignConf(AliAlgSteer* algSteer)
   algSteer->SetMinPointsColl(6,6);     // min number of points per track Boff/Bon
   algSteer->SetMinPointsCosm(4,4);
   //
-  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
-  //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
-  //
-  algSteer->InitDOFs();   
+  //  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  algSteer->SetMPOutType(AliAlgSteer::kMPRec | AliAlgSteer::kContR);
   //  
   //  algSteer->SetMilleTXT(1);
+  algSteer->InitDOFs();
   //  
 }
 

@@ -1,5 +1,5 @@
 Jobtag = {
-   "comment:alignTest"
+   "comment:algTst $2"
 };
 
 # Input xml collections
@@ -29,7 +29,8 @@ InputFile = {
    "LF:/alice/cern.ch/user/s/shahoian/algTest/AliGloAlgTask.cxx",
    "LF:/alice/cern.ch/user/s/shahoian/algTest/alignConf.C",
    "LF:/alice/cern.ch/user/s/shahoian/algTest/configRefOCDB.C",
-   "LF:/alice/cern.ch/user/s/shahoian/algTest/configRecoOCDB.C"
+   "LF:/alice/cern.ch/user/s/shahoian/algTest/configRecoOCDB.C",
+   "LF:/alice/cern.ch/user/s/shahoian/algTest/millepede.res"
 };
 
 # This is the startup script
@@ -41,7 +42,7 @@ Split = "se";
 TTL = "28000";
 
 # Maximum number of input files to be processed per subjob
-SplitMaxInputFileNumber = "20";
+SplitMaxInputFileNumber = "100";
 
 # Format of input data
 InputDataListFormat = "xml-single";

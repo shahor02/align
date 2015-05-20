@@ -1,4 +1,0 @@
-/data/algData/alice/data/2012/LHC12g/000188503/cpass1_pass2/12000188503000.10/AliESDs_Barrel.root
-/data/algData/alice/data/2012/LHC12g/000188503/cpass1_pass2/12000188503000.11/AliESDs_Barrel.root
-/data/algData/alice/data/2012/LHC12g/000188503/cpass1_pass2/12000188503000.12/AliESDs_Barrel.root
-/data/algData/alice/data/2012/LHC12g/000188503/cpass1_pass2/12000188503000.13/AliESDs_Barrel.root

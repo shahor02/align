@@ -33,6 +33,7 @@ AliGloAlgTask::AliGloAlgTask(const char *name)
   ,fOutput(0)
   ,fTrigSel(0)
   ,fAlgSteer(0)
+  ,fIniParFileName()
   ,fConfMacroName()
 {
   // Constructor
@@ -129,5 +130,9 @@ void AliGloAlgTask::LocalInit()
   fAlgSteer = new AliAlgSteer();
   gROOT->ProcessLine(Form(".x %s+g((AliAlgSteer*)%p)",fConfMacroName.Data(),fAlgSteer));
   //
+  if (!fIniParFileName.IsNull() && !gSystem->AccessPathName(fIniParFileName.Data(), kFileExists)) {
+    AliInfoF("Imposing initial parameters from %s",fIniParFileName.Data());
+    fAlgSteer->ReadParameters(fIniParFileName.Data());
+  }
   fAlgSteer->Print();
 }

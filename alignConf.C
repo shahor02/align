@@ -59,6 +59,7 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
   //  
   //  algSteer->SetMilleTXT(1);
+  algSteer->InitDOFs();
   //  
 }
 
