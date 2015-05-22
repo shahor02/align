@@ -167,9 +167,9 @@ class AliAlgPoint : public TObject
   //
   Int_t      fNGloDOFs;                                // number of global DOFs this point depends on
   Int_t      fDGloOffs;                                // 1st entry slot of d/dGloPar in the AlgTrack fDResDGlo arrays
-  Float_t    fMatCorrExp[kNMatDOFs];                   // material correction expectation (diagonalized)
+  Float_t    fMatCorrExp[kNMatDOFs];                   // material correction due to ELoss expectation (non-diagonalized)
   Float_t    fMatCorrCov[kNMatDOFs];                   // material correction delta covariance (diagonalized)
-  Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           //  matrix for  diagonalization of material effects errors
+  Float_t    fMatDiag[kNMatDOFs][kNMatDOFs];           // matrix for  diagonalization of material effects errors
   //
   Double_t   fTrParamWSA[kNMatDOFs];                   // workspace for tracks params at this point AFTER material correction
   Double_t   fTrParamWSB[kNMatDOFs];                   // workspace for tracks params at this point BEFORE material correction
