@@ -47,6 +47,7 @@ class AliAlgTrack: public AliExternalTrackParam
   //
   virtual void Clear(Option_t *opt="");
   virtual void Print(Option_t *opt="")           const;
+  virtual void DumpCoordinates()                 const;
   //
   Bool_t PropagateToPoint(AliExternalTrackParam& tr, const AliAlgPoint* pnt, 
 			  int minNSteps,double maxStep,Bool_t matCor, double* matPar=0);

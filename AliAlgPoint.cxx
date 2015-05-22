@@ -171,6 +171,36 @@ void AliAlgPoint::Print(Option_t* opt) const
 }
 
 //_____________________________________
+void AliAlgPoint::DumpCoordinates() const
+{
+  // dump various corrdinates for inspection
+  // global xyz
+  double xyz[3];
+  GetXYZGlo(xyz);
+  for (int i=0;i<3;i++) printf("%+.4e ",xyz[i]);
+  //
+  AliExternalTrackParam wsb;
+  AliExternalTrackParam wsa;
+  GetTrWSB(wsb);
+  GetTrWSB(wsa);
+  wsb.GetXYZ(xyz);
+  for (int i=0;i<3;i++) printf("%+.4e ",xyz[i]); // track before mat corr
+  wsa.GetXYZ(xyz);
+  for (int i=0;i<3;i++) printf("%+.4e ",xyz[i]); // track after mat corr
+  //
+  printf("%+.4f ",fAlphaSens);
+  printf("%+.4e ",GetXPoint());
+  printf("%+.4e ",GetYTracking());
+  printf("%+.4e ",GetZTracking());
+  //
+  printf("%+.4e %.4e ",wsb.GetY(),wsb.GetZ());
+  printf("%+.4e %.4e ",wsa.GetY(),wsa.GetZ());
+  //
+  printf("%4e %4e",Sqrt(fErrYZTracking[0]),Sqrt(fErrYZTracking[2]));
+  printf("\n");
+}
+
+//_____________________________________
 void AliAlgPoint::Clear(Option_t* )
 {
   // reset the point

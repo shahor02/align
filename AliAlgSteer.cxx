@@ -985,8 +985,11 @@ Bool_t AliAlgSteer::TestLocalSolution()
   }
   */
   //
-  fAlgTrack->CalcResiduals(vsl.GetMatrixArray());
+  // increment current params by new solution
+  rhs.SetElements(fAlgTrack->GetLocPars());
+  vsl += rhs;
   fAlgTrack->SetLocPars(vsl.GetMatrixArray());
+  fAlgTrack->CalcResiduals();
   delete mat;
   //
   return kTRUE;

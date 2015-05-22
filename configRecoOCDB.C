@@ -9,11 +9,12 @@ void configRecoOCDB(int run = 188503)
   //
   if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {
     man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");
-    man->SetRun(run);
     man->SetSnapshotMode("data/OCDB.root");
   }
   else {
-    AliFatalGeneralF("","Failed to setup Reco-Time OCDB for run %d",run);
+    man->SetRaw(1);
   }
   //
+  man->SetRun(run);
+
 }

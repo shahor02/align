@@ -620,6 +620,9 @@ Bool_t AliAlgTrack::PropagateToPoint(AliExternalTrackParam &tr, const AliAlgPoin
         if (alongTrackDir) xrho = -xrho; // if we go along track direction, energy correction is negative
 	x2X0Tot += xx0;
 	xrhoTot += xrho;
+	//	printf("MAT %+7.2f %+7.2f %+7.2f -> %+7.2f %+7.2f %+7.2f | %+e %+e | -> %+e %+e | %+e %+e %+e %+e %+e\n",
+	//	       xyz0[0],xyz0[1],xyz0[2], xyz1[0],xyz1[1],xyz1[2], tr.Phi(), tr.GetAlpha(),
+	//	       x2X0Tot,xrhoTot, matarr[0],matarr[1],matarr[2],matarr[3],matarr[4]);
 	if (!tr.CorrectForMeanMaterial(xx0,xrho,fMass)) {
 #if DEBUG>3
 	AliWarningF("Failed on CorrectForMeanMaterial(%f,%f,%f)",xx0,xrho,fMass);
@@ -855,6 +858,10 @@ void AliAlgTrack::Print(Option_t *opt) const
 	const double *corrDiag = &fLocParA[pnt->GetMaxLocVarID()-nCorrPar];
 	printf("  Corr.Diag:  "); 
 	for (int i=0;i<nCorrPar;i++) printf("%+.3e ",corrDiag[i]); printf("\n");
+	printf("  Corr.Pull:  "); 
+	float *corExp = pnt->GetMatCorrExp(); // correction expectation
+	float *corCov = pnt->GetMatCorrCov(); // correction covariance
+	for (int i=0;i<nCorrPar;i++) printf("%+.3e ",(corrDiag[i] - corExp[i])/Sqrt(corCov[i])); printf("\n");
 	if (paru) { // print also mat.corrections in track frame
 	  double corr[5] = {0};
 	  pnt->UnDiagMatCorr(corrDiag, corr);
@@ -865,6 +872,18 @@ void AliAlgTrack::Print(Option_t *opt) const
       }
     }
   } // print points
+}
+
+//______________________________________________
+void AliAlgTrack::DumpCoordinates() const
+{
+  // print various coordinates for inspection
+  printf("gpx/D:gpy/D:gpz/D:gtxb/D:gtyb/D:gtzb/D:gtxa/D:gtya/D:gtza/D:alp/D:px/D:py/D:pz/D:tyb/D:tzb/D:tya/D:tza/D:ey/D:ez/D\n");
+  for (int ip=0;ip<GetNPoints();ip++) {
+    AliAlgPoint* pnt = GetPoint(ip);
+    if (!pnt->ContainsMeasurement()) continue;
+    pnt->DumpCoordinates();
+  }
 }
 
 //______________________________________________
@@ -1036,12 +1055,16 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   for (int ip=pFrom;ip!=pTo;ip+=pinc) { // inward fit from outer point
     AliAlgPoint* pnt = GetPoint(ip);
     //
+    //    printf("*** FitLeg %d (%d %d)\n",ip,pFrom,pTo);
+    //    trc.Print();
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       if (pnt->GetNeedUpdateFromTrack()) pnt->UpdatePointByTrackInfo(&trc); 
       const double* yz    = pnt->GetYZTracking();
       const double* errYZ = pnt->GetYZErrTracking();
       double chi = trc.GetPredictedChi2(yz,errYZ);
+      //      printf("***>> fitleg-> Y: %+e %+e / Z: %+e %+e -> Chi2: %e | %+e %+e\n",yz[0],trc.GetY(),yz[1],trc.GetZ(),chi,
+      //	     trc.Phi(),trc.GetAlpha());
       if (!trc.Update(yz,errYZ)) {
 #if DEBUG>3
 	AliWarningF("Failed on Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
@@ -1139,6 +1162,7 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
     memcpy((double*)trc.GetCovariance(),kErrTiny,15*sizeof(double)); // assign tiny errors to both tracks
     tr0 = trc;
     //
+    //    printf("-> ProcMat %d (%d->%d)\n",ip,pFrom,pTo);
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE ,x2X0xRho)) {  // with material corrections
 #if DEBUG>3
       AliErrorF("Failed to take track to point %d (dir: %d -> %d) with mat.corr.",ip,pFrom,pTo);
@@ -1154,6 +1178,7 @@ Bool_t AliAlgTrack::ProcessMaterials(AliExternalTrackParam& trc, int pFrom,int p
       continue;
     }
     //
+    //    printf("-> ProcMat000 %d (%d->%d)\n",ip,pFrom,pTo);
     if (!PropagateToPoint(tr0,pnt,kMinNStep, kMaxDefStep, kFALSE,0)) { // no material corrections
 #if DEBUG>3
       AliErrorF("Failed to take track to point %d (dir: %d -> %d) w/o mat.corr.",ip,pFrom,pTo);

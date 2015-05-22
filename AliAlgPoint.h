@@ -132,6 +132,7 @@ class AliAlgPoint : public TObject
   //
   void       IncrementStat();
   //
+  virtual void DumpCoordinates()            const;
   virtual void Print(Option_t* option = "") const;
   virtual void Clear(Option_t* option = "");
   //

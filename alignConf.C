@@ -108,6 +108,7 @@ void ConfigTPC(AliAlgSteer* algSteer)
   det->SetNPointsSelCosm(50);
   //
   det->SetAddError(3,10.); // HUGE errors
+  // det->SetAddError(0.1,0.1); // HUGE errors
 }
 
 //======================================================================
