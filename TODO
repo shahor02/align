@@ -1,4 +1,1 @@
-Implement shift of gloVar index by 1 everywhere
-
-Why vertex variable is not stored?
-
+shoul 1 iter of TestLocalSol be called before filling MP data?
