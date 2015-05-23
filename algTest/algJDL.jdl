@@ -30,7 +30,7 @@ InputFile = {
    "LF:/alice/cern.ch/user/s/shahoian/algTest/alignConf.C",
    "LF:/alice/cern.ch/user/s/shahoian/algTest/configRefOCDB.C",
    "LF:/alice/cern.ch/user/s/shahoian/algTest/configRecoOCDB.C",
-   "LF:/alice/cern.ch/user/s/shahoian/algTest/millepede.res"
+   "LF:/alice/cern.ch/user/s/shahoian/algTest/OCDB.root"
 };
 
 # This is the startup script
@@ -53,7 +53,7 @@ InputDataList = "wn.xml";
 # List of output files and archivesList of output files and archives
 Output = {
    "log_archive:stdout,stderr,*.log@disk=1",
-   "*.root,*.mille"
+   "statOut.root,mpData.root,controlRes.root,mpData.mille"
 };
 
 # AliEn price for this job

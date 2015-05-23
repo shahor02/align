@@ -43,6 +43,7 @@ void runGloAlgTask
   //-------------------------------------------
   algTask->SetTriggerSelection(trigSel);
   algTask->SetConfMacroName("alignConf.C");
+  algTask->SetIniParFileName("millepede.res");
   //-------------------------------------------
   AliAnalysisDataContainer *coutput1 = 
     mgr->CreateContainer("clist", TList::Class(),AliAnalysisManager::kOutputContainer,"statOut.root");
@@ -66,7 +67,8 @@ Bool_t InputHandlerSetup(TString esdFName)
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   AliAnalysisDataContainer *cin = mgr->GetCommonInputContainer();
   if (cin) return;
-  AliESDInputHandler *esdInputHandler = dynamic_cast<AliESDInputHandler*>(AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler());
+  AliESDInputHandler *esdInputHandler = 
+    dynamic_cast<AliESDInputHandler*>(AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler());
   if (!esdInputHandler) {
     Info("CustomAnalysisTaskInputSetup", "Creating esdInputHandler ...");
     esdInputHandler = new AliESDInputHandler();

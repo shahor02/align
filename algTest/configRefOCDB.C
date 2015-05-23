@@ -2,7 +2,7 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-const char* specOCDB = "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+const char* specOCDB = 0;//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
 
 void configRefOCDB(int run = 188503) 
 {
@@ -10,12 +10,9 @@ void configRefOCDB(int run = 188503)
   AliAlgAux::CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();
   //
-  if (gSystem->AccessPathName("data/OCDB.root", kFileExists)==0) {        
-    man->SetDefaultStorage("local://$ALICE_ROOT/OCDB");    
-    man->SetSnapshotMode("data/OCDB.root");
-  }
-  else {
-    man->SetRaw(1);
+  man->SetRaw(1);
+  if (gSystem->AccessPathName("OCDB.root", kFileExists)==0) {
+    man->SetSnapshotMode("OCDB.root");
   }
   //
   if (specOCDB) {
