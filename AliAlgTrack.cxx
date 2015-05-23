@@ -879,8 +879,8 @@ void AliAlgTrack::Print(Option_t *opt) const
 	printf("  Corr.Diag:  "); 
 	for (int i=0;i<nCorrPar;i++) printf("%+.3e ",corrDiag[i]); printf("\n");
 	printf("  Corr.Pull:  "); 
-	float *corExp = pnt->GetMatCorrExp(); // correction expectation
 	float *corCov = pnt->GetMatCorrCov(); // correction covariance
+	//float *corExp = pnt->GetMatCorrExp(); // correction expectation
 	for (int i=0;i<nCorrPar;i++) printf("%+.3e ",(corrDiag[i]/* - corExp[i]*/)/Sqrt(corCov[i])); printf("\n");
 	if (paru) { // print also mat.corrections in track frame
 	  double corr[5] = {0};
@@ -1019,8 +1019,8 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   const int    kMinNStep = 3;
   const double kMaxDefStep = 3.0; 
   const double kErrSpace=50.;
-  const double kErrAng = 0.5;
-  const double kErrRelPtI = 0.7;
+  const double kErrAng = 0.7;
+  const double kErrRelPtI = 1.;
   const double kIniErr[15] = { // initial error
     kErrSpace*kErrSpace,
     0                  , kErrSpace*kErrSpace,

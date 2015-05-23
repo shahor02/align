@@ -14,7 +14,8 @@ AliESDEvent *esdEv=0;
 AliESDfriend *esdFr=0;
 TTree *esdTree = 0;
 
-Int_t LoadESD(const char* path="LHC12g_188503/AliESDs.root",Bool_t friends=kTRUE);
+//Int_t LoadESD(const char* path="LHC12g_188503/AliESDs.root",Bool_t friends=kTRUE);
+Int_t LoadESD(const char* path="data/AliESDs.root",Bool_t friends=kTRUE);
 void PrintTrack(Int_t i);
 void PrintTracks();
 void ConnectFriends();
@@ -51,6 +52,7 @@ void tstAlg(int evID=4) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000
   algSTEER->SetESDEvent(esdEv);
   algSTEER->SetFieldOn(1);
   algSTEER->SetRunNumber(esdEv->GetRunNumber());
+  algSTEER->SetMPOutType(0);
   //
   //  algSTEER->Terminate();
 

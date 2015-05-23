@@ -24,7 +24,7 @@ void alignConf(AliAlgSteer* algSteer)
 {
   //
   algSteer->SetRefOCDBConfigMacro("configRefOCDB.C");
-  //algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
+  //  algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
   algSteer->SetRecoOCDBConfigMacro(""); // Use ESD info
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
@@ -33,9 +33,10 @@ void alignConf(AliAlgSteer* algSteer)
   algSteer->AddDetector(AliAlgSteer::kTOF);
   algSteer->InitDetectors();
   //
+  //algSteer->GetDetectorByDetID(AliAlgSteer::kITS)->SetDisabled();
   algSteer->GetDetectorByDetID(AliAlgSteer::kTPC)->SetDisabled();
-  //  algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
-  //  algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
+  //algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
+  //algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
   ConfigITS(algSteer);
   ConfigTPC(algSteer);
@@ -83,12 +84,15 @@ void ConfigITS(AliAlgSteer* algSteer)
   det->SetITSSelPatternColl(AliAlgDetITS::kSPDAny);
   det->SetITSSelPatternCosm(AliAlgDetITS::kSPDNoSel);
   //
-  det->SetAddErrorLr(0,30e-4,200e-4);
-  det->SetAddErrorLr(1,30e-4,200e-4);
-  det->SetAddErrorLr(2,2000e-4,80e-4);
-  det->SetAddErrorLr(3,2000e-4,80e-4);
-  det->SetAddErrorLr(4,50e-4,500e-4);
-  det->SetAddErrorLr(5,50e-4,500e-4);   
+  //  det->SetAddError(2,2);
+  //  /*
+  det->SetAddErrorLr(0,20e-4,100e-4);
+  det->SetAddErrorLr(1,20e-4,100e-4);
+  det->SetAddErrorLr(2,2000e-4,20e-4);
+  det->SetAddErrorLr(3,2000e-4,20e-4);
+  det->SetAddErrorLr(4,20e-4,500e-4);
+  det->SetAddErrorLr(5,20e-4,500e-4);   
+  //  */
 }
 
 //======================================================================
@@ -107,8 +111,8 @@ void ConfigTPC(AliAlgSteer* algSteer)
   det->SetNPointsSelColl(70);
   det->SetNPointsSelCosm(50);
   //
-  det->SetAddError(3,10.); // HUGE errors
-  // det->SetAddError(0.1,0.1); // HUGE errors
+  //  det->SetAddError(3,10.); // HUGE errors
+  det->SetAddError(0.1,0.1); // HUGE errors
 }
 
 //======================================================================
@@ -126,6 +130,8 @@ void ConfigTRD(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(2);
   det->SetNPointsSelCosm(2);
+
+  //  det->SetAddError(0.1,0.1);
   //
 }
 
@@ -144,5 +150,8 @@ void ConfigTOF(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(1);
   det->SetNPointsSelCosm(1);
+
+  //  det->SetAddError(12,12);
+
   //
 }

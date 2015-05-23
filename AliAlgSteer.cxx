@@ -504,7 +504,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   //
   if (GetProduceControlRes() &&  // need control residuals, ignore selection fraction if this is the 
       (fMPOutType==kContR || gRandom->Rndm()<fControlFrac) ) { // output requested
-    if ( !TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
+    if (!TestLocalSolution() || !StoreProcessedTrack(kContR) ) return kFALSE;
   }
   //
   FillStatHisto( kTrackStore );

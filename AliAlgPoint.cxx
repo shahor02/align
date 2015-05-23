@@ -182,7 +182,7 @@ void AliAlgPoint::DumpCoordinates() const
   AliExternalTrackParam wsb;
   AliExternalTrackParam wsa;
   GetTrWSB(wsb);
-  GetTrWSB(wsa);
+  GetTrWSA(wsa);
   wsb.GetXYZ(xyz);
   for (int i=0;i<3;i++) printf("%+.4e ",xyz[i]); // track before mat corr
   wsa.GetXYZ(xyz);
