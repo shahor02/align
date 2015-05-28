@@ -2,7 +2,8 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-const char* specOCDB = 0;//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+TString specOCDB = "";//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+//TString specOCDB = "outOCDB";
 
 void configRefOCDB(int run = 188503) 
 {
@@ -15,10 +16,17 @@ void configRefOCDB(int run = 188503)
     man->SetSnapshotMode("OCDB.root");
   }
   //
-  if (specOCDB) {
-    man->SetSpecificStorage("ITS/Align/Data",Form("alien://folder=%s",specOCDB));
-    man->SetSpecificStorage("TRD/Align/Data",Form("alien://folder=%s",specOCDB));
-    man->SetSpecificStorage("TOF/Align/Data",Form("alien://folder=%s",specOCDB));
+  if (!specOCDB.IsNull()) {
+    if (specOCDB.BeginsWith("/alice/cern.ch")) {
+      man->SetSpecificStorage("ITS/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
+      man->SetSpecificStorage("TRD/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
+      man->SetSpecificStorage("TOF/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
+    }
+    else {
+      man->SetSpecificStorage("ITS/Align/Data",Form("local://%s",specOCDB.Data()));
+      man->SetSpecificStorage("TRD/Align/Data",Form("local://%s",specOCDB.Data()));
+      man->SetSpecificStorage("TOF/Align/Data",Form("local://%s",specOCDB.Data()));
+    }
   }
   //
   man->SetRun(run);

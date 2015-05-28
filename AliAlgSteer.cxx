@@ -709,14 +709,16 @@ Bool_t AliAlgSteer::FillMilleData()
     if (pnt->ContainsMaterial()) {     // material point can add 4 or 5 otrhogonal pseudo-measurements
       memset(buffDL,0,nVarLoc*sizeof(float));      
       int nmatpar = pnt->GetNMatPar();  // residuals (correction expectation value)
-      const float* expMatCorr = pnt->GetMatCorrExp(); // expected corrections (diagonalized)
+      //      const float* expMatCorr = pnt->GetMatCorrExp(); // expected corrections (diagonalized)
       const float* expMatCov  = pnt->GetMatCorrCov(); // their diagonalized error matrix
       int offs  = pnt->GetMaxLocVarID() - nmatpar;    // start of material variables
       // here all derivatives are 1 = dx/dx
       for (int j=0;j<nmatpar;j++) { // mat. "measurements" don't depend on global params
 	int j1 = j+offs;
 	buffDL[j1] = 1.0;                     // only 1 non-0 derivative	
-	fMille->mille(nVarLoc,buffDL,0,buffDG,buffI,expMatCorr[j],Sqrt(expMatCov[j]));
+	//fMille->mille(nVarLoc,buffDL,0,buffDG,buffI,expMatCorr[j],Sqrt(expMatCov[j]));
+	// expectation for MS effect is 0
+	fMille->mille(nVarLoc,buffDL,0,buffDG,buffI,0,Sqrt(expMatCov[j]));
 	buffDL[j1] = 0.0;                     // reset buffer
       }
     } // material "measurement"
@@ -1034,12 +1036,13 @@ AliSymMatrix* AliAlgSteer::BuildMatrix(TVectorD &vec)
     if (pnt->ContainsMaterial()) {
       // at least 4 parameters: 2 spatial + 2 angular kinks with 0 expectaction
       int npm = pnt->GetNMatPar();
-      const float* expMatCorr = pnt->GetMatCorrExp(); // expected correction (diagonalized)
+      // const float* expMatCorr = pnt->GetMatCorrExp(); // expected correction (diagonalized)
       const float* expMatCov  = pnt->GetMatCorrCov(); // its error
       int offs  = pnt->GetMaxLocVarID() - npm;
       for (int ipar=0;ipar<npm;ipar++) {
 	int parI = offs + ipar;
-	vec[parI] -= expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
+	// expected 
+	//	vec[parI] -= expMatCorr[ipar]/expMatCov[ipar]; // consider expectation as measurement
 	mat(parI,parI) += 1./expMatCov[ipar]; // this measurement is orthogonal to all others
 	//printf("Pnt:%3d MatVar:%d DOF %3d | ExpVal: %+e Cov: %+e\n",ip,ipar,parI, expMatCorr[ipar], expMatCov[ipar]);
       }
@@ -1451,7 +1454,7 @@ Bool_t AliAlgSteer::ReadParameters(const char* parfile, Bool_t useErrors)
       AliErrorF("Invalid label %d at line %d -> ParID=%d",lab,cnt,parID);
       return kFALSE;
     }
-    fGloParVal[parID] = v0;
+    fGloParVal[parID] = -v0;
     if (useErrors) fGloParErr[parID] = v1;
     asg++;
     //

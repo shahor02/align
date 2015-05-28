@@ -52,7 +52,7 @@ void tstAlg(int evID=4) // for beam: data -> LHC10b_000117220_vpass1_pass4_10000
   algSTEER->SetESDEvent(esdEv);
   algSTEER->SetFieldOn(1);
   algSTEER->SetRunNumber(esdEv->GetRunNumber());
-  algSTEER->SetMPOutType(0);
+  //  algSTEER->SetMPOutType(0);
   //
   //  algSTEER->Terminate();
 

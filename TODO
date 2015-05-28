@@ -1,1 +1,2 @@
-shoul 1 iter of TestLocalSol be called before filling MP data?
+When reading millepede.res, parameters need to be taken with - sign.
+Instead, in the MPRecord and MPData can store negative residuals

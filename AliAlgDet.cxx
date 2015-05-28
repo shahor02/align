@@ -535,3 +535,15 @@ void AliAlgDet::AddAutoConstraints() const
     if (!vol->GetParent()) vol->AddAutoConstraints((TObjArray*)fAlgSteer->GetConstraints());
   }
 }
+
+//________________________________________
+void AliAlgDet::FixNonSensors()
+{
+  // fix all non-sensor volumes
+  for (int i=GetNVolumes();i--;) {
+    AliAlgVol *vol = GetVolume(i);
+    if (vol->IsSensor()) continue;
+    vol->SetFreeDOFPattern(0);
+    vol->SetChildrenConstrainPattern(0);
+  }
+}

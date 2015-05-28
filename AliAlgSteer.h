@@ -188,6 +188,7 @@ class AliAlgSteer : public TObject
   UInt_t     AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]) const;
   Bool_t     CheckSetVertex(const AliESDVertex* vtx);
   Bool_t     AddVertexConstraint();
+  Int_t      GetNDetectors()                              const {return fNDet;}
   AliAlgDet* GetDetector(Int_t i)                         const {return fDetectors[i];}
   AliAlgDet* GetDetectorByDetID(Int_t i)                  const {return fDetPos[i]<0 ? 0:fDetectors[fDetPos[i]];}
   AliAlgDet* GetDetectorByVolID(Int_t id)                 const;

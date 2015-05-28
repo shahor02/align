@@ -38,6 +38,15 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
+  /*
+  for (int i=algSteer->GetNDetectors();i--;) { //!!!!RS
+    AliAlgDet* det = algSteer->GetDetector(i);
+    for (int iv=det->GetNVolumes();iv--;) 
+      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTY)|(0x1<<AliAlgVol::kDOFTZ)|(0x1<<AliAlgVol::kDOFTX) );
+      //      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTX) );
+    // det->FixNonSensors();
+  }
+  */
   ConfigITS(algSteer);
   ConfigTPC(algSteer);
   ConfigTRD(algSteer);
