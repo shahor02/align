@@ -12,6 +12,7 @@
 #include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
+#include "AliAlgVtx.h"
 #endif
 
 void alignConf(AliAlgSteer* algSteer);
@@ -19,7 +20,8 @@ void ConfigITS(AliAlgSteer* algSteer);
 void ConfigTPC(AliAlgSteer* algSteer);
 void ConfigTRD(AliAlgSteer* algSteer);
 void ConfigTOF(AliAlgSteer* algSteer);
-//
+void ConfigVTX(AliAlgSteer* algSteer);
+
 
 void alignConf(AliAlgSteer* algSteer)
 {
@@ -80,10 +82,18 @@ void alignConf(AliAlgSteer* algSteer)
 }
 
 //======================================================================
+void ConfigVTX(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgVtx *vtx = algSteer->GetVertexSensor();
+  vtx->SetFreeDOFPattern(0);
+}
+
+//======================================================================
 void ConfigITS(AliAlgSteer* algSteer)
 {
   //
-  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1,1,1,1}; // precondition sigmas
+  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.2,1,1,1}; // precondition sigmas
   //
   AliAlgDetITS* det = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
   if (!det||det->IsDisabled()) return;
@@ -111,14 +121,14 @@ void ConfigITS(AliAlgSteer* algSteer)
   }  
   //
   //  det->SetAddError(2,2);
-  //  /*
+  /*
   det->SetAddErrorLr(0,20e-4,100e-4);
   det->SetAddErrorLr(1,20e-4,100e-4);
   det->SetAddErrorLr(2,2000e-4,20e-4);
   det->SetAddErrorLr(3,2000e-4,20e-4);
   det->SetAddErrorLr(4,20e-4,500e-4);
   det->SetAddErrorLr(5,20e-4,500e-4);   
-  //  */
+  */
 }
 
 //======================================================================

@@ -47,8 +47,8 @@ void AliAlgVtx::PrepareMatrixT2L()
 void AliAlgVtx::ApplyCorrection(double* vtx) const
 {
   // apply eventual correction to supplied vertex position
-  vtx[kDOFTX] -= GetParVal(kDOFTX);
-  vtx[kDOFTY] -= GetParVal(kDOFTY);
-  vtx[kDOFTZ] -= GetParVal(kDOFTZ);
+  vtx[kDOFTX] += GetParVal(kDOFTX);
+  vtx[kDOFTY] += GetParVal(kDOFTY);
+  vtx[kDOFTZ] += GetParVal(kDOFTZ);
   //
 }
