@@ -250,11 +250,15 @@ class AliAlgSteer : public TObject
   void     WritePedeConstraints()                          const;
   void     CheckConstraints(const char* params=0);
   TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
-  void     DetachHistoDOF()                                      {fHistoDOF = 0;}
+  void     SetHistoDOF(TH1F* h)                                  {fHistoDOF = h;}
+  void     DetachHistoDOF()                                      {SetHistoDOF(0);}
   TH1*     GetHistoStat()                                  const {return fHistoStat;}
-  void     DetachHistoStat()                                     {fHistoStat = 0;}
+  void     DetachHistoStat()                                     {SetHistoStat(0);}
+  void     SetHistoStat(TH1F* h)                                 {fHistoStat = h;}
   void     FillStatHisto(int type, float w=1);
   void     CreateStatHisto();
+  void     FixLowStatFromHisto(Int_t thresh=40);
+  void     LoadStatHistos(const char* flname);
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}

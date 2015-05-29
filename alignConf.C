@@ -197,7 +197,7 @@ void ConfigTOF(AliAlgSteer* algSteer)
     for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
       if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
       if   (vol->IsSensor()) vol->SetParErr(idf, kCondSigSTR[idf] );    // set condition
-      else (vol->IsSensor()) vol->SetParErr(idf, kCondSigSMD[idf] );    // set condition
+      else                   vol->SetParErr(idf, kCondSigSMD[idf] );    // set condition
     }
   }
   //

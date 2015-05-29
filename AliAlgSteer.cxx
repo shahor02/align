@@ -45,6 +45,7 @@
 #include <TSystem.h>
 #include <TRandom.h>
 #include <TH1F.h>
+#include <TList.h>
 #include <stdio.h>
 #include <TGeoGlobalMagField.h>
 
@@ -1632,4 +1633,71 @@ void AliAlgSteer::WritePedeConstraints() const
   for (int icon=0;icon<nconstr;icon++) GetConstraint(icon)->WriteChildrenConstraints(conFl);
   //
   fclose(conFl);
+}
+
+//____________________________________________________________
+void AliAlgSteer::FixLowStatFromHisto(Int_t thresh)
+{
+  // fix DOFs having stat below threshold
+  //
+  if (!fHistoDOF) {
+    AliError("No histo with DOFs statistics");
+    return;
+  }
+  TAxis*  xax = fHistoDOF->GetXaxis();
+  int nb = xax->GetNbins();
+  for (int ib=1;ib<=nb;ib++) {
+    if (fHistoDOF->GetBinContent(ib)>=thresh) continue;
+    TString lb = xax->GetBinLabel(ib);
+    int id = lb.First('_');
+    if (id<0) {
+      AliErrorF("Failed to extract DOF label from bin %d: %s",ib,lb.Data());
+      return;
+    }
+    lb.Resize(id);
+    if (!lb.IsDigit()) {
+      AliErrorF("Label for bin %d is not digit: %s",ib,lb.Data());
+      return;
+    }
+    int lbID = lb.Atoi();
+    int parID = Label2ParID(lbID);
+    if (parID<0) {
+      AliErrorF("Did not find parameter for label %d of bin %d: %s",lbID,ib,xax->GetBinLabel(ib));
+      return;
+    }
+    AliInfoF("Fixing DOF (stat: %4d) %s",int(fHistoDOF->GetBinContent(ib)),xax->GetBinLabel(ib));
+    fGloParErr[parID] = -999.;
+  }
+  //
+}
+
+//____________________________________________________________
+void AliAlgSteer::LoadStatHistos(const char* flname)
+{
+  // load statistics histos from external file produced by alignment task
+  TFile* fl = TFile::Open(flname);
+  //
+  TH1F *hdf=0,*hst=0;
+  TList* lst = (TList*)fl->Get("clist");
+  if (lst) {
+    hdf = (TH1F*)lst->FindObject("DOFstat");
+    if (hdf) lst->Remove(hdf);
+    hst = (TH1F*)lst->FindObject("stat");
+    if (hst) lst->Remove(hst);
+    delete lst;
+  }
+  else {
+    hdf = (TH1F*)fl->Get("DOFstat");
+    hst = (TH1F*)fl->Get("stat");
+  }
+  if (hdf) hdf->SetDirectory(0);
+  else AliWarning("did not fine DOFstat histo");
+  if (hst) hst->SetDirectory(0);
+  else AliWarning("did not fine stat histo");
+  //
+  SetHistoStat(hst);
+  SetHistoDOF(hdf);
+  //
+  fl->Close();
+  delete fl;
 }
