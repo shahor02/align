@@ -8,6 +8,9 @@ TString specOCDB = "";//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst
 void configRefOCDB(int run = 188503) 
 {
   //
+  int ver = -1;
+  int sver = -1;
+
   AliAlgAux::CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();
   //
@@ -18,14 +21,14 @@ void configRefOCDB(int run = 188503)
   //
   if (!specOCDB.IsNull()) {
     if (specOCDB.BeginsWith("/alice/cern.ch")) {
-      man->SetSpecificStorage("ITS/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
-      man->SetSpecificStorage("TRD/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
-      man->SetSpecificStorage("TOF/Align/Data",Form("alien://folder=%s",specOCDB.Data()));
+      man->SetSpecificStorage("ITS/Align/Data",Form("alien://folder=%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
+      man->SetSpecificStorage("TRD/Align/Data",Form("alien://folder=%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
+      man->SetSpecificStorage("TOF/Align/Data",Form("alien://folder=%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
     }
     else {
-      man->SetSpecificStorage("ITS/Align/Data",Form("local://%s",specOCDB.Data()));
-      man->SetSpecificStorage("TRD/Align/Data",Form("local://%s",specOCDB.Data()));
-      man->SetSpecificStorage("TOF/Align/Data",Form("local://%s",specOCDB.Data()));
+      man->SetSpecificStorage("ITS/Align/Data",Form("local://%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
+      man->SetSpecificStorage("TRD/Align/Data",Form("local://%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
+      man->SetSpecificStorage("TOF/Align/Data",Form("local://%s",specOCDB.Data()),ver<0 ? -1:ver, sver<0 ? -1:sver);
     }
   }
   //

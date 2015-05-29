@@ -109,7 +109,7 @@ class AliAlgSteer : public TObject
   //
   void     SetESDTree(const TTree* tr)                          {fESDTree = tr;}
   const    TTree* GetESDTree()                            const {return fESDTree;}
-  void     SetESDEvent(const AliESDEvent* ev)                   {fESDEvent = ev;}
+  void     SetESDEvent(const AliESDEvent* ev);
   const    AliESDEvent* GetESDEvent()                     const {return fESDEvent;}
   void     SetESDtrack(const AliESDtrack* tr, int i=0)          {fESDTrack[i] = tr;}
   const    AliESDtrack* GetESDtrack(int i=0)              const {return fESDTrack[i];}

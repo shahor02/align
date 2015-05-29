@@ -7,6 +7,7 @@
 //
 #include "AliAlgSteer.h"
 #include "AliAlgDet.h"
+#include "AliAlgSens.h"
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
@@ -38,15 +39,15 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
-  /*
+
   for (int i=algSteer->GetNDetectors();i--;) { //!!!!RS
     AliAlgDet* det = algSteer->GetDetector(i);
     for (int iv=det->GetNVolumes();iv--;) 
-      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTY)|(0x1<<AliAlgVol::kDOFTZ)|(0x1<<AliAlgVol::kDOFTX) );
+      //  det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTY)|(0x1<<AliAlgVol::kDOFTZ)|(0x1<<AliAlgVol::kDOFTX) );
       //      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTX) );
-    // det->FixNonSensors();
+      det->FixNonSensors();
   }
-  */
+
   ConfigITS(algSteer);
   ConfigTPC(algSteer);
   ConfigTRD(algSteer);
@@ -69,6 +70,11 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
   //  
   //  algSteer->SetMilleTXT(1);
+
+  AliAlgSens* vtxS = (AliAlgSens*)algSteer->GetVertexSensor();
+  printf("VTS: %p\n",vtxS);
+  vtxS->SetFreeDOFPattern(0); // fix vertex movements
+
   algSteer->InitDOFs();
   //  
 }
@@ -76,6 +82,8 @@ void alignConf(AliAlgSteer* algSteer)
 //======================================================================
 void ConfigITS(AliAlgSteer* algSteer)
 {
+  //
+  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1,1,1,1}; // precondition sigmas
   //
   AliAlgDetITS* det = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
   if (!det||det->IsDisabled()) return;
@@ -92,6 +100,15 @@ void ConfigITS(AliAlgSteer* algSteer)
   //
   det->SetITSSelPatternColl(AliAlgDetITS::kSPDAny);
   det->SetITSSelPatternCosm(AliAlgDetITS::kSPDNoSel);
+  //
+  // precondition
+  for (int iv=det->GetNVolumes();iv--;) {
+    AliAlgVol* vol = det->GetVolume(iv);
+    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
+      vol->SetParErr(idf, kCondSig[idf] );    // set condition
+    }
+  }  
   //
   //  det->SetAddError(2,2);
   //  /*
@@ -128,6 +145,8 @@ void ConfigTPC(AliAlgSteer* algSteer)
 void ConfigTRD(AliAlgSteer* algSteer)
 {
   //
+  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.5,0.5,5.0,1,1,1}; // precondition sigmas
+
   AliAlgDetTRD* det = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
   if (!det||det->IsDisabled()) return;
   //
@@ -139,7 +158,16 @@ void ConfigTRD(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(2);
   det->SetNPointsSelCosm(2);
-
+  //
+  // precondition
+  for (int iv=det->GetNVolumes();iv--;) {
+    AliAlgVol* vol = det->GetVolume(iv);
+    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
+      vol->SetParErr(idf, kCondSig[idf] );    // set condition
+    }
+  }
+  //
   //  det->SetAddError(0.1,0.1);
   //
 }
@@ -147,6 +175,9 @@ void ConfigTRD(AliAlgSteer* algSteer)
 //======================================================================
 void ConfigTOF(AliAlgSteer* algSteer)
 {
+  //
+  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
+  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
   //
   AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
   if (!det||det->IsDisabled()) return;
@@ -159,7 +190,17 @@ void ConfigTOF(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(1);
   det->SetNPointsSelCosm(1);
-
+  //
+  // precondition
+  for (int iv=det->GetNVolumes();iv--;) {
+    AliAlgVol* vol = det->GetVolume(iv);
+    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
+      if   (vol->IsSensor()) vol->SetParErr(idf, kCondSigSTR[idf] );    // set condition
+      else (vol->IsSensor()) vol->SetParErr(idf, kCondSigSMD[idf] );    // set condition
+    }
+  }
+  //
   //  det->SetAddError(12,12);
 
   //

@@ -151,7 +151,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   // run config macro if provided
   if (!fConfMacroName.IsNull()) {
     gROOT->ProcessLine(Form(".x %s+g((AliAlgSteer*)%p)",fConfMacroName.Data(),this));
-    InitDOFs();
+    if (!GetInitDOFsDone()) InitDOFs();
     if (!GetNDOFs()) AliFatalF("No DOFs found, initialization with %s failed",
 			       fConfMacroName.Data());
   }  
@@ -213,7 +213,8 @@ void AliAlgSteer::InitDetectors()
   memset(fGloParVal,0,dofCnt*sizeof(Float_t));
   memset(fGloParErr,0,dofCnt*sizeof(Float_t));
   memset(fGloParLab,0,dofCnt*sizeof(Int_t));
-  AliInfoF("Booked %d global parameters, actual DOFs will be assigned after InitDOFs",dofCnt);
+  AssignDOFs();
+  AliInfoF("Booked %d global parameters",dofCnt);
   //
   SetInitGeomDone();
   //
@@ -231,21 +232,23 @@ void AliAlgSteer::InitDOFs()
   }
   //
   fNDOFs = 0;
+  int ndfAct = 0;
   AssignDOFs();
   //
   int nact = 0;
   fVtxSens->InitDOFs();
   for (int i=0;i<fNDet;i++) {
     AliAlgDet* det = GetDetector(i);
+    det->InitDOFs();
     if (det->IsDisabled()) continue;
-    fDetectors[i]->InitDOFs();
     nact++;
+    ndfAct += det->GetNDOFs();
   }
   for (int i=0;i<kNTrackTypes;i++) 
     if (nact<fMinDetAcc[i])
       AliFatalF("%d detectors are active, while %d in track are asked",nact,fMinDetAcc[i]);
   //
-  AliInfoF("%d global parameters in %d active detectors",fNDOFs,nact);
+  AliInfoF("%d global parameters %d detectors, %d in %d active detectors",fNDOFs,fNDet,ndfAct,nact);
   //
   AddAutoConstraints();
   //
@@ -266,7 +269,8 @@ void AliAlgSteer::AssignDOFs()
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
-    if (!det || det->IsDisabled()) continue;
+    if (!det) continue;
+    //if (det->IsDisabled()) continue;
     fNDOFs += det->AssignDOFs();
   }
   AliInfoF("Assigned parameters/labels arrays for %d DOFs",fNDOFs);
@@ -374,6 +378,19 @@ UInt_t AliAlgSteer::AcceptTrackCosmic(const AliESDtrack* esdPairCosm[kNCosmLegs]
   if (!CheckDetectorPattern(detAcc)) return 0;
   return detAcc;
   //
+}
+
+//_________________________________________________________
+void AliAlgSteer::SetESDEvent(const AliESDEvent* ev)
+{
+  // attach event to analyse
+  fESDEvent = ev;
+  // setup magnetic field if needed
+  if (fESDEvent && 
+      (!TGeoGlobalMagField::Instance()->GetField() || 
+       !IsZeroAbs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())) ) { 
+    fESDEvent->InitMagneticField();
+  }
 }
 
 //_________________________________________________________
@@ -796,8 +813,9 @@ void AliAlgSteer::AcknowledgeNewRun(Int_t run)
   AliInfoF("Processing new run %d",fRunNumber);
   //
   // setup magnetic field
-  if (!TGeoGlobalMagField::Instance()->GetField() || 
-      !IsZeroAbs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())) { 
+  if (fESDEvent && 
+      (!TGeoGlobalMagField::Instance()->GetField() || 
+       !IsZeroAbs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())) ) { 
     fESDEvent->InitMagneticField();
   }
   //

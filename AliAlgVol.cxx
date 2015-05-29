@@ -268,6 +268,12 @@ void AliAlgVol::Print(const Option_t *opt) const
   if (GetExcludeFromParentConstraint()) printf(" Excl.from parent constr.");
   printf("\n");
   //
+  if (opts.Contains("par") && fParVals) {
+    printf("     Lb: "); for (int i=0;i<fNDOFs;i++) printf("%10d  ",GetParLab(i)); printf("\n");
+    printf("     Vl: "); for (int i=0;i<fNDOFs;i++) printf("%+9.3e  ",GetParVal(i)); printf("\n");
+    printf("     Er: "); for (int i=0;i<fNDOFs;i++) printf("%+9.3e  ",GetParErr(i)); printf("\n");
+  }
+
   if (opts.Contains("mat")) { // print matrices
     printf("L2G ideal   : "); 
     GetMatrixL2GIdeal().Print();
