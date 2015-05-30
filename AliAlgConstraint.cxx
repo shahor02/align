@@ -111,7 +111,6 @@ void AliAlgConstraint::WriteChildrenConstraints(FILE* conOut) const
       jac = cstrArr + kNDOFGeom*kNDOFGeom*ich;
       if (cmtStatus) fprintf(conOut,"%s",comment[cmtStatus]); // comment out contribution
       // first write real constraints
-      int nwr = 0;
       for (int ip=0;ip<kNDOFGeom;ip++) {
 	float jv = jac[ics*kNDOFGeom+ip];
 	if (child->IsFreeDOF(ip)&&!IsZeroAbs(jv)&& child->GetParErr(ip)>=0) 
