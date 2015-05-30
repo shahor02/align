@@ -41,7 +41,7 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
-
+  /*
   for (int i=algSteer->GetNDetectors();i--;) { //!!!!RS
     AliAlgDet* det = algSteer->GetDetector(i);
     for (int iv=det->GetNVolumes();iv--;) 
@@ -49,6 +49,7 @@ void alignConf(AliAlgSteer* algSteer)
       //      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTX) );
       det->FixNonSensors();
   }
+  */
 
   ConfigITS(algSteer);
   ConfigTPC(algSteer);
@@ -155,7 +156,8 @@ void ConfigTPC(AliAlgSteer* algSteer)
 void ConfigTRD(AliAlgSteer* algSteer)
 {
   //
-  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.5,0.5,5.0,1,1,1}; // precondition sigmas
+  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {2,2,2,1,1,1}; // precondition sigmas
+  const double kCondSigCHA[AliAlgVol::kNDOFGeom] = {0.5,0.5,5.0,1,1,1}; // precondition sigmas
 
   AliAlgDetTRD* det = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
   if (!det||det->IsDisabled()) return;
@@ -170,14 +172,11 @@ void ConfigTRD(AliAlgSteer* algSteer)
   det->SetNPointsSelCosm(2);
   //
   // precondition
-  for (int iv=det->GetNVolumes();iv--;) {
-    AliAlgVol* vol = det->GetVolume(iv);
-    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
-      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
-      vol->SetParErr(idf, kCondSig[idf] );    // set condition
-    }
+  // precondition
+  for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
+    det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
+    det->SetDOFCondition(idf,kCondSigCHA[idf],1); // level 1 - chambers
   }
-  //
   //  det->SetAddError(0.1,0.1);
   //
 }
@@ -187,7 +186,7 @@ void ConfigTOF(AliAlgSteer* algSteer)
 {
   //
   const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
-  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
+  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
   //
   AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
   if (!det||det->IsDisabled()) return;
@@ -202,14 +201,12 @@ void ConfigTOF(AliAlgSteer* algSteer)
   det->SetNPointsSelCosm(1);
   //
   // precondition
-  for (int iv=det->GetNVolumes();iv--;) {
-    AliAlgVol* vol = det->GetVolume(iv);
-    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
-      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
-      if   (vol->IsSensor()) vol->SetParErr(idf, kCondSigSTR[idf] );    // set condition
-      else                   vol->SetParErr(idf, kCondSigSMD[idf] );    // set condition
-    }
+  for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
+    det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
+    det->SetDOFCondition(idf,kCondSigSTR[idf],1); // level 1 - strips
   }
+  //
+  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
   //
   //  det->SetAddError(12,12);
 
