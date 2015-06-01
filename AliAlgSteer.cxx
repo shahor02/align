@@ -389,7 +389,7 @@ void AliAlgSteer::SetESDEvent(const AliESDEvent* ev)
   // setup magnetic field if needed
   if (fESDEvent && 
       (!TGeoGlobalMagField::Instance()->GetField() || 
-       !IsZeroAbs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())) ) { 
+       !Abs(fESDEvent->GetMagneticField()-AliTrackerBase::GetBz())>1e-4) ) { 
     fESDEvent->InitMagneticField();
   }
 }

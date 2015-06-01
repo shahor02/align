@@ -56,6 +56,8 @@ void alignConf(AliAlgSteer* algSteer)
   ConfigTRD(algSteer);
   ConfigTOF(algSteer);
   //
+  ConfigVTX(algSteer);
+  //
   algSteer->SetVtxMinCont(5);   // accept events with min number of vertexTracks contributors
   algSteer->SetVtxMinContVC(10); // use for vertex constraint only those with min number of contributors
   algSteer->SetMaxDCAforVC(0.1,0.6); // dcaR/Z primary selection to allow vertex constraint
@@ -73,11 +75,7 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
   //  
   //  algSteer->SetMilleTXT(1);
-
-  AliAlgSens* vtxS = (AliAlgSens*)algSteer->GetVertexSensor();
-  printf("VTS: %p\n",vtxS);
-  vtxS->SetFreeDOFPattern(0); // fix vertex movements
-
+  //
   algSteer->InitDOFs();
   //  
 }
@@ -87,7 +85,8 @@ void ConfigVTX(AliAlgSteer* algSteer)
 {
   //
   AliAlgVtx *vtx = algSteer->GetVertexSensor();
-  vtx->SetFreeDOFPattern(0);
+  //  vtx->SetFreeDOFPattern(0);
+  vtx->SetAddError(0.003,0.003);
 }
 
 //======================================================================
@@ -122,14 +121,13 @@ void ConfigITS(AliAlgSteer* algSteer)
   }  
   //
   //  det->SetAddError(2,2);
-  /*
-  det->SetAddErrorLr(0,20e-4,100e-4);
-  det->SetAddErrorLr(1,20e-4,100e-4);
-  det->SetAddErrorLr(2,2000e-4,20e-4);
-  det->SetAddErrorLr(3,2000e-4,20e-4);
-  det->SetAddErrorLr(4,20e-4,500e-4);
-  det->SetAddErrorLr(5,20e-4,500e-4);   
-  */
+  //  det->SetAddErrorLr(0,20e-4,100e-4);
+  //  det->SetAddErrorLr(1,20e-4,100e-4);
+  det->SetAddErrorLr(2,500e-4,10e-4);
+  det->SetAddErrorLr(3,500e-4,10e-4);
+  //  det->SetAddErrorLr(4,20e-4,500e-4);
+  //  det->SetAddErrorLr(5,20e-4,500e-4);   
+
 }
 
 //======================================================================
@@ -156,8 +154,8 @@ void ConfigTPC(AliAlgSteer* algSteer)
 void ConfigTRD(AliAlgSteer* algSteer)
 {
   //
-  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {2,2,2,1,1,1}; // precondition sigmas
-  const double kCondSigCHA[AliAlgVol::kNDOFGeom] = {0.5,0.5,5.0,1,1,1}; // precondition sigmas
+  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {2,2,10,1,1,1}; // precondition sigmas
+  const double kCondSigCHA[AliAlgVol::kNDOFGeom] = {1.5,1.5,5.0, 1,1,1}; // precondition sigmas
 
   AliAlgDetTRD* det = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
   if (!det||det->IsDisabled()) return;
@@ -186,7 +184,8 @@ void ConfigTOF(AliAlgSteer* algSteer)
 {
   //
   const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
-  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
+  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, 1,1,1}; // precondition sigmas
+  //  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
   //
   AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
   if (!det||det->IsDisabled()) return;
@@ -206,7 +205,7 @@ void ConfigTOF(AliAlgSteer* algSteer)
     det->SetDOFCondition(idf,kCondSigSTR[idf],1); // level 1 - strips
   }
   //
-  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
+  //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
   //
   //  det->SetAddError(12,12);
 
