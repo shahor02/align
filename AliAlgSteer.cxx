@@ -414,9 +414,11 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   //
   FillStatHisto( kEvInp );
   //
+#if DEBUG>2    
   AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d",
 	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),
 	   IsCosmic() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
+#endif
   //
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
   if (!IsCosmic() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
@@ -444,9 +446,10 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
   //
   FillStatHisto( kTrackAcc, accTr);
   //
-  AliInfoF("Processed event %d of ev.specie %d -> Accepted: %4d of %4d tracks",
-	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),accTr,ntr);
-
+  if (accTr) {
+    AliInfoF("Processed event %d of ev.specie %d -> Accepted: %4d of %4d tracks",
+	     esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),accTr,ntr);
+  }
   return kTRUE;
 }
 
