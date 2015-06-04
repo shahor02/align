@@ -594,7 +594,6 @@ void AliAlgDet::ConstrainOrphans(const double* sigma, const char* match)
   //
   TString mts=match, syms;
   AliAlgConstraint* constr = new AliAlgConstraint();
-  UInt_t mask = 0;
   for (int i=0;i<AliAlgVol::kNDOFGeom;i++) {
     if (sigma[i]>=0) constr->ConstrainDOF(i);
     else             constr->UnConstrainDOF(i);
