@@ -2,6 +2,7 @@
 #define ALIALGRES_H
 
 #include <TObject.h>
+#include <TMath.h>
 class AliAlgTrack;
 
 /*--------------------------------------------------------
