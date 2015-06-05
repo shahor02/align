@@ -1,0 +1,7 @@
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/collLHC12g_000188503/controlRes.root\",\"halgV0.root\",\"v0BM\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/collLHC12a_000176753/controlRes.root\",\"halgV0.root\",\"v0BP\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/controlResB0.root\",\"halgV0.root\",\"v0B0\"\)
+
+aliroot -b -q ProcRes.C+\(\"/data/algTest/pedeSens/collLHC12g_000188503/controlRes.root\",\"halgSN.root\",\"snBM\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/pedeSens/collLHC12a_000176753/controlRes.root\",\"halgSN.root\",\"snBP\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/pedeSens/controlResB0.root\",\"halgSN.root\",\"snB0\"\)

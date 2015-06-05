@@ -889,7 +889,7 @@ void DrawReport(TObjArray* hmans, const char* psname)
   repCanv = new TCanvas("algCanv","algCanv",700,900);
   TString psnm1 = psname;
   if (psnm1.IsNull()) psnm1 = Form("algRep");
-  if (!psnm1.EndsWith(".ps")) psnm1 += "ps";
+  if (!psnm1.EndsWith(".ps")) psnm1 += ".ps";
   TString psnm0 = psnm1 + "["; 
   TString psnm2 = psnm1 + "]";
   repCanv->Print(psnm0.Data());
@@ -1126,7 +1126,7 @@ void DrawHistos(TObjArray* hmans, int id)
     if (!h || h->GetEntries()==0) continue;
     h->SetMinimum( mn - 0.2*(mx-mn) );
     h->SetMaximum( mx + 0.2*(mx-mn) );
-    h->Draw(nhAcc ? "":"same");
+    h->Draw(nhAcc==0 ? "":"same");
     nhAcc++;
   }
   gPad->SetGrid();
