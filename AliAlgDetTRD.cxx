@@ -88,7 +88,7 @@ AliAlgPoint* AliAlgDetTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointArr
   // custom correction for non-crossing points, to account for the dependence of Z bias
   // on track inclination (prob. to not cross pads)
   //
-  AliAlgPoint* pnt = AliAlgDetTRD::TrackPoint2AlgPoint(pntId,trp); // process in usual way
+  AliAlgPoint* pnt = AliAlgDet::TrackPoint2AlgPoint(pntId,trp); // process in usual way
   if (!pnt) return 0;
   //
   // is it pad crrossing?
