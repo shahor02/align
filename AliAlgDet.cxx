@@ -93,7 +93,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, 
   AliAlgPoint* apnt(0);
   for (int ip=0;ip<np;ip++) {
     if (!SensorOfDetector(trP->GetVolumeID()[ip])) continue;
-    if (!(apnt=TrackPoint2AlgPoint(ip, trP))) continue;
+    if (!(apnt=TrackPoint2AlgPoint(ip, trP, esdTr))) continue;
     algTrack->AddPoint(apnt);
     if (inv) apnt->SetInvDir();
     npSel++;
@@ -104,7 +104,7 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, 
 }
 
 //____________________________________________
-AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr)
+AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack*)
 {
   // convert the pntId-th point to AliAlgPoint, detectors may override this method
   //
