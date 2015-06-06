@@ -56,6 +56,9 @@ enum {kHOffsVTX=1000,kHOffsITS=100000,kHOffsTRD=300000,kHOffsTOF=400000};
 enum {kDYSnp,kDZSnp,kDYPullSnp,kDZPullSnp};
 enum {kNLrITS=6,kNLrTRD=6};
 //
+const char* kFitOptGS = "qmr"; // "qmrl"
+const char* kFitOptP1 = "qmr"; //
+
 int kITSLrOffs[kNLrITS] = {0};
 int kTRDLrOffs[kNLrTRD] = {0};
 //
@@ -825,11 +828,11 @@ Bool_t FitMeanSlope(TObjArray *histos, int minEnt)
       hOutSigP1->GetXaxis()->SetBinLabel(ih+1,nm.Data()+idm+1);
     }
     if (!h || h->GetEntries()<minEnt) continue;
-    h->FitSlicesY(gs,-1,-1,0,"qmrl",&hfarr);
+    h->FitSlicesY(gs,0,-1,0,kFitOptGS,&hfarr);
     TH1* hmean = (TH1*)hfarr[1];
     TH1* hsig  = (TH1*)hfarr[2];
     if (!hmean || !hsig) {hfarr.Delete(); continue;}
-    hmean->Fit("pol1","qmr");
+    hmean->Fit("pol1",kFitOptP1);
     TF1* plm = (TF1*)hmean->GetListOfFunctions()->FindObject("pol1");
     if (plm) {
       hOutMeanP0->SetBinContent(ih+1,plm->GetParameter(0));
@@ -869,7 +872,7 @@ Bool_t FitProfile(TObjArray *histos, int minEnt)
   double range = h->GetYaxis()->GetXmax();
   TF1* gs = new TF1("gs","gaus",-range,range);
   TObjArray hfarr;
-  h->FitSlicesY(gs,-1,-1,0,"qmrl",&hfarr);
+  h->FitSlicesY(gs,0,-1,0,kFitOptGS,&hfarr);
   TH1* hmean = (TH1*)hfarr[1];
   TH1* hsig  = (TH1*)hfarr[2];
   if (!hmean || !hsig) {hfarr.Delete(); return kFALSE;}

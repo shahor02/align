@@ -153,7 +153,7 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
     const double *sysE = sens->GetAddError(); // additional syst error
     pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
   }
-  else { // errors will be calculated just befor using the point in the fit, using track info
+  else { // errors will be calculated just before using the point in the fit, using track info
     pnt->SetYZErrTracking(0,0,0);
     pnt->SetNeedUpdateFromTrack();
   }

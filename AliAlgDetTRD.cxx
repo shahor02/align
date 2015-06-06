@@ -81,3 +81,26 @@ Bool_t AliAlgDetTRD::AcceptTrack(const AliESDtrack* trc,Int_t trtype) const
   if (trc->GetTRDntracklets()<fNPointsSel[trtype]) return kFALSE;
   return kTRUE;
 }
+
+//____________________________________________
+AliAlgPoint* AliAlgDetTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp)
+{
+  // custom correction for non-crossing points, to account for the dependence of Z bias
+  // on track inclination (prob. to not cross pads)
+  //
+  AliAlgPoint* pnt = AliAlgDetTRD::TrackPoint2AlgPoint(pntId,trp); // process in usual way
+  if (!pnt) return 0;
+  //
+  // is it pad crrossing?
+  double sgYZ = pnt->GetYZErrTracking()[1];
+  if (TMath::Abs(sgYZ)<0.01) return pnt; // crossing
+  //
+  double* pYZ = (double*)pnt->GetYZTracking();
+  double dip = pYZ[1]/pnt->GetXPoint();     // Z/X
+  double corrZ = 1.055*dip;
+  double sgZ2 = pnt->GetYZErrTracking()[2];
+  pYZ[1] += corrZ; 
+  pYZ[0] += corrZ*sgYZ/sgZ2;  // Y and Z are correlated
+  return pnt;
+  //
+}

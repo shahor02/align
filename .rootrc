@@ -17,7 +17,7 @@ WinNT.*.Root.MacroPath:     ./;$(ROOTSYS)/macros
 
 # Fix include path for aclic
 #ACLiC.IncludePaths:	-I$(ALICE_ROOT)/include -I$(HOME)/ALICE/mymacros -I$(ALICE_ROOT) -I$(ALICE_ROOT)/ITS -I$(ALICE_ROOT)/MUON -I$(ALICE_ROOT)/MUON/mapping -I$(ALICE_ROOT)/ITS/UPGRADE/testITSU -I$(ALICE_ROOT)/ITS/UPGRADE -I$(ALICE_ROOT)/ITS/UPGRADE  -I$(ALICE_ROOT)/ITS
-ACLiC.IncludePaths:	-I$(HOME)/ALICE/mymacros -I$(ALICE_ROOT)/include -I$(ALICE_PHYSICS)/include -I$(ALICE_ROOT)/ITS/UPGRADE
+ACLiC.IncludePaths:	-I$(ALICESW)/mymacros -I$(ALICE_ROOT)/include -I$(ALICE_PHYSICS)/include -I$(ALICE_ROOT)/ITS/UPGRADE
 
 
 # Path where to look for TrueType fonts
