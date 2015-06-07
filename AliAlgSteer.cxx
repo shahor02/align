@@ -92,6 +92,8 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fGloParVal(0)
   ,fGloParErr(0)
   ,fGloParLab(0)
+  ,fOrderedLbl(0)
+  ,fLbl2ID(0)
   ,fRefPoint(0)
   ,fESDTree(0)
   ,fESDEvent(0)
@@ -213,9 +215,13 @@ void AliAlgSteer::InitDetectors()
   fGloParVal = new Float_t[dofCnt];
   fGloParErr = new Float_t[dofCnt];
   fGloParLab = new Int_t[dofCnt];  
+  fOrderedLbl = new Int_t[dofCnt];  
+  fLbl2ID    = new Int_t[dofCnt];  
   memset(fGloParVal,0,dofCnt*sizeof(Float_t));
   memset(fGloParErr,0,dofCnt*sizeof(Float_t));
   memset(fGloParLab,0,dofCnt*sizeof(Int_t));
+  memset(fOrderedLbl,0,dofCnt*sizeof(Int_t));
+  memset(fLbl2ID,0,dofCnt*sizeof(Int_t));
   AssignDOFs();
   AliInfoF("Booked %d global parameters",dofCnt);
   //
@@ -278,6 +284,11 @@ void AliAlgSteer::AssignDOFs()
   }
   AliInfoF("Assigned parameters/labels arrays for %d DOFs",fNDOFs);
   if (ndfOld>-1 && ndfOld != fNDOFs) AliErrorF("Recalculated NDOFs=%d not equal to saved NDOFs=%d",fNDOFs,ndfOld);
+  //
+  // build Lbl <-> parID table
+  Sort(fNDOFs,fGloParLab,fLbl2ID,kFALSE); // sort in increasing order
+  for (int i=fNDOFs;i--;) fOrderedLbl[i] = fGloParLab[fLbl2ID[i]];
+  //
 }
 
 //________________________________________________________________
@@ -1612,8 +1623,9 @@ void AliAlgSteer::PrintLabels() const
 Int_t AliAlgSteer::Label2ParID(int lab) const
 {
   // convert Mille label to ParID (slow)
-  for (int i=fNDOFs;i--;) if (fGloParLab[i]==lab) return i;
-  return -1;
+  int ind = FindKeyIndex(lab,fOrderedLbl,fNDOFs);
+  if (ind<0) return -1;
+  return fLbl2ID[ind];
 }
 
 //____________________________________________________________

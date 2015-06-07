@@ -4,7 +4,7 @@ void CreateDataSet(TString path="/alice/data/2012/LHC12g/000188503/cpass1_pass2"
 		   TString out="coll.xml")
 {
   // Create dataset for the grid data directory + run number.
-  const Int_t maxEntries = 15000;
+  const Int_t maxEntries = 9999999;
   if (nTest<0||nTest>maxEntries) nTest = maxEntries;
   if (!gGrid) {
     TGrid::Connect("alien://");
