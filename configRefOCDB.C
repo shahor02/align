@@ -3,7 +3,7 @@
 // will be evaluated wrt these objects
 
 TString specOCDB = "";//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
-//TString specOCDB = "outOCDB";
+//TString specOCDB = "CDBpedeSens";//"outOCDB";
 
 void configRefOCDB(int run = 188503) 
 {
