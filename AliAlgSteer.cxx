@@ -1787,7 +1787,14 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
       irs++; // skip 2nd 
       continue;
     }
-    nMatCorr++;
+    else if (rec->GetResid(irs)==0 && rec->GetVolID(irs)==-1) { // material corrections have 0 residual
+      nMatCorr++; 
+    }
+    else { // might be fixed parameter, global derivs are skept
+      nPoints++;
+      irs++; // skip 2nd 
+      continue;     
+    }
   }
   //
   if (nMatCorr%4) AliWarningF("Error? NMatCorr=%d is not multiple of 4",nMatCorr);
@@ -1810,6 +1817,8 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
   //
   if (loc) vecp = new TVectorD(nvloc);
   //
+  float chi2Ini=0,chi2L=0,chi2LG=0;
+  //
   // residuals, accounting for global solution
   double *resid = new Double_t[nres];
   int* volID = new Int_t[nres];
@@ -1819,17 +1828,20 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
     //
     int ndglo = rec->GetNDGlo(irs);
     int ndloc = rec->GetNDLoc(irs);
+    volID[irs]=0;
     for (int ig=0;ig<ndglo;ig++) {
       int lbI = recLabGlo[ig];
       int idP = Label2ParID(lbI);
       if (idP<0) AliFatalF("Did not find parameted for label %d\n",lbI);
       double parVal = GetGloParVal()[idP];
-      resid[irs] += parVal*recDGlo[ig];
+      resid[irs] -= parVal*recDGlo[ig];
       if (!ig) volID[irs] = GetVolOfDOFID(idP)->GetVolID();
     }
     //
     double  sg2inv = rec->GetResErr(irs);
-    sg2inv = 1./sg2inv/sg2inv;
+    sg2inv = 1./(sg2inv*sg2inv);
+    //
+    chi2Ini += resid[irs]*resid[irs]*sg2inv; // chi accounting for global solution only
     //
     // Build matrix to solve local parameters
     for (int il=0;il<ndloc;il++) {
@@ -1848,6 +1860,9 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
     recDLoc   += ndloc;
     //
   }
+  //
+  if (rL)  rL->SetChi2Ini(chi2Ini);
+  if (rLG) rLG->SetChi2Ini(chi2Ini);
   //
   TVectorD vecSol(nvloc);
   TVectorD vecSolG(nvloc);
@@ -1904,6 +1919,7 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
     double resL = resOr;
     double resLG = resid[irs];
     double  sg = rec->GetResErr(irs);
+    double  sg2Inv = 1/(sg*sg);
     //
     int ndglo = rec->GetNDGlo(irs);
     int ndloc = rec->GetNDLoc(irs);
@@ -1914,17 +1930,22 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
       resLG += recDLoc[il]*vecSolG[lbLI];
     }
     //
-    if (ndglo) { // real measurement
+    chi2L  += resL*resL*sg2Inv; // chi accounting for global solution only
+    chi2LG += resLG*resLG*sg2Inv; // chi accounting for global solution only
+    //
+    if (ndglo || resOr!=0) { // real measurement
       idMeas++;
       if (idMeas>1) idMeas = 0; 
       if (idMeas==0) pntID++; // measurements come in pairs
+      int lbl = rec->GetVolID(irs);
+      lbl = ndglo ? recLabGlo[0] : 0; // TMP, until VolID is filled // RS!!!!
       if (rLG) {
 	rLG->SetResSigMeas(pntID,idMeas,resLG,sg);
-	if (idMeas==0) rLG->SetLabel(pntID,recLabGlo[0],volID[irs]);
+	if (idMeas==0) rLG->SetLabel(pntID,lbl,volID[irs]);
       }
       if (rL) {
 	rL->SetResSigMeas(pntID,idMeas,resL,sg);
-	if (idMeas==0) rL->SetLabel(pntID,recLabGlo[0],volID[irs]);
+	if (idMeas==0) rL->SetLabel(pntID,lbl,volID[irs]);
       }
     }
     else {
@@ -1935,16 +1956,26 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
     }
     //
     if (verbose) {
+      int lbl = rec->GetVolID(irs); 
+      lbl = ndglo ? recLabGlo[0] : (resOr==0 ? -1 : 0); // TMP, until VolID is filled // RS!!!!
       if (loc) printf("%3d (%9d) %6.4f | [%+.2e:%+7.2f] [%+.2e:%+7.2f]\n",
-		      irs,ndglo ? recLabGlo[0]:-1,sg,resL,resL/sg,resLG,resLG/sg);
+		      irs,lbl,sg,resL,resL/sg,resLG,resLG/sg);
       else     printf("%3d (%9d) %6.4f | [%+.2e:%+7.2f]\n",
-		      irs,ndglo ? recLabGlo[0]:-1,sg,resLG,resLG/sg);
+		      irs,lbl,sg,resLG,resLG/sg);
     }
     //
     recLabGlo += ndglo; // prepare for next record
     recDGlo   += ndglo;
     recLabLoc += ndloc;
     recDLoc   += ndloc;
+  }
+  if (rL)  rL->SetChi2(chi2L);
+  if (rLG) rLG->SetChi2(chi2LG);
+  //
+  if (verbose) {
+    printf("Chi: G = %e | LG = %e",chi2Ini,chi2LG);
+    if (loc) printf(" | L = %e",chi2L);
+    printf("\n");
   }
   // store track corrections
   int nTrCor = nvloc - matID - 1;

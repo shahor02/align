@@ -41,7 +41,7 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm);
 void DrawReportITS(TObjArray* hmans, const char* psnm);
 void DrawReportTRD(TObjArray* hmans, const char* psnm);
 void DrawReportTOF(TObjArray* hmans, const char* psnm);
-void DrawHistos(TObjArray* hmans, int id);
+void DrawHistos(TObjArray* hmans, int id, float range=-1);
 
 Bool_t FitMeanSlope(TObjArray *histos, int minEnt=50);
 Bool_t FitProfile(TObjArray *histos, int minEnt=50);
@@ -947,6 +947,19 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
 void DrawReportITS(TObjArray* hmans, const char* psnm)
 {
   int icn;
+  float drRangeY[4][6] = {
+    { 2e-4, 2e-4,20e-4,20e-4,20e-4,20e-4},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1}
+  };
+  float drRangeZ[4][6] = {
+    {20e-4,20e-4,20e-4,20e-4,200e-4,200e-4},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1}
+  };
+  
   for (int ilr=0;ilr<6;ilr++) {
     //
     icn = 1;
@@ -955,7 +968,7 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsITS + ilr*100 + kDYSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsITS + ilr*100 + kDYSnp*10 + i*2+j,drRangeY[i*2+j][ilr]);
       }
     repCanv->Print(psnm);
     //
@@ -966,7 +979,7 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPullSnp*10 + i*2+j, i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -977,7 +990,7 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsITS + ilr*100 + kDZSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsITS + ilr*100 + kDZSnp*10 + i*2+j,drRangeZ[i*2+j][ilr]);
       }
     repCanv->Print(psnm);
     //
@@ -988,7 +1001,7 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPullSnp*10 + i*2+j,i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -999,6 +1012,19 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
 //____________________________________________
 void DrawReportTRD(TObjArray* hmans, const char* psnm)
 {
+  float drRangeY[4][6] = {
+    { 0.1, 0.1, 0.1, 0.1, 0.1, 0.1},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1}
+  };
+  float drRangeZ[4][6] = {
+    { 1., 1., 1., 1., 1., 1.},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1},
+    { -1, -1, -1, -1, -1, -1}
+  };
+  //
   int icn;
   for (int ilr=0;ilr<6;ilr++) {
     //
@@ -1008,7 +1034,7 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYSnp*10 + i*2+j,drRangeY[i*2+j][ilr]);
       }
     repCanv->Print(psnm);
     //
@@ -1019,7 +1045,7 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPullSnp*10 + i*2+j, i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -1030,7 +1056,7 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZSnp*10 + i*2+j,drRangeY[i*2+j][ilr]);
       }
     repCanv->Print(psnm);
     //
@@ -1041,7 +1067,7 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPullSnp*10 + i*2+j, i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -1052,6 +1078,9 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
 //____________________________________________
 void DrawReportTOF(TObjArray* hmans, const char* psnm)
 {
+  float drRangeY[4] = {1,-1,-1,-1};
+  float drRangeZ[4] = {3,-1,-1,-1};
+  // 
   int icn;
   for (int isc=0;isc<18;isc++) {
     //
@@ -1061,7 +1090,7 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTOF + isc*100 + kDYSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTOF + isc*100 + kDYSnp*10 + i*2+j,drRangeY[i*2+j]);
       }
     repCanv->Print(psnm);
     //
@@ -1072,7 +1101,7 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPullSnp*10 + i*2+j, i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -1083,7 +1112,7 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTOF + isc*100 + kDZSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTOF + isc*100 + kDZSnp*10 + i*2+j,drRangeZ[i*2+j]);
       }
     repCanv->Print(psnm);
     //
@@ -1094,7 +1123,7 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
     for (int i=0;i<2;i++) 
       for (int j=0;j<2;j++) {
 	repCanv->cd(icn++);
-	DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPullSnp*10 + i*2+j);
+	DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPullSnp*10 + i*2+j, i*2+j ? -1 : 3);
       }
     repCanv->Print(psnm);
     //
@@ -1103,7 +1132,7 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
 }
 
 //_________________________________________________
-void DrawHistos(TObjArray* hmans, int id)
+void DrawHistos(TObjArray* hmans, int id, float range)
 {
   // draw histo ID from set of histo managers
   int nhm = hmans->GetEntriesFast();
@@ -1120,6 +1149,9 @@ void DrawHistos(TObjArray* hmans, int id)
     nhAcc++;
   }
   if (nhAcc<1 || mn>=mx) return;
+  float mnd = mn - 0.2*(mx-mn);
+  float mxd = mx + 0.2*(mx-mn);
+  if (range>0) {mxd = range; mnd = -range;}
   nhAcc = 0;
   gStyle->SetTitleW(0.9);
   for (int ih=0;ih<nhm;ih++) {
@@ -1127,8 +1159,8 @@ void DrawHistos(TObjArray* hmans, int id)
     if (!hm) continue;
     TH1* h = hm->GetHisto1F(id);
     if (!h || h->GetEntries()==0) continue;
-    h->SetMinimum( mn - 0.2*(mx-mn) );
-    h->SetMaximum( mx + 0.2*(mx-mn) );
+    h->SetMinimum( mnd );
+    h->SetMaximum( mxd );
     h->Draw(nhAcc==0 ? "":"same");
     nhAcc++;
   }
