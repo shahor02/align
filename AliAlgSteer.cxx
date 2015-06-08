@@ -411,6 +411,17 @@ void AliAlgSteer::SetESDEvent(const AliESDEvent* ev)
 Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 {
   // process event
+  const int kProcStatFreq = 100;
+  static int evCount=0;
+  if (!(evCount%kProcStatFreq)) {
+    ProcInfo_t procInfo;
+    gSystem->GetProcInfo(&procInfo);
+    AliInfoF("ProcStat: CPUusr: %6d CPUsys: %6d RMem:%6d VMem:%6d",
+	     int(procInfo.fCpuUser), int(procInfo.fCpuSys),
+	     int(procInfo.fMemResident/1024),int(procInfo.fMemVirtual/1024));
+  }
+  evCount++;
+  //
   SetESDEvent(esdEv);
   //
   if (esdEv->GetRunNumber() != GetRunNumber()) SetRunNumber(esdEv->GetRunNumber());

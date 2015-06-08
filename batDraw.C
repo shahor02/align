@@ -1,7 +1,7 @@
 {
-  hv0bm = new HistoManager("hpostv0BM","halgV0_trdNew.root",1);
-  hv0bp = new HistoManager("hpostv0BP","halgV0_trdNew.root",1);
-  hv0b0 = new HistoManager("hpostv0B0","halgV0_trdNew.root",1);
+  hv0bm = new HistoManager("hpostv0BM","halgV0.root",1);
+  hv0bp = new HistoManager("hpostv0BP","halgV0.root",1);
+  hv0b0 = new HistoManager("hpostv0B0","halgV0.root",1);
   hv0bm->SetColor(kRed);
   hv0bp->SetColor(kBlue);
   hv0b0->SetColor(kGreen+2);
