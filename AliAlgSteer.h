@@ -228,11 +228,13 @@ class AliAlgSteer : public TObject
   Bool_t   FillMPRecData();
   Bool_t   FillMilleData();
   Bool_t   FillControlData();
+  void     SetDoKalmanResid(Bool_t v=kTRUE)                      {fDoKalmanResid = v;}
   void     SetMPOutType(Int_t t)                                 {fMPOutType = t;}
   void     ProduceMPData(Bool_t v=kTRUE)                         {if (v) fMPOutType|=kMille; else fMPOutType&=~kMille;}
   void     ProduceMPRecord(Bool_t v=kTRUE)                       {if (v) fMPOutType|=kMPRec; else fMPOutType&=~kMPRec;}
   void     ProduceControlRes(Bool_t v=kTRUE)                     {if (v) fMPOutType|=kContR; else fMPOutType&=~kContR;}
   Int_t    GetMPOutType()                                  const {return fMPOutType;}
+  Bool_t   GetDoKalmanResid()                              const {return fDoKalmanResid;}
   Bool_t   GetProduceMPData()                              const {return fMPOutType&kMille;}
   Bool_t   GetProduceMPRecord()                            const {return fMPOutType&kMPRec;}
   Bool_t   GetProduceControlRes()                          const {return fMPOutType&kContR;}
@@ -355,6 +357,7 @@ class AliAlgSteer : public TObject
   TString         fMPSteerFileName;                       //  file name for MP steering
   TString         fResidFileName;                         //  file name for optional control residuals
   Bool_t          fMilleOutBin;                           //  optionally text output for Mille debugging
+  Bool_t          fDoKalmanResid;                         //  calculate residuals with smoothed kalman in the ControlRes
   //
   TString         fOutCDBPath;                            // output OCDB path
   TString         fOutCDBComment;                         // optional comment to add to output cdb objects
@@ -376,7 +379,7 @@ class AliAlgSteer : public TObject
   static const Char_t* fgkHStatName[kNHVars];             // names for stat.bins in the stat histo
   static const Char_t* fgkMPDataExt;                      // extension for MP2 binary data 
   //
-  ClassDef(AliAlgSteer,1)
+  ClassDef(AliAlgSteer,2)
 };
 
 //__________________________________________________________

@@ -7,10 +7,12 @@
 //
 #include "AliAlgSteer.h"
 #include "AliAlgDet.h"
+#include "AliAlgSens.h"
 #include "AliAlgDetITS.h"
 #include "AliAlgDetTPC.h"
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
+#include "AliAlgVtx.h"
 #endif
 
 void alignConf(AliAlgSteer* algSteer);
@@ -18,7 +20,8 @@ void ConfigITS(AliAlgSteer* algSteer);
 void ConfigTPC(AliAlgSteer* algSteer);
 void ConfigTRD(AliAlgSteer* algSteer);
 void ConfigTOF(AliAlgSteer* algSteer);
-//
+void ConfigVTX(AliAlgSteer* algSteer);
+
 
 void alignConf(AliAlgSteer* algSteer)
 {
@@ -38,14 +41,26 @@ void alignConf(AliAlgSteer* algSteer)
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTOF)->SetDisabled();
   //algSteer->GetDetectorByDetID(AliAlgSteer::kTRD)->SetDisabled();
   //
+  /*
+  for (int i=algSteer->GetNDetectors();i--;) { //!!!!RS
+    AliAlgDet* det = algSteer->GetDetector(i);
+    for (int iv=det->GetNVolumes();iv--;) 
+      //  det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTY)|(0x1<<AliAlgVol::kDOFTZ)|(0x1<<AliAlgVol::kDOFTX) );
+      //      det->GetVolume(iv)->SetFreeDOFPattern( (0x1<<AliAlgVol::kDOFTX) );
+      det->FixNonSensors();
+  }
+  */
+
   ConfigITS(algSteer);
   ConfigTPC(algSteer);
   ConfigTRD(algSteer);
   ConfigTOF(algSteer);
   //
+  ConfigVTX(algSteer);
+  //
   algSteer->SetVtxMinCont(5);   // accept events with min number of vertexTracks contributors
   algSteer->SetVtxMinContVC(10); // use for vertex constraint only those with min number of contributors
-  algSteer->SetMaxDCAforVC(0.1,0.6); // dcaR/Z primary selection to allow vertex constraint
+  algSteer->SetMaxDCAforVC(0.05,0.3); // dcaR/Z primary selection to allow vertex constraint
   algSteer->SetMaxChi2forVC(10);     // track-vertex chi2 primary selection to allow vertex constraint
 
   algSteer->SetCosmicSelStrict(kTRUE); // apply track selection to each leg separately
@@ -56,17 +71,30 @@ void alignConf(AliAlgSteer* algSteer)
   algSteer->SetMinPointsColl(6,6);     // min number of points per track Boff/Bon
   algSteer->SetMinPointsCosm(4,4);
   //
-  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
-  //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
+  //  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  algSteer->SetMPOutType(AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  algSteer->SetDoKalmanResid(kTRUE); // calculate Kalman residuals on top of analytical solutiuon
   //  
   //  algSteer->SetMilleTXT(1);
+  //
   algSteer->InitDOFs();
   //  
 }
 
 //======================================================================
+void ConfigVTX(AliAlgSteer* algSteer)
+{
+  //
+  AliAlgVtx *vtx = algSteer->GetVertexSensor();
+  //  vtx->SetFreeDOFPattern(0);
+  vtx->SetAddError(0.003,0.003);
+}
+
+//======================================================================
 void ConfigITS(AliAlgSteer* algSteer)
 {
+  //
+  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.2,1,1,1}; // precondition sigmas
   //
   AliAlgDetITS* det = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
   if (!det||det->IsDisabled()) return;
@@ -84,15 +112,23 @@ void ConfigITS(AliAlgSteer* algSteer)
   det->SetITSSelPatternColl(AliAlgDetITS::kSPDAny);
   det->SetITSSelPatternCosm(AliAlgDetITS::kSPDNoSel);
   //
+  // precondition
+  for (int iv=det->GetNVolumes();iv--;) {
+    AliAlgVol* vol = det->GetVolume(iv);
+    for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+      if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
+      vol->SetParErr(idf, kCondSig[idf] );    // set condition
+    }
+  }  
+  //
   //  det->SetAddError(2,2);
-  //  /*
-  det->SetAddErrorLr(0,20e-4,100e-4);
-  det->SetAddErrorLr(1,20e-4,100e-4);
-  det->SetAddErrorLr(2,2000e-4,20e-4);
-  det->SetAddErrorLr(3,2000e-4,20e-4);
-  det->SetAddErrorLr(4,20e-4,500e-4);
-  det->SetAddErrorLr(5,20e-4,500e-4);   
-  //  */
+  //  det->SetAddErrorLr(0,20e-4,100e-4);
+  //  det->SetAddErrorLr(1,20e-4,100e-4);
+  det->SetAddErrorLr(2,500e-4,10e-4);
+  det->SetAddErrorLr(3,500e-4,10e-4);
+  //  det->SetAddErrorLr(4,20e-4,500e-4);
+  //  det->SetAddErrorLr(5,20e-4,500e-4);   
+
 }
 
 //======================================================================
@@ -119,6 +155,9 @@ void ConfigTPC(AliAlgSteer* algSteer)
 void ConfigTRD(AliAlgSteer* algSteer)
 {
   //
+  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {2,2,10,1,1,1}; // precondition sigmas
+  const double kCondSigCHA[AliAlgVol::kNDOFGeom] = {1.5,1.5,5.0, 1,1,1}; // precondition sigmas
+
   AliAlgDetTRD* det = (AliAlgDetTRD*)algSteer->GetDetectorByDetID(AliAlgSteer::kTRD);
   if (!det||det->IsDisabled()) return;
   //
@@ -130,7 +169,17 @@ void ConfigTRD(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(2);
   det->SetNPointsSelCosm(2);
-
+  //
+  // just repeat default settings
+  det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
+  det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
+  //
+  // precondition
+  // precondition
+  for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
+    det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
+    det->SetDOFCondition(idf,kCondSigCHA[idf],1); // level 1 - chambers
+  }
   //  det->SetAddError(0.1,0.1);
   //
 }
@@ -138,6 +187,10 @@ void ConfigTRD(AliAlgSteer* algSteer)
 //======================================================================
 void ConfigTOF(AliAlgSteer* algSteer)
 {
+  //
+  const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
+  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, 1,1,1}; // precondition sigmas
+  //  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
   //
   AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
   if (!det||det->IsDisabled()) return;
@@ -150,7 +203,15 @@ void ConfigTOF(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(1);
   det->SetNPointsSelCosm(1);
-
+  //
+  // precondition
+  for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
+    det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
+    det->SetDOFCondition(idf,kCondSigSTR[idf],1); // level 1 - strips
+  }
+  //
+  //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
+  //
   //  det->SetAddError(12,12);
 
   //

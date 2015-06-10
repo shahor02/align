@@ -60,7 +60,7 @@ void alignConf(AliAlgSteer* algSteer)
   //
   algSteer->SetVtxMinCont(5);   // accept events with min number of vertexTracks contributors
   algSteer->SetVtxMinContVC(10); // use for vertex constraint only those with min number of contributors
-  algSteer->SetMaxDCAforVC(0.1,0.6); // dcaR/Z primary selection to allow vertex constraint
+  algSteer->SetMaxDCAforVC(0.05,0.3); // dcaR/Z primary selection to allow vertex constraint
   algSteer->SetMaxChi2forVC(10);     // track-vertex chi2 primary selection to allow vertex constraint
 
   algSteer->SetCosmicSelStrict(kTRUE); // apply track selection to each leg separately
@@ -71,8 +71,9 @@ void alignConf(AliAlgSteer* algSteer)
   algSteer->SetMinPointsColl(6,6);     // min number of points per track Boff/Bon
   algSteer->SetMinPointsCosm(4,4);
   //
-  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
-  //algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kContR);
+  //  algSteer->SetMPOutType(AliAlgSteer::kMille | AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  algSteer->SetMPOutType(AliAlgSteer::kMPRec | AliAlgSteer::kContR);
+  algSteer->SetDoKalmanResid(kTRUE); // calculate Kalman residuals on top of analytical solutiuon
   //  
   //  algSteer->SetMilleTXT(1);
   //
@@ -168,6 +169,10 @@ void ConfigTRD(AliAlgSteer* algSteer)
   //
   det->SetNPointsSelColl(2);
   det->SetNPointsSelCosm(2);
+  //
+  // just repeat default settings
+  det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
+  det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
   //
   // precondition
   // precondition

@@ -20,16 +20,26 @@
 #include "AliGeomManager.h"
 #include "AliESDtrack.h"
 #include "AliTRDgeometry.h"
-#include "TGeoManager.h"
+#include <TGeoManager.h>
+#include <TMath.h>
+
+using namespace TMath;
 
 ClassImp(AliAlgDetTRD);
 
 //____________________________________________
 AliAlgDetTRD::AliAlgDetTRD(const char* title)
+  : AliAlgDet()
+  ,fNonRCCorrDzDtgl(0)
 {
   // default c-tor
   SetNameTitle(AliAlgSteer::GetDetNameByDetID(AliAlgSteer::kTRD),title);
   SetDetID(AliAlgSteer::kTRD);
+  fExtraErrRC[0] = fExtraErrRC[1] = 0;
+  //
+  // ad hoc correction
+  SetNonRCCorrDzDtgl();
+  SetExtraErrRC();
 }
 
 
@@ -88,18 +98,35 @@ AliAlgPoint* AliAlgDetTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointArr
   // custom correction for non-crossing points, to account for the dependence of Z bias
   // on track inclination (prob. to not cross pads)
   //
+  const double kTilt = 2.*TMath::DegToRad();
   AliAlgPoint* pnt = AliAlgDet::TrackPoint2AlgPoint(pntId,trp,tr); // process in usual way
   if (!pnt) return 0;
   //
   // is it pad crrossing?
-  double sgYZ = pnt->GetYZErrTracking()[1];
-  if (TMath::Abs(sgYZ)<0.01) return pnt; // crossing
-  //
-  double* pYZ = (double*)pnt->GetYZTracking();
-  double corrZ = 1.055*tr->GetTgl();
-  double sgZ2 = pnt->GetYZErrTracking()[2];
-  pYZ[1] += corrZ; 
-  pYZ[0] += corrZ*sgYZ/sgZ2;  // Y and Z are correlated
+  double* errYZ = (double*) pnt->GetYZErrTracking();
+  double sgYZ = errYZ[1];
+  if (TMath::Abs(sgYZ)<0.01) {  // crossing
+    // increase errors since the error 
+    errYZ[0] += fExtraErrRC[0]*fExtraErrRC[0];
+    errYZ[2] += fExtraErrRC[1]*fExtraErrRC[1];
+  }
+  else { // account for probability to not cross the row
+    double* pYZ = (double*)pnt->GetYZTracking();
+    double corrZ = 1.055*tr->GetTgl();
+    pYZ[1] += corrZ; 
+    pYZ[0] += corrZ*Sign(kTilt,sgYZ);  // Y and Z are correlated
+  }
   return pnt;
   //
 }
+
+//__________________________________________
+//____________________________________________
+void AliAlgDetTRD::Print(const Option_t *opt) const
+{
+  // print info
+  AliAlgDet::Print(opt);
+  printf("Correction dZ/dTgl NonRC: %f\n",fNonRCCorrDzDtgl);
+  printf("Extra error for RC tracklets: Y:%e Z:%e\n",fExtraErrRC[0],fExtraErrRC[1]);
+}
+ 

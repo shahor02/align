@@ -17,11 +17,18 @@ class AliAlgDetTRD : public AliAlgDet
   virtual ~AliAlgDetTRD();
   //
   virtual void DefineVolumes();  
+  virtual void Print(const Option_t *opt="")              const;
   //
   Bool_t AcceptTrack(const AliESDtrack* trc,Int_t trtype) const;
   //
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp, const AliESDtrack* tr);
   //
+  Double_t GetNonRCCorrDzDtgl()                           const {return fNonRCCorrDzDtgl;}
+  void     SetNonRCCorrDzDtgl(double v=1.055)                   {fNonRCCorrDzDtgl = v;}
+  //
+  const Double_t* GetExtraErrRC()                         const {return fExtraErrRC;} 
+  void     SetExtraErrRC(double y=0.2, double z=1.0)            {fExtraErrRC[0]=y;fExtraErrRC[1]=z;}
+  //  
  protected:
   //
   // -------- dummies --------
@@ -29,6 +36,9 @@ class AliAlgDetTRD : public AliAlgDet
   AliAlgDetTRD& operator=(const AliAlgDetTRD&);
   //
  protected:
+
+  Double_t fNonRCCorrDzDtgl;     // correction in Z for non-crossing tracklets
+  Double_t fExtraErrRC[2];       // extra errors for RC tracklets
 
   ClassDef(AliAlgDetTRD,1);
 };

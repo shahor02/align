@@ -99,7 +99,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fESDEvent(0)
   ,fVertex(0)
   ,fControlFrac(1.0)
-  ,fMPOutType(kMille)
+  ,fMPOutType(kMille|kMPRec|kContR)
   ,fMille(0)
   ,fMPRecord(0)
   ,fCResid(0)
@@ -115,6 +115,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fMPSteerFileName("mpSteer.txt")
   ,fResidFileName("controlRes.root")
   ,fMilleOutBin(kTRUE)
+  ,fDoKalmanResid(kTRUE)
   //
   ,fOutCDBPath("local://outOCDB")
   ,fOutCDBComment("AliAlgSteer")
@@ -806,7 +807,7 @@ Bool_t AliAlgSteer::FillControlData()
   if (nps<0) return kTRUE;
   //
   fCResid->Clear();
-  if (!fCResid->FillTrack(fAlgTrack)) return kFALSE;
+  if (!fCResid->FillTrack(fAlgTrack, fDoKalmanResid)) return kFALSE;
   fCResid->SetRun(fRunNumber);
   fCResid->SetTimeStamp(fESDEvent->GetTimeStamp());
   fCResid->SetBz(fESDEvent->GetMagneticField());

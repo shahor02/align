@@ -1032,7 +1032,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   const double kMaxDefStep = 3.0; 
   const double kErrSpace=50.;
   const double kErrAng = 0.7;
-  const double kErrRelPtI = 1.;
+  const double kErrRelPtI = 10.;
   const double kIniErr[15] = { // initial error
     kErrSpace*kErrSpace,
     0                  , kErrSpace*kErrSpace,
@@ -1113,6 +1113,163 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
     trc.Invert();
   }
   //
+  return kTRUE;
+}
+
+//______________________________________________
+Bool_t AliAlgTrack::ResidKalman() 
+{
+  // calculate residuals from bi-directional Kalman smoother
+  // ATTENTION: this method modifies workspaces of the points!!!
+  // 
+  Bool_t inv = kFALSE;
+  const int    kMinNStep = 3;
+  const double kMaxDefStep = 3.0; 
+  const double kErrSpace=50.;
+  const double kErrAng = 0.7;
+  const double kErrRelPtI = 10.;
+  const double kIniErr[15] = { // initial error
+    kErrSpace*kErrSpace,
+    0                  , kErrSpace*kErrSpace,
+    0                  ,                   0, kErrAng*kErrAng,
+    0                  ,                   0,               0, kErrAng*kErrAng,
+    0                  ,                   0,               0,               0, kErrRelPtI*kErrRelPtI
+  };
+  const Double_t kOverShootX = 5;
+  //
+  AliExternalTrackParam trc = *this;
+  //
+  int pID=0, nPnt = GetNPoints();;
+  AliAlgPoint* pnt = 0;
+  // get 1st measured point  
+  while ( pID<nPnt && !(pnt=GetPoint(pID))->ContainsMeasurement() ) pID++;
+  if (!pnt) return kFALSE;
+  double phi = trc.Phi(),alp=pnt->GetAlphaSens();
+  BringTo02Pi(phi);
+  BringTo02Pi(alp);
+  double dphi = DeltaPhiSmall(phi,alp);
+  if (dphi>Pi()/2.) { // need to invert the track to new frame
+    inv = kTRUE;
+    trc.Invert();
+  }
+  // prepare track seed at 1st valid point
+  if (!trc.RotateParamOnly(pnt->GetAlphaSens())) {
+#if DEBUG>3
+    AliWarningF("Failed on RotateParamOnly to %f",pnt->GetAlphaSens());
+    trc.Print();
+#endif
+    return kFALSE;
+  }
+  if (!trc.PropagateParamOnlyTo(pnt->GetXPoint()+kOverShootX,AliTrackerBase::GetBz())) {
+#if DEBUG>3
+    AliWarningF("Failed on PropagateParamOnlyTo to %f",pnt->GetXPoint()+kOverShootX);
+    trc.Print();
+#endif
+    return kFALSE;
+  }
+  //
+  double* cov = (double*)trc.GetCovariance();
+  memcpy(cov,kIniErr,15*sizeof(double));
+  cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
+  //
+  double chifwd = 0, chibwd = 0;
+  // inward fit
+  for (int ip=0;ip<nPnt;ip++) {
+    pnt = GetPoint(ip);
+    if (pnt->IsInvDir()!=inv) { // crossing point where the track should be inverted?
+      trc.Invert();
+      inv = !inv;
+    }
+    if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
+    if (!pnt->ContainsMeasurement()) continue;
+    const double* yz    = pnt->GetYZTracking();
+    const double* errYZ = pnt->GetYZErrTracking();
+    // store track position/errors before update in the point WorkSpace-A
+    double* ws = (double*)pnt->GetTrParamWSA();
+    ws[0] = trc.GetY();
+    ws[1] = trc.GetZ();
+    ws[2] = trc.GetSigmaY2();
+    ws[3] = trc.GetSigmaZY();
+    ws[4] = trc.GetSigmaZ2();
+    double chi = trc.GetPredictedChi2(yz,errYZ);
+    //    printf(">> INV%d (%9d): %+.2e %+.2e | %+.2e %+.2e %+.2e %+.2e %+.2e | %.2e %d \n",ip,pnt->GetSensor()->GetInternalID(),yz[0],yz[1], ws[0],ws[1],ws[2],ws[3],ws[4],chi,inv);
+    //    printf(">>Bef ");trc.Print();
+    if (!trc.Update(yz,errYZ)) {
+#if DEBUG>3
+      AliWarningF("Failed on Inward Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
+      trc.Print();
+#endif
+      return kFALSE;
+    }
+    //    printf(">>Aft ");trc.Print();
+    chifwd += chi;    
+  }
+  //
+  // outward fit
+  cov = (double*)trc.GetCovariance();
+  memcpy(cov,kIniErr,15*sizeof(double));
+  cov[14] *= trc.GetSigned1Pt()*trc.GetSigned1Pt();
+  for (int ip=nPnt;ip--;) {
+    pnt = GetPoint(ip);
+    if (pnt->IsInvDir()!=inv) { // crossing point where the track should be inverted?
+      trc.Invert();
+      inv = !inv;
+    }
+    if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
+    if (!pnt->ContainsMeasurement()) continue;
+    const double* yz    = pnt->GetYZTracking();
+    const double* errYZ = pnt->GetYZErrTracking();
+    // store track position/errors before update in the point WorkSpace-B
+    double* ws = (double*)pnt->GetTrParamWSB();
+    ws[0] = trc.GetY();
+    ws[1] = trc.GetZ();
+    ws[2] = trc.GetSigmaY2();
+    ws[3] = trc.GetSigmaZY();
+    ws[4] = trc.GetSigmaZ2();
+    double chi = trc.GetPredictedChi2(yz,errYZ);    
+    //    printf("<< OUT%d (%9d): %+.2e %+.2e | %+.2e %+.2e %+.2e %+.2e %+.2e | %.2e %d \n",ip,pnt->GetSensor()->GetInternalID(),yz[0],yz[1], ws[0],ws[1],ws[2],ws[3],ws[4],chi,inv);
+    //    printf("<<Bef ");    trc.Print();
+    if (!trc.Update(yz,errYZ)) {
+#if DEBUG>3
+      AliWarningF("Failed on Outward Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
+      trc.Print();
+#endif
+      return kFALSE;
+    }
+    chibwd += chi;    
+    //    printf("<<Aft ");    trc.Print();
+  }
+  //  
+  // now compute smoothed prediction and residual
+  for (int ip=0;ip<nPnt;ip++) {
+    pnt = GetPoint(ip);
+    if (!pnt->ContainsMeasurement()) continue;
+    double* wsA = (double*)pnt->GetTrParamWSA(); // inward measurement
+    double* wsB = (double*)pnt->GetTrParamWSB(); // outward measurement
+    double &yA=wsA[0],&zA=wsA[1],&sgAYY=wsA[2],&sgAYZ=wsA[3],&sgAZZ=wsA[4];
+    double &yB=wsB[0],&zB=wsB[1],&sgBYY=wsB[2],&sgBYZ=wsB[3],&sgBZZ=wsB[4];
+    // compute weighted average
+    double sgYY = sgAYY+sgBYY, sgYZ=sgAYZ+sgBYZ, sgZZ=sgAZZ+sgBZZ;
+    double detI = sgYY*sgZZ - sgYZ*sgYZ;
+    if (TMath::Abs(detI) < kAlmost0) return kFALSE; else detI = 1./detI;
+    double tmp = sgYY; 
+    sgYY  = sgZZ*detI; 
+    sgZZ  = tmp*detI; 
+    sgYZ  = -sgYZ*detI;
+    double dy=yB-yA, dz=zB-zA;
+    double k00=sgAYY*sgYY+sgAYZ*sgYZ, k01=sgAYY*sgYZ+sgAYZ*sgZZ;
+    double k10=sgAYZ*sgYY+sgAZZ*sgYZ, k11=sgAYZ*sgYZ+sgAZZ*sgZZ;
+    double sgAYZt=sgAYZ;
+    yA += dy*k00 + dz*k01; // these are smoothed predictions, stored in WSA
+    zA += dy*k10 + dz*k11; //
+    sgAYY -= k00*sgAYY + k01*sgAYZ;
+    sgAYZ -= k00*sgAYZt+ k01*sgAZZ;
+    sgAZZ -= k10*sgAYZt+ k11*sgAZZ;
+    //    printf("|| WGH%d (%9d): | %+.2e %+.2e %+.2e %.2e %.2e\n",ip,pnt->GetSensor()->GetInternalID(), wsA[0],wsA[1],wsA[2],wsA[3],wsA[4]);
+  }
+  //
+  fChi2 = chifwd;
+  SetKalmanDone(kTRUE);
   return kTRUE;
 }
 
