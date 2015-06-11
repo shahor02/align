@@ -196,7 +196,7 @@ void ConfigTOF(AliAlgSteer* algSteer)
   if (!det||det->IsDisabled()) return;
   //
   det->SetObligatoryColl(kTRUE);
-  det->SetObligatoryCosm(kTRUE);
+  det->SetObligatoryCosm(kFALSE);
   //
   det->SetTrackFlagSelColl(AliESDtrack::kTOFout);
   det->SetTrackFlagSelCosm(AliESDtrack::kTOFout);

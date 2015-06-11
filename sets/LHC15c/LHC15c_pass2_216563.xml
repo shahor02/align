@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<alien>
+  <collection name="collection">
+    <event name="1">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:24:23" dir="98913744" entryId="98913769" expiretime="" gowner="alidaq" guid="F5EE0156-0555-11E5-9A9C-A3A3B6105450" guidtime="11E50555" jobid="510184479" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.10/AliESDs.root" md5="a24945235c5830a2c626dba040943d1f" owner="alidaq" perm="755" replicated="0" selist="" size="46195785" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.10/AliESDs.root" type="f" />
+    </event>
+    <event name="10">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:46:41" dir="98907492" entryId="98907566" expiretime="" gowner="alidaq" guid="B2375DFE-0550-11E5-AB42-EB741B94A4A5" guidtime="11E50550" jobid="510184488" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.19/AliESDs.root" md5="de84ee197d14d85e6216e3df2afc8755" owner="alidaq" perm="755" replicated="0" selist="" size="46104353" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.19/AliESDs.root" type="f" />
+    </event>
+    <event name="11">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 19:48:28" dir="98929398" entryId="98929534" expiretime="" gowner="alidaq" guid="8DA2BEA0-0561-11E5-9241-43AE54836085" guidtime="11E50561" jobid="510184489" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.10/AliESDs.root" md5="50d07738599fc8c0a63f2014df16f0b3" owner="alidaq" perm="755" replicated="0" selist="" size="45608348" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.10/AliESDs.root" type="f" />
+    </event>
+    <event name="12">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:35:29" dir="98915646" entryId="98916091" expiretime="" gowner="alidaq" guid="3B7F9FB2-0557-11E5-9142-3BBFB76D136F" guidtime="11E50557" jobid="510184490" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.11/AliESDs.root" md5="01ef6d216b0c99b82698db2d66de78fb" owner="alidaq" perm="755" replicated="0" selist="" size="46594568" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.11/AliESDs.root" type="f" />
+    </event>
+    <event name="13">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:20:02" dir="98913104" entryId="98913241" expiretime="" gowner="alidaq" guid="512B8A08-0555-11E5-B8FB-2BDDF24F25F8" guidtime="11E50555" jobid="510184491" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.12/AliESDs.root" md5="e5bc0304d702880e99a0a5ac06a6d34a" owner="alidaq" perm="755" replicated="0" selist="" size="45704827" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.12/AliESDs.root" type="f" />
+    </event>
+    <event name="14">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 19:01:24" dir="98919821" entryId="98919937" expiretime="" gowner="alidaq" guid="0C78EC88-055B-11E5-9111-336A8D958044" guidtime="11E5055B" jobid="510184492" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.13/AliESDs.root" md5="70bf3c18363caef74c1f31f0e46572fc" owner="alidaq" perm="755" replicated="0" selist="" size="45755836" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.13/AliESDs.root" type="f" />
+    </event>
+    <event name="15">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:42:31" dir="98917097" entryId="98917142" expiretime="" gowner="alidaq" guid="78D0BFD0-0558-11E5-A501-0BDFA2BFC2E8" guidtime="11E50558" jobid="510184493" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.14/AliESDs.root" md5="f76285b44098758d1eb94a9e90e5fab7" owner="alidaq" perm="755" replicated="0" selist="" size="45100914" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.14/AliESDs.root" type="f" />
+    </event>
+    <event name="16">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:15:22" dir="98912545" entryId="98912631" expiretime="" gowner="alidaq" guid="AD00E87E-0554-11E5-BB2B-E7BF0F1CE89B" guidtime="11E50554" jobid="510184494" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.15/AliESDs.root" md5="c5e3e4f710bcae8a7abd68a358cfb9fe" owner="alidaq" perm="755" replicated="0" selist="" size="45792673" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.15/AliESDs.root" type="f" />
+    </event>
+    <event name="17">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:01:04" dir="98909203" entryId="98909246" expiretime="" gowner="alidaq" guid="AF047124-0552-11E5-BC10-3B173F20A8B7" guidtime="11E50552" jobid="510184495" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.16/AliESDs.root" md5="cf942505b8d3689c024346ad5f72460a" owner="alidaq" perm="755" replicated="0" selist="" size="45464577" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.16/AliESDs.root" type="f" />
+    </event>
+    <event name="18">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:47:11" dir="98907529" entryId="98907627" expiretime="" gowner="alidaq" guid="B7DE6126-0550-11E5-92ED-1B8979C2A7D2" guidtime="11E50550" jobid="510184496" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.17/AliESDs.root" md5="93749cfb6efe3a7fb77eced7d19cba5e" owner="alidaq" perm="755" replicated="0" selist="" size="45676784" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.17/AliESDs.root" type="f" />
+    </event>
+    <event name="19">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:58:31" dir="98908872" entryId="98908991" expiretime="" gowner="alidaq" guid="4CB23678-0552-11E5-94BC-332CEB6D555B" guidtime="11E50552" jobid="510184497" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.18/AliESDs.root" md5="68ba8a74d1e3daa64b115b7a6c6a660d" owner="alidaq" perm="755" replicated="0" selist="" size="45651587" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.18/AliESDs.root" type="f" />
+    </event>
+    <event name="2">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:21:02" dir="98913356" entryId="98913415" expiretime="" gowner="alidaq" guid="7CC50B4E-0555-11E5-A6A1-43A6EDDE342B" guidtime="11E50555" jobid="510184480" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.11/AliESDs.root" md5="919382b0c6876f239dff4c2dcd1d2a79" owner="alidaq" perm="755" replicated="0" selist="" size="45754370" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.11/AliESDs.root" type="f" />
+    </event>
+    <event name="20">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 19:16:26" dir="98922380" entryId="98922489" expiretime="" gowner="alidaq" guid="3836DD2E-055D-11E5-B22E-9F548CB36E2D" guidtime="11E5055D" jobid="510184498" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.19/AliESDs.root" md5="97d497ef968025c7219f2a33986aebdd" owner="alidaq" perm="755" replicated="0" selist="" size="45564819" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563019.19/AliESDs.root" type="f" />
+    </event>
+    <event name="21">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 19:46:27" dir="98929235" entryId="98929343" expiretime="" gowner="alidaq" guid="59ABAFBC-0561-11E5-AA2E-B74E21D59E93" guidtime="11E50561" jobid="510184499" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.10/AliESDs.root" md5="70556a20029fe77fe2209d817600b541" owner="alidaq" perm="755" replicated="0" selist="" size="44945554" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.10/AliESDs.root" type="f" />
+    </event>
+    <event name="22">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:42:27" dir="98907000" entryId="98907051" expiretime="" gowner="alidaq" guid="18E10A38-0550-11E5-9786-174B47D09891" guidtime="11E50550" jobid="510184500" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.11/AliESDs.root" md5="1227d01db1378761ff21f0c5e59af280" owner="alidaq" perm="755" replicated="0" selist="" size="45465255" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.11/AliESDs.root" type="f" />
+    </event>
+    <event name="23">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 23:39:40" dir="98989387" entryId="98990102" expiretime="" gowner="alidaq" guid="DDDE7DA8-0581-11E5-9085-9330895616E2" guidtime="11E50581" jobid="510184501" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.12/AliESDs.root" md5="6d8a6dc0c0e097ea357ee87449044abe" owner="alidaq" perm="755" replicated="0" selist="" size="45452385" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.12/AliESDs.root" type="f" />
+    </event>
+    <event name="24">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 16:57:38" dir="98902141" entryId="98902168" expiretime="" gowner="alidaq" guid="CF7C2400-0549-11E5-883C-9BF2133A61BA" guidtime="11E50549" jobid="510184502" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.13/AliESDs.root" md5="3aa9b501fc0bde5823f3758c88bfeafa" owner="alidaq" perm="755" replicated="0" selist="" size="45511273" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.13/AliESDs.root" type="f" />
+    </event>
+    <event name="25">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:52:26" dir="98908172" entryId="98908224" expiretime="" gowner="alidaq" guid="74336E0C-0551-11E5-A7AB-E74B45062E7C" guidtime="11E50551" jobid="510184503" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.14/AliESDs.root" md5="6fa802c8c70b335cf150fbba2d299301" owner="alidaq" perm="755" replicated="0" selist="" size="45303460" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.14/AliESDs.root" type="f" />
+    </event>
+    <event name="26">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:48:31" dir="98907779" entryId="98907818" expiretime="" gowner="alidaq" guid="EEB827CC-0550-11E5-B7F3-7B1E9B8B92F0" guidtime="11E50550" jobid="510184504" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.15/AliESDs.root" md5="38ebe0907d58801a750d1640ef9b8253" owner="alidaq" perm="755" replicated="0" selist="" size="45338735" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.15/AliESDs.root" type="f" />
+    </event>
+    <event name="27">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:57:21" dir="98908677" entryId="98908824" expiretime="" gowner="alidaq" guid="1FF04A12-0552-11E5-BDD0-B763617D8889" guidtime="11E50552" jobid="510184505" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.16/AliESDs.root" md5="a05c139ba19ba5e38748bc0fd9a78b7a" owner="alidaq" perm="755" replicated="0" selist="" size="45278823" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.16/AliESDs.root" type="f" />
+    </event>
+    <event name="28">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 20:11:03" dir="98933106" entryId="98933138" expiretime="" gowner="alidaq" guid="D7A24E0A-0564-11E5-8C4A-7B770FC8C149" guidtime="11E50564" jobid="510184506" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.17/AliESDs.root" md5="088f2df3d03cc2456fb2bf09b8893ecf" owner="alidaq" perm="755" replicated="0" selist="" size="45547704" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.17/AliESDs.root" type="f" />
+    </event>
+    <event name="29">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 19:39:10" dir="98927945" entryId="98928058" expiretime="" gowner="alidaq" guid="6586C778-0560-11E5-9482-FF9963AE1125" guidtime="11E50560" jobid="510184507" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.18/AliESDs.root" md5="0e2f2cbdb775c60994ac4b9636280e73" owner="alidaq" perm="755" replicated="0" selist="" size="45111682" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.18/AliESDs.root" type="f" />
+    </event>
+    <event name="3">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:46:30" dir="98907478" entryId="98907520" expiretime="" gowner="alidaq" guid="A858F5EA-0550-11E5-94F5-133A1F60D5B9" guidtime="11E50550" jobid="510184481" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.12/AliESDs.root" md5="b2f8b5e2f620a087d56a0199b87c36e0" owner="alidaq" perm="755" replicated="0" selist="" size="45109857" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.12/AliESDs.root" type="f" />
+    </event>
+    <event name="30">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:05:56" dir="98909859" entryId="98909893" expiretime="" gowner="alidaq" guid="5A1950AC-0553-11E5-B130-930E4CA72F7F" guidtime="11E50553" jobid="510184508" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.19/AliESDs.root" md5="a3447c00a16ef751dfcd61c6e0f47b62" owner="alidaq" perm="755" replicated="0" selist="" size="44669265" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563020.19/AliESDs.root" type="f" />
+    </event>
+    <event name="4">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:54:58" dir="98908407" entryId="98908450" expiretime="" gowner="alidaq" guid="D69919C0-0551-11E5-942E-83E04D401737" guidtime="11E50551" jobid="510184482" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.13/AliESDs.root" md5="7206b7099e56cd4f20aefa3fd116ee03" owner="alidaq" perm="755" replicated="0" selist="" size="45712269" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.13/AliESDs.root" type="f" />
+    </event>
+    <event name="5">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:20:52" dir="98913262" entryId="98913382" expiretime="" gowner="alidaq" guid="6BFADFDC-0555-11E5-8DF3-D7A6FD5F8ED1" guidtime="11E50555" jobid="510184483" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.14/AliESDs.root" md5="c32c586d013cf9a65464d426f08eab6d" owner="alidaq" perm="755" replicated="0" selist="" size="45833437" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.14/AliESDs.root" type="f" />
+    </event>
+    <event name="6">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:05:50" dir="98909846" entryId="98909868" expiretime="" gowner="alidaq" guid="4E0BB106-0553-11E5-BAC3-A7B909599102" guidtime="11E50553" jobid="510184484" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.15/AliESDs.root" md5="75109ae9e5fa34f4219406fa627fa1f3" owner="alidaq" perm="755" replicated="0" selist="" size="45801526" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.15/AliESDs.root" type="f" />
+    </event>
+    <event name="7">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:04:46" dir="98909600" entryId="98909824" expiretime="" gowner="alidaq" guid="2618443E-0553-11E5-BC76-FF1A5B0E5B53" guidtime="11E50553" jobid="510184485" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.16/AliESDs.root" md5="ad7ccc162f01c333e3fc6f815dccba33" owner="alidaq" perm="755" replicated="0" selist="" size="45667256" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.16/AliESDs.root" type="f" />
+    </event>
+    <event name="8">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 18:29:05" dir="98914627" entryId="98914740" expiretime="" gowner="alidaq" guid="98E5E360-0556-11E5-97C6-BBE7E2B6F63B" guidtime="11E50556" jobid="510184486" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.17/AliESDs.root" md5="cecc84f7932316f9aa612d7397b6605c" owner="alidaq" perm="755" replicated="0" selist="" size="45530098" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.17/AliESDs.root" type="f" />
+    </event>
+    <event name="9">
+      <file name="AliESDs.root" aclId="" broken="0" ctime="2015-05-28 17:45:40" dir="98907357" entryId="98907421" expiretime="" gowner="alidaq" guid="8D294A90-0550-11E5-9426-43512766CCD4" guidtime="11E50550" jobid="510184487" lfn="/alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.18/AliESDs.root" md5="08fd7b79c14130e67f77b08ffa4695d4" owner="alidaq" perm="755" replicated="0" selist="" size="45272813" turl="alien:///alice/data/2015/LHC15c/000216563/cosmics_pass2/15000216563018.18/AliESDs.root" type="f" />
+    </event>
+    <info command="[/alice/cern.ch/user/s/shahoian/]: find -z -x collection -l9999999 /alice/data/2015/LHC15c/000216563/cosmics_pass2 *AliESDs.root" creator="admin" date="Fri Jun 12 00:03:32 CEST 2015" timestamp="1434060212" />
+  </collection>
+</alien>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
