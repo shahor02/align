@@ -62,6 +62,12 @@ class AliAlgRes: public TObject
   Float_t  GetSigmaYK(int i)                    const {return TMath::Sqrt(fSigY2K[i]);}      
   Float_t  GetSigmaZK(int i)                    const {return TMath::Sqrt(fSigZ2K[i]);}      
   //
+  Float_t  GetSigY2(int i)                      const {return fSigY2[i];}
+  Float_t  GetSigYZ(int i)                      const {return fSigYZ[i];}
+  Float_t  GetSigZ2(int i)                      const {return fSigZ2[i];}
+  Float_t  GetSigmaY(int i)                     const {return TMath::Sqrt(fSigY2[i]);}      
+  Float_t  GetSigmaZ(int i)                     const {return TMath::Sqrt(fSigZ2[i]);}      
+  //
   Float_t  GetSigY2Tot(int i)                   const {return fSigY2K[i]+fSigY2[i];}
   Float_t  GetSigYZTot(int i)                   const {return fSigYZK[i]+fSigYZ[i];}
   Float_t  GetSigZ2Tot(int i)                   const {return fSigZ2K[i]+fSigZ2[i];}

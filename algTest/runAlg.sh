@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export LD_PRELOAD=$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libjemalloc.so
 
 tarball="algGlo.tar.gz"
 
