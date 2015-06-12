@@ -35,7 +35,7 @@ AliAlgSensTRD::~AliAlgSensTRD()
 {
   // d-tor
 }
-
+/*
 //__________________________________________________________________
 void AliAlgSensTRD::SetTrackingFrame()
 {
@@ -43,4 +43,27 @@ void AliAlgSensTRD::SetTrackingFrame()
   fAlp = Sector2Alpha(fSector);
   fX = 0;
 }
+*/
 
+//____________________________________________
+void AliAlgSensTRD::PrepareMatrixT2L()
+{
+  // extract from geometry T2L matrix
+  double alp = Sector2Alpha(fSector);
+  double loc[3]={0,0,0},glo[3];
+  GetMatrixL2GIdeal().LocalToMaster(loc,glo);
+  double x = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
+  TGeoHMatrix t2l;
+  t2l.SetDx(x);
+  t2l.RotateZ(alp*RadToDeg());
+  t2l.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
+  /*
+  const TGeoHMatrix* t2l = AliGeomManager::GetTracking2LocalMatrix(GetVolID());
+  if (!t2l) {
+    Print("long");
+    AliFatalF("Failed to find T2L matrix for VID:%d %s",GetVolID(),GetSymName());
+  }
+  */
+  SetMatrixT2L(t2l);
+  //
+}

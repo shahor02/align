@@ -279,7 +279,7 @@ void AliAlgDet::DefineMatrices()
   next.Reset();
   while ( (vol=(AliAlgVol*)next()) ) {
     vol->PrepareMatrixT2L();
-    if (vol->IsSens()) ((AliAlgSens*)vol)->PrepareMatrixClAlg(); // alignment matrix
+    if (vol->IsSensor()) ((AliAlgSens*)vol)->PrepareMatrixClAlg(); // alignment matrix
   }
   //
 }

@@ -23,7 +23,8 @@ class AliAlgSensTRD : public AliAlgSens
   Int_t GetSector()                      const {return fSector;}
   void  SetSector(UInt_t sc)                   {fSector = (UChar_t)sc;}
   //
-  virtual void   SetTrackingFrame();
+  //  virtual void   SetTrackingFrame();
+  virtual void PrepareMatrixT2L();
   //
  protected:
   //

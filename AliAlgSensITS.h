@@ -20,7 +20,7 @@ class AliAlgSensITS : public AliAlgSens
   AliAlgSensITS(const char* name=0, Int_t vid=0, Int_t iid=0);
   virtual ~AliAlgSensITS();
   //
-  virtual void   SetTrackingFrame();
+  //  virtual void   SetTrackingFrame();
   //
  protected:
   //

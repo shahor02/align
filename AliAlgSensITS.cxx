@@ -33,7 +33,7 @@ AliAlgSensITS::~AliAlgSensITS()
 {
   // d-tor
 }
-
+/*
 //__________________________________________________________________
 void AliAlgSensITS::SetTrackingFrame()
 {
@@ -46,3 +46,4 @@ void AliAlgSensITS::SetTrackingFrame()
   fAlp = ATan2(glo[1],glo[0]);
   AliAlgAux::BringToPiPM(fAlp);
 }
+*/

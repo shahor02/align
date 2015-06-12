@@ -285,19 +285,15 @@ Int_t AliAlgSens::Compare(const TObject* b) const
 void AliAlgSens::SetTrackingFrame()
 {
   // define tracking frame of the sensor
-  AliWarningF("Generic method called for %s",GetSymName());
-  double tra[3]={0},loc[3],glo[3];
-  const TGeoHMatrix &t2l = GetMatrixT2L();
-  const double* t = t2l.GetTranslation();
-  double r = TMath::Sqrt(t[0]*t[0]+t[1]*t[1]);
-  // ITS defines tracking frame with origin in sensor, others at 0
-  if (r>1) tra[0] = r;
-  //
-  t2l.LocalToMaster(tra,loc);
-  GetMatrixL2GIdeal().LocalToMaster(loc,glo);
-  fX = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);
+  //  AliWarningF("Generic method called for %s",GetSymName());
+  double tra[3]={0},glo[3];
+  TGeoHMatrix t2g;
+  GetMatrixT2G(t2g);
+  t2g.LocalToMaster(tra,glo);
+  fX   = Sqrt(glo[0]*glo[0]+glo[1]*glo[1]);  
   fAlp = ATan2(glo[1],glo[0]);
   AliAlgAux::BringToPiPM(fAlp);
+  //
 }
 
 //____________________________________________
