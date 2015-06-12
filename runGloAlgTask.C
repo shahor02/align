@@ -47,7 +47,7 @@ void runGloAlgTask
   algTask->SetConfMacroName("alignConf.C");
   //-------------------------------------------
   AliAnalysisDataContainer *coutput1 = 
-    mgr->CreateContainer("clist", TList::Class(),AliAnalysisManager::kOutputContainer,"statOut.root");
+    mgr->CreateContainer("clist", TList::Class(),AliAnalysisManager::kOutputContainer,"mpStatOut.root");
   mgr->AddTask(algTask);
   //
   mgr->ConnectInput(algTask, 0,  mgr->GetCommonInputContainer());
