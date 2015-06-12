@@ -113,7 +113,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fMPParFileName("mpParams.txt")
   ,fMPConFileName("mpConstraints.txt")
   ,fMPSteerFileName("mpSteer.txt")
-  ,fResidFileName("controlRes.root")
+  ,fResidFileName("mpControlRes.root")
   ,fMilleOutBin(kTRUE)
   ,fDoKalmanResid(kTRUE)
   //
@@ -1219,7 +1219,7 @@ void AliAlgSteer::SetResidFileName(const char* name)
 {
   // set output file name
   fResidFileName = name; 
-  if (fResidFileName.IsNull()) fResidFileName = "controlRes.root"; 
+  if (fResidFileName.IsNull()) fResidFileName = "mpControlRes.root"; 
   //
 }
 

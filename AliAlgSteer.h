@@ -205,7 +205,7 @@ class AliAlgSteer : public TObject
   void     SetMPParFileName(const char* name="mpParams.txt");
   void     SetMPConFileName(const char* name="mpConstraints.txt");
   void     SetMPSteerFileName(const char* name="mpSteer.txt");
-  void     SetResidFileName(const char* name="controlRes.root");
+  void     SetResidFileName(const char* name="mpControlRes.root");
   void     SetOutCDBPath(const char* name="local://outOCDB");
   void     SetOutCDBComment(const char* cm=0)                    {fOutCDBComment = cm;}
   void     SetOutCDBResponsible(const char* v=0)                 {fOutCDBResponsible = v;}
