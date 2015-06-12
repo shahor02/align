@@ -1,7 +1,7 @@
 
-aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContB0.txt\",\"halgV0_newTRDnewRC.root\",\"pfB0\"\)
-aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContBP.txt\",\"halgV0_newTRDnewRC.root\",\"pfBP\"\)
-aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContBM.txt\",\"halgV0_newTRDnewRC.root\",\"pfBM\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContB0.txt\",\"halgV0_newTRDnewRC.root\",\"v0B0\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContBP.txt\",\"halgV0_newTRDnewRC.root\",\"v0BP\"\)
+aliroot -b -q ProcRes.C+\(\"/data/algTest/v0/lstContBM.txt\",\"halgV0_newTRDnewRC.root\",\"v0BM\"\)
 
 
 aliroot -b -q ProcRes.C+\(\"/data/algTest/pedeF/lstContB0.txt\",\"halgPF_newTRDnewRC.root\",\"pfB0\"\)

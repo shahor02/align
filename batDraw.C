@@ -1,37 +1,52 @@
 {
-  hv0bm = new HistoManager("hpostv0BM","halgV0.root",1);
-  hv0bp = new HistoManager("hpostv0BP","halgV0.root",1);
-  hv0b0 = new HistoManager("hpostv0B0","halgV0.root",1);
-  hv0bm->SetColor(kRed);
+  hv0bm = new HistoManager("hpostpfBM","halgV0_newTRDnewRC.root",1,"v0");
+  hv0bp = new HistoManager("hpostpfBP","halgV0_newTRDnewRC.root",1,"v0");
+  hv0b0 = new HistoManager("hpostpfB0","halgV0_newTRDnewRC.root",1,"v0");
+  hv0bm->SetColor(kBlue);
   hv0bp->SetColor(kBlue);
-  hv0b0->SetColor(kGreen+2);
+  hv0b0->SetColor(kBlue);
   hv0bm->SetMarkerStyle(24);
-  hv0bp->SetMarkerStyle(25);
-  hv0b0->SetMarkerStyle(26);
-  hsnb0 = new HistoManager("hpostsnB0","halgSN.root",1);
-  hsnbp = new HistoManager("hpostsnBP","halgSN.root",1);
-  hsnbm = new HistoManager("hpostsnBM","halgSN.root",1);
-  hsnb0->SetColor(kGreen+2);
-  hsnbp->SetColor(kBlue);
-  hsnbm->SetColor(kRed);
-  hsnbm->SetMarkerStyle(20);
-  hsnbp->SetMarkerStyle(21);
-  hsnb0->SetMarkerStyle(22);
+  hv0bp->SetMarkerStyle(24);
+  hv0b0->SetMarkerStyle(24);
+  hpfb0 = new HistoManager("hpostpfB0","halgPF_newTRDnewRC.root",1);
+  hpfbp = new HistoManager("hpostpfBP","halgPF_newTRDnewRC.root",1);
+  hpfbm = new HistoManager("hpostpfBM","halgPF_newTRDnewRC.root",1);
+  hpfb0->SetColor(kRed);
+  hpfbp->SetColor(kRed);
+  hpfbm->SetColor(kRed);
+  hpfbm->SetMarkerStyle(20);
+  hpfbp->SetMarkerStyle(20);
+  hpfb0->SetMarkerStyle(20);
   //
+  gROOT->ProcessLine(".L ProcRes.C++g");
+
   TObjArray harr;
   harr.Add(hv0b0);
-  harr.Add(hv0bp);
-  harr.Add(hv0bm);
-  harr.Add(hsnb0);
-  harr.Add(hsnbp);
-  harr.Add(hsnbm);
-
-  //
+  harr.Add(hpfb0);
   for (int i=harr.GetEntriesFast();i--;) {
     HistoManager* hm = (HistoManager*)harr[i];
-    hm->SetMarkerSize(0.4);
+    hm->SetMarkerSize(0.6);
   }
-  gROOT->ProcessLine(".L ProcRes.C++g");
-  DrawReport(&harr,"algRep");
+  DrawReport(&harr,"algRepB0_newTRDnewRC");
+  //
+  
+  harr.Clear();
+  harr.Add(hv0bp);
+  harr.Add(hpfbp);
+  for (int i=harr.GetEntriesFast();i--;) {
+    HistoManager* hm = (HistoManager*)harr[i];
+    hm->SetMarkerSize(0.6);
+  }
+  DrawReport(&harr,"algRepBP_newTRDnewRC");
+  //
+  harr.Clear();
+  harr.Add(hv0bm);
+  harr.Add(hpfbm);
+  for (int i=harr.GetEntriesFast();i--;) {
+    HistoManager* hm = (HistoManager*)harr[i];
+    hm->SetMarkerSize(0.6);
+  }
+  DrawReport(&harr,"algRepBM_newTRDnewRC");
+  //
   //
 }

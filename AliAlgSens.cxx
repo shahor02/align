@@ -347,7 +347,12 @@ void AliAlgSens::PrepareMatrixT2L()
   }
   SetMatrixT2L(*t2l);
   //
-  // create alignment matrix
+}
+
+//____________________________________________
+void AliAlgSens::PrepareMatrixClAlg()
+{
+  // prepare alignment matrix
   TGeoHMatrix ma = GetMatrixT2L();
   ma.MultiplyLeft(&GetMatrixL2G());
   ma.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());

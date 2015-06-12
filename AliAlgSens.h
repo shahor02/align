@@ -53,6 +53,7 @@ class AliAlgSens : public AliAlgVol
   //
   virtual void UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
   //
+  virtual void PrepareMatrixClAlg();
   const TGeoHMatrix&  GetMatrixClAlg()            const {return fMatClAlg;}
   void  SetMatrixClAlg(const TGeoHMatrix& m)            {fMatClAlg = m;}
   //

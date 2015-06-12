@@ -277,7 +277,10 @@ void AliAlgDet::DefineMatrices()
   // is used for as the reference for the alignment parameters only,
   // see its definition in the AliAlgVol::PrepateMatrixT2L
   next.Reset();
-  while ( (vol=(AliAlgVol*)next()) ) vol->PrepareMatrixT2L();
+  while ( (vol=(AliAlgVol*)next()) ) {
+    vol->PrepareMatrixT2L();
+    if (vol->IsSens()) ((AliAlgSens*)vol)->PrepareMatrixClAlg(); // alignment matrix
+  }
   //
 }
 
