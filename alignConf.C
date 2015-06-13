@@ -204,6 +204,8 @@ void ConfigTOF(AliAlgSteer* algSteer)
   det->SetNPointsSelColl(1);
   det->SetNPointsSelCosm(1);
   //
+
+
   // precondition
   for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
     det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules

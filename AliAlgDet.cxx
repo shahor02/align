@@ -553,6 +553,25 @@ void AliAlgDet::FixNonSensors()
 }
 
 //________________________________________
+int AliAlgDet::SelectVolumes(TObjArray* arr, int lev, const char* match)
+{
+  // select volumes matching to pattern and/or hierarchy level
+  //
+  if (!arr) return 0;
+  int nadd = 0;
+  TString mts=match, syms;
+  for (int i=GetNVolumes();i--;) {
+    AliAlgVol *vol = GetVolume(i);
+    if (lev>=0 && vol->CountParents()!=lev) continue; // wrong level
+    if (!mts.IsNull() && !(syms=vol->GetSymName()).Contains(mts)) continue; //wrong name
+    arr->AddLast(vol);
+    nadd++;
+  }
+  //
+  return nadd;
+}
+
+//________________________________________
 void AliAlgDet::SetFreeDOFPattern(UInt_t pat, int lev,const char* match)
 {
   // set free DOFs to volumes matching either to hierarchy level or

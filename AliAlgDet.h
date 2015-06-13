@@ -86,6 +86,7 @@ class AliAlgDet : public TNamed
   void      FixNonSensors();
   void      SetFreeDOFPattern(UInt_t pat=0xffffffff, int lev=-1,const char* match=0);
   void      SetDOFCondition(int dof, float condErr, int lev=-1,const char* match=0);
+  int       SelectVolumes(TObjArray* arr, int lev=-1,const char* match=0);
   //
   Int_t     GetNDOFs()                              const {return fNDOFs;}
   //
