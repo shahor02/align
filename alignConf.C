@@ -13,6 +13,7 @@
 #include "AliAlgDetTRD.h"
 #include "AliAlgDetTOF.h"
 #include "AliAlgVtx.h"
+#include "AliAlgConstraint.h"
 #endif
 
 void alignConf(AliAlgSteer* algSteer);
@@ -86,8 +87,11 @@ void ConfigVTX(AliAlgSteer* algSteer)
 {
   //
   AliAlgVtx *vtx = algSteer->GetVertexSensor();
-  //  vtx->SetFreeDOFPattern(0);
   vtx->SetAddError(0.003,0.003);
+  // fix vertex by precondition
+  for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+    vtx->SetParErr(idf,-999);
+  }
 }
 
 //======================================================================
@@ -112,14 +116,32 @@ void ConfigITS(AliAlgSteer* algSteer)
   det->SetITSSelPatternColl(AliAlgDetITS::kSPDAny);
   det->SetITSSelPatternCosm(AliAlgDetITS::kSPDNoSel);
   //
+  AliAlgVol* vol=0;
   // precondition
   for (int iv=det->GetNVolumes();iv--;) {
-    AliAlgVol* vol = det->GetVolume(iv);
+    vol = det->GetVolume(iv);
     for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
       if (TMath::Abs(vol->GetParErr(idf))>1e-6) continue; // there is already condition
       vol->SetParErr(idf, kCondSig[idf] );    // set condition
     }
+    if (!vol->IsSensor()) {
+      // prevent global shift of children in the containers      
+      vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
+    }
   }  
+  //
+  // constraints
+  vol = det->GetVolume("ITS");
+  // 
+  // limit global shifts of ITS envelope
+  const double tolITS[6]={100e-4,100e-4,200e-4,-1,-1,-1};
+  for (int idf=AliAlgVol::kDOFTX;idf<=AliAlgVol::kDOFTZ;idf++) {
+    AliAlgConstraint* cstr = new AliAlgConstraint(Form("ITSshift%s",AliAlgVol::GetGeomDOFName(idf)),"");
+    cstr->SetNoJacobian();
+    cstr->AddChild(vol);
+    cstr->SetConstrainPattern(0x1<<idf);
+    cstr->SetSigma(idf,tolITS[idf]);
+  }
   //
   //  det->SetAddError(2,2);
   //  det->SetAddErrorLr(0,20e-4,100e-4);
@@ -173,15 +195,26 @@ void ConfigTRD(AliAlgSteer* algSteer)
   // just repeat default settings
   det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
   det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
+  //  det->SetAddError(0.1,0.1);
   //
-  // precondition
   // precondition
   for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
     det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
     det->SetDOFCondition(idf,kCondSigCHA[idf],1); // level 1 - chambers
   }
-  //  det->SetAddError(0.1,0.1);
   //
+  TObjArray tmpArr;
+  det->SelectVolumes(&tmpArr,0); // select supermodules (level0)
+  // 
+  for (int i=0;i<tmpArr.GetEntriesFast();i++) {
+    AliAlgVol* vol = (AliAlgVol*)tmpArr[i]; 
+    //
+    // prevent global shift and phi rotation of chambers wrt SM (in automatic constraint)
+    vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | 
+				     AliAlgVol::kDOFBitTZ | AliAlgVol::kDOFBitPH);
+  }
+  //
+  tmpArr.Clear();
 }
 
 //======================================================================
@@ -204,17 +237,29 @@ void ConfigTOF(AliAlgSteer* algSteer)
   det->SetNPointsSelColl(1);
   det->SetNPointsSelCosm(1);
   //
-
-
   // precondition
   for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {
     det->SetDOFCondition(idf,kCondSigSMD[idf],0); // level 0 - supermodules
     det->SetDOFCondition(idf,kCondSigSTR[idf],1); // level 1 - strips
   }
   //
-  //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
+  TObjArray tmpArr;
+  det->SelectVolumes(&tmpArr,0); // select supermodules (level0)
   //
-  //  det->SetAddError(12,12);
-
+  // prevent systematic rotation by tracking Y (i.e. rphi) shifts
+  AliAlgConstraint* ctofY = new AliAlgConstraint("TOF_Yconstr","");
+  ctofY->SetNoJacobian();
+  ctofY->ConstrainDOF(AliAlgVol::kDOFTY);
+  ctofY->SetSigma(AliAlgVol::kDOFTY,1.0); // sigma for sum of all Y shifts
+  algSteer->AddConstraint(ctofY);
+  for (int i=0;i<tmpArr.GetEntriesFast();i++) {
+    AliAlgVol* vol = (AliAlgVol*)tmpArr[i]; 
+    ctofY->AddChild(vol); // add volume to special Y constraint
+    //
+    // prevent global shift of strips wrt SM
+    vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
+  }
+  //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
+  tmpArr.Clear();
   //
 }

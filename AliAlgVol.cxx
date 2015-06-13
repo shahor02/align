@@ -118,8 +118,7 @@ using namespace AliAlgAux;
 const char* AliAlgVol::fgkFrameName[AliAlgVol::kNVarFrames] = {"LOC","TRA"};
 //
 UInt_t      AliAlgVol::fgDefGeomFree = 
-  BIT(AliAlgVol::kDOFTX)|BIT(AliAlgVol::kDOFTY)|BIT(AliAlgVol::kDOFTZ)|
-  BIT(AliAlgVol::kDOFPH)|BIT(AliAlgVol::kDOFTH)|BIT(AliAlgVol::kDOFPS);
+  kDOFBitTX | kDOFBitTY | kDOFBitTZ | kDOFBitPS | kDOFBitTH | kDOFBitPH;
 //
 const char* AliAlgVol::fgkDOFName[AliAlgVol::kNDOFGeom]={"TX","TY","TZ","PSI","THT","PHI"};
 

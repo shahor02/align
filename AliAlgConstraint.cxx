@@ -224,7 +224,7 @@ void AliAlgConstraint::CheckConstraint() const
       for (int jc=0;jc<kNDOFGeom;jc++) {
 	Bool_t acc = child->IsFreeDOF(jc) && child->GetParErr(jc)>=0;
 	if (acc) { printf("    %+.3e    ",parsC[jc]); parsTotAn[jc] += parsC[jc];}
-	else       printf(" *[ %+.3e ]* ",parsC[jc]);  // just for info, not in the constraint
+	else       printf(" /* %+.3e */ ",parsC[jc]);  // just for info, not in the constraint
       }
     }
     printf(" | ");
@@ -237,7 +237,7 @@ void AliAlgConstraint::CheckConstraint() const
     if (doJac) printf("%+.1e/%+.1e ",parsTotAn[jp],parsTotEx[jp]);
     else {
       if (IsDOFConstrained(jp)) printf("    %+.3e    ",parsTotAn[jp]);
-      else                      printf(" *[ %+.3e ]* ",parsTotAn[jp]);
+      else                      printf(" /* %+.3e */ ",parsTotAn[jp]);
     }
   }
   printf(" | ");
@@ -246,7 +246,10 @@ void AliAlgConstraint::CheckConstraint() const
   printf(" ! <----- %s\n",GetName());
   //
   printf(" Sig | ");
-  for (int jp=0;jp<kNDOFGeom;jp++) printf("    %+.3e    ",fSigma[jp]);
+  for (int jp=0;jp<kNDOFGeom;jp++) {
+    if (IsDOFConstrained(jp)) printf("    %+.3e    ",fSigma[jp]);
+    else                      printf(" /* %+.3e */ ",fSigma[jp]);
+  }
   printf(" ! <----- \n");
 
   //
@@ -288,6 +291,7 @@ void AliAlgConstraint::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kND
   //   sinpsi*sinthe*cosphi + cospsi*sinphi; -sinpsi*sinthe*sinphi + cospsi*cosphi; -costhe*sinpsi;
   //  -cospsi*sinthe*cosphi + sinpsi*sinphi;  cospsi*sinthe*sinphi + sinpsi*cosphi;  costhe*cospsi;
   //
+  const double kJTol = 1e-4;  // treat derivatives below this threshold as 0
   const double sgc[kNDOFGeom] = {1.,1.,1.,-RadToDeg(),RadToDeg(),-RadToDeg()};
   //
   double dDPar[kNDOFGeom][4][4] = {
@@ -316,8 +320,10 @@ void AliAlgConstraint::ConstrCoefGeom(const TGeoHMatrix &matRD, float* jac/*[kND
   //
   for (int cs=0;cs<kNDOFGeom;cs++) {
     int i=ij[cs][0],j=ij[cs][1];
-    for (int ip=0;ip<kNDOFGeom;ip++) 
-      jac[cs*kNDOFGeom+ip] = sgc[cs]*dDPar[ip][i][j]*cf[ip]; // [cs][ip]
+    for (int ip=0;ip<kNDOFGeom;ip++) {
+      double jval = sgc[cs]*dDPar[ip][i][j]*cf[ip];
+      jac[cs*kNDOFGeom+ip] =  (Abs(jval)>kJTol) ? jval : 0; // [cs][ip]
+    }
   }
 }
 

@@ -23,7 +23,9 @@ class TH1;
 class AliAlgVol : public TNamed
 {
  public:
-  enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPH,kDOFTH,kDOFPS,kNDOFGeom,kAllGeomDOF=0x3F};
+  enum DOFGeom_t {kDOFTX,kDOFTY,kDOFTZ,kDOFPS,kDOFTH,kDOFPH,kNDOFGeom,kAllGeomDOF=0x3F};
+  enum {kDOFBitTX=BIT(kDOFTX),kDOFBitTY=BIT(kDOFTY),kDOFBitTZ=BIT(kDOFTZ),
+	kDOFBitPS=BIT(kDOFPS),kDOFBitTH=BIT(kDOFTH),kDOFBitPH=BIT(kDOFPH)};
   enum {kNDOFMax=32};
   enum Frame_t {kLOC,kTRA,kNVarFrames};  // variation frames defined
   enum {kInitDOFsDoneBit=BIT(14),kSkipBit=BIT(15),kExclFromParentConstraintBit=BIT(16)};
