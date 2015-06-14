@@ -1858,7 +1858,8 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
       int idP = Label2ParID(lbI);
       if (idP<0) AliFatalF("Did not find parameted for label %d\n",lbI);
       double parVal = GetGloParVal()[idP];
-      resid[irs] -= parVal*recDGlo[ig];
+      //      resid[irs] -= parVal*recDGlo[ig];
+      resid[irs] += parVal*recDGlo[ig];
       if (!ig) volID[irs] = GetVolOfDOFID(idP)->GetVolID();
     }
     //

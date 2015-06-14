@@ -292,15 +292,20 @@ void AliAlgMPRecord::Print(const Option_t *) const
     //
     //
     printf("Global Derivatives:\n");
-    eolOK = kTRUE;
-    const int kNColGlo=6;
+    //    eolOK = kTRUE;
+    //    const int kNColGlo=6;
+    int prvID = -1;
     for (int id=0;id<ndglo;id++) {
       int jd = id+curGlo;
+      //      eolOK==kFALSE;
+      if (prvID>fIDGlo[jd]%100) {printf("\n");/* eolOK = kTRUE;*/}
       printf("[%5d] %+.2e  ",fIDGlo[jd],fDGlo[jd]);
-      if (((id+1)%kNColGlo)==0) {printf("\n"); eolOK = kTRUE;}
-      else eolOK = kFALSE;
+      //      if (((id+1)%kNColGlo)==0) 
+      //      else eolOK = kFALSE;
+      prvID=fIDGlo[jd]%100;
     }
-    if (!eolOK) printf("\n");
+    //    if (!eolOK) printf("\n");
+    printf("\n");
     curGlo += ndglo;
     //
   }
