@@ -2,7 +2,7 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-const char* specOCDB = 0;//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+const char* specOCDB = "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
 
 void configRefOCDB(int run = 188503) 
 {

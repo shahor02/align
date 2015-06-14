@@ -1,16 +1,16 @@
 {
-  hv0bm = new HistoManager("hpostpfBM","halgV0_newTRDnewRC.root",1,"v0");
-  hv0bp = new HistoManager("hpostpfBP","halgV0_newTRDnewRC.root",1,"v0");
-  hv0b0 = new HistoManager("hpostpfB0","halgV0_newTRDnewRC.root",1,"v0");
+  hv0bm = new HistoManager("hpostv0BM","halgV0_newTRDnewRC.root",1,"v0");
+  hv0bp = new HistoManager("hpostv0BP","halgV0_newTRDnewRC.root",1,"v0");
+  hv0b0 = new HistoManager("hpostv0B0","halgV0_newTRDnewRC.root",1,"v0");
   hv0bm->SetColor(kBlue);
   hv0bp->SetColor(kBlue);
   hv0b0->SetColor(kBlue);
   hv0bm->SetMarkerStyle(24);
   hv0bp->SetMarkerStyle(24);
   hv0b0->SetMarkerStyle(24);
-  hpfb0 = new HistoManager("hpostpfB0","halgPF_newTRDnewRC.root",1);
-  hpfbp = new HistoManager("hpostpfBP","halgPF_newTRDnewRC.root",1);
-  hpfbm = new HistoManager("hpostpfBM","halgPF_newTRDnewRC.root",1);
+  hpfb0 = new HistoManager("hpostpfB0","halgPF3_newTRDnewRC.root",1);
+  hpfbp = new HistoManager("hpostpfBP","halgPF3_newTRDnewRC.root",1);
+  hpfbm = new HistoManager("hpostpfBM","halgPF3_newTRDnewRC.root",1);
   hpfb0->SetColor(kRed);
   hpfbp->SetColor(kRed);
   hpfbm->SetColor(kRed);
@@ -27,7 +27,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRepB0_newTRDnewRC");
+  DrawReport(&harr,"algRepB0_newTRDnewRCPF3");
   //
   
   harr.Clear();
@@ -37,7 +37,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRepBP_newTRDnewRC");
+  DrawReport(&harr,"algRepBP_newTRDnewRCPF3");
   //
   harr.Clear();
   harr.Add(hv0bm);
@@ -46,7 +46,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRepBM_newTRDnewRC");
+  DrawReport(&harr,"algRepBM_newTRDnewRCPF3");
   //
   //
 }

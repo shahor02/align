@@ -6,6 +6,10 @@ Usage() {
     exit 1
 }
 
+control=mpControlRes.root
+stat=mpStatOut.root
+mpdat=mpData.root
+
 if [ $# -lt 1 ] ; then Usage ;fi
 
 for dir in "$@"; 
@@ -13,9 +17,10 @@ do
 #
  dir=`echo $dir | sed "s/\/$//"`
  echo doing $dir
- hadd -f ${dir}/controlRes.root ${dir}/*/controlRes.root
- hadd -f ${dir}/statOut.root ${dir}/*/statOut.root
- hadd -f ${dir}/mpData.root ${dir}/*/mpData.root
+ hadd -f ${dir}/$control ${dir}/*/$control
+ hadd -f ${dir}/$stat ${dir}/*/$stat
+# hadd -f ${dir}/$mpdat ${dir}/*/$mpdat
+
 #
 done
 

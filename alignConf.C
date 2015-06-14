@@ -251,23 +251,25 @@ void ConfigTOF(AliAlgSteer* algSteer)
   AliAlgConstraint* ctofY = new AliAlgConstraint("TOF_Yconstr","");
   ctofY->SetNoJacobian();
   ctofY->ConstrainDOF(AliAlgVol::kDOFTY);
+  algSteer->AddConstraint(ctofY);
   //
   // prevent systematic compression of inflation in R
   // ATTENTION: see if using cosmics will allow to avoid this constraint
-  AliAlgConstraint* ctofX = new AliAlgConstraint("TOF_Xconstr","");
-  ctofX->SetNoJacobian();
-  ctofX->ConstrainDOF(AliAlgVol::kDOFTX);
-  //
-  algSteer->AddConstraint(ctofY);
-  algSteer->AddConstraint(ctofX);
+  //  AliAlgConstraint* ctofX = new AliAlgConstraint("TOF_Xconstr","");
+  //  ctofX->SetNoJacobian();
+  //  ctofX->ConstrainDOF(AliAlgVol::kDOFTX);
+  //  algSteer->AddConstraint(ctofX);
   //
   for (int i=0;i<tmpArr.GetEntriesFast();i++) {
     AliAlgVol* vol = (AliAlgVol*)tmpArr[i]; 
     ctofY->AddChild(vol); // add volume to special Y constraint
-    ctofX->AddChild(vol); // add volume to special X constraint
+    //    ctofX->AddChild(vol); // add volume to special X constraint
     //
     // prevent global shift of strips wrt SM
     vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
+    //
+    // ATTENTION: to limit R scaling fix TOF X, see if can be removed with cosmics added
+    vol->SetParErr(AliAlgVol::kDOFTX, -999);
   }
   //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
   tmpArr.Clear();
