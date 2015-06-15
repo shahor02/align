@@ -467,11 +467,11 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
       accTr += ProcessTrack(esdEv->GetTrack(itr));      
       if (accTr>accTrOld) {
 	int ndf = fCResid->GetNPoints()*2-5;
-	if (fCResid->GetChi2()/ndf>40 || !fCResid->GetKalmanDone() 
-	    || fCResid->GetChi2K()/ndf>40) {
+	if (fCResid->GetChi2()/ndf>20 || !fCResid->GetKalmanDone() 
+	    || fCResid->GetChi2K()/ndf>20) {
 	  printf("BAD FIT for %d\n",itr);
 	}
-	fCResid->Print("er");
+       	fCResid->Print("er");
       }
     }
     if (accTr) fStat[kAccStat][kEventColl]++;

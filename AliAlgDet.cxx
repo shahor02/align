@@ -43,7 +43,15 @@ AliAlgDet::AliAlgDet()
   ,fNSensors(0)
   ,fSID2VolID(0)
   ,fNProcPoints(0)
-  //
+   //
+  ,fNCalibDOF(0)
+  ,fNCalibDOFFree(0)
+  ,fCalibDOF(0)
+  ,fFirstParGloID(-1)
+  ,fParVals(0)
+  ,fParErrs(0)
+  ,fParLabs(0)   
+   //
   ,fUseErrorParam(0)
   ,fSensors()
   ,fVolumes()
@@ -317,6 +325,7 @@ Int_t AliAlgDet::InitGeom()
     fNDOFs += vol->GetNDOFs();
   }
   //
+  fNDOFs += fNCalibDOF;
   SetInitGeomDone();
   return fNDOFs;
 }
@@ -330,6 +339,17 @@ Int_t AliAlgDet::AssignDOFs()
   Float_t* pars = fAlgSteer->GetGloParVal(); 
   Float_t* errs = fAlgSteer->GetGloParErr(); 
   Int_t*   labs = fAlgSteer->GetGloParLab();
+  //
+  // assign calibration DOFs
+  fFirstParGloID = gloCount;
+  fParVals = pars + gloCount;
+  fParErrs = errs + gloCount;
+  fParLabs = labs + gloCount;
+  for (int icl=0;icl<fNCalibDOF;icl++) {
+    fParLabs[icl] = (GetDetLabel() + 10000)*100 + icl;
+    gloCount++;
+  }
+  //
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
@@ -337,6 +357,7 @@ Int_t AliAlgDet::AssignDOFs()
     if (!vol->GetParent()) vol->AssignDOFs(gloCount,pars,errs,labs);
   }
   //
+
   if (fNDOFs != gloCount-gloCount0) AliFatalF("Mismatch between declared %d and initialized %d DOFs for %s",
 					      fNDOFs,gloCount-gloCount0,GetName());
   
@@ -349,8 +370,13 @@ void AliAlgDet::InitDOFs()
   // initialize free parameters
   if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
   //
+  // process calibration DOFs
+  for (int i=0;i<fNCalibDOF;i++) if (fParErrs[i]<0 && IsZeroAbs(fParVals[i])) FixDOF(i);
+  //
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) GetVolume(iv)->InitDOFs();
+  //
+  CalcFree(kTRUE);
   //
   SetInitDOFsDone();
   return;
@@ -601,7 +627,7 @@ void AliAlgDet::SetDOFCondition(int dof, float condErr ,int lev,const char* matc
     if (dof>=vol->GetNDOFs()) continue;
     vol->SetParErr(dof, condErr);
     if (condErr>=0 && !vol->IsFreeDOF(dof)) vol->SetFreeDOF(dof);
-    if (condErr<0  && vol->IsFreeDOF(dof)) vol->FixDOF(dof);
+    //if (condErr<0  && vol->IsFreeDOF(dof)) vol->FixDOF(dof);
   }
   //
 }
@@ -633,5 +659,45 @@ void AliAlgDet::ConstrainOrphans(const double* sigma, const char* match)
     delete constr;
   }
   else ((TObjArray*)fAlgSteer->GetConstraints())->Add(constr);
+  //
+}
+
+//________________________________________
+void AliAlgDet::SetFreeDOF(Int_t dof) 
+{
+  // set detector free dof
+  if (dof>=kNMaxKalibDOF) {AliFatalF("Detector CalibDOFs limited to %d, requested %d",kNMaxKalibDOF,dof);}
+  fCalibDOF |= 0x1<<dof; 
+  CalcFree();
+}
+
+//________________________________________
+void AliAlgDet::FixDOF(Int_t dof)
+{
+  // fix detector dof
+  if (dof>=kNMaxKalibDOF) {AliFatalF("Detector CalibDOFs limited to %d, requested %d",kNMaxKalibDOF,dof);}
+  fCalibDOF &=~(0x1<<dof); 
+  CalcFree();
+}
+
+//__________________________________________________________________
+Bool_t AliAlgDet::IsCondDOF(Int_t i) const
+{
+  // is DOF free and conditioned?
+  return (!IsZeroAbs(GetParVal(i)) || !IsZeroAbs(GetParErr(i)));
+}
+
+//__________________________________________________________________
+void AliAlgDet::CalcFree(Bool_t condFix)
+{
+  // calculate free calib dofs. If condFix==true, condition parameter a la pede, i.e. error < 0
+  fNCalibDOFFree = 0;
+  for (int i=0;i<fNCalibDOF;i++) {
+    if (!IsFreeDOF(i)) {
+      if (condFix) SetParErr(i,-999);
+      continue;
+    }
+    fNCalibDOFFree++;
+  }
   //
 }

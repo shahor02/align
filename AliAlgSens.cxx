@@ -46,7 +46,7 @@ AliAlgSens::~AliAlgSens()
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv) const
+void AliAlgSens::DPosTraDParGeomLOC(const AliAlgPoint* pnt, double* deriv) const
 {
   // Jacobian of position in sensor tracking frame (tra) vs sensor LOCAL frame 
   // parameters in TGeoHMatrix convention.
@@ -57,6 +57,7 @@ void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv) const
   //
   memset(delta,0,kNDOFGeom*sizeof(double));
   memset(deriv,0,kNDOFGeom*3*sizeof(double));
+  const double *tra = pnt->GetXYZTracking();
   //
   for (int ip=kNDOFGeom;ip--;) {
     //
@@ -88,7 +89,7 @@ void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv) const
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv, const AliAlgVol* parent) const
+void AliAlgSens::DPosTraDParGeomLOC(const AliAlgPoint* pnt, double* deriv, const AliAlgVol* parent) const
 {
   // Jacobian of position in sensor tracking frame (tra) vs parent volume LOCAL frame parameters.
   // NO check of parentship is done!
@@ -102,6 +103,7 @@ void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv, const AliA
   //
   memset(delta,0,kNDOFGeom*sizeof(double));
   memset(deriv,0,kNDOFGeom*3*sizeof(double));
+  const double *tra = pnt->GetXYZTracking();
   //
   for (int ip=kNDOFGeom;ip--;) {
     //
@@ -132,7 +134,7 @@ void AliAlgSens::DPosTraDParGeomLOC(const double *tra, double* deriv, const AliA
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv) const
+void AliAlgSens::DPosTraDParGeomTRA(const AliAlgPoint* pnt, double* deriv) const
 {
   // Jacobian of position in sensor tracking frame (tra) vs sensor TRACKING 
   // frame parameters in TGeoHMatrix convention, i.e. the modified parameter is
@@ -145,6 +147,7 @@ void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv) const
   //
   memset(delta,0,kNDOFGeom*sizeof(double));
   memset(deriv,0,kNDOFGeom*3*sizeof(double));
+  const double *tra = pnt->GetXYZTracking();
   //
   for (int ip=kNDOFGeom;ip--;) {
     //
@@ -175,7 +178,7 @@ void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv) const
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv, const AliAlgVol* parent) const
+void AliAlgSens::DPosTraDParGeomTRA(const AliAlgPoint* pnt, double* deriv, const AliAlgVol* parent) const
 {
   // Jacobian of position in sensor tracking frame (tra) vs sensor TRACKING 
   // frame parameters in TGeoHMatrix convention, i.e. the modified parameter is
@@ -202,6 +205,7 @@ void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv, const AliA
   //
   memset(delta,0,kNDOFGeom*sizeof(double));
   memset(deriv,0,kNDOFGeom*3*sizeof(double));
+  const double *tra = pnt->GetXYZTracking();
   //
   for (int ip=kNDOFGeom;ip--;) {
     //
@@ -232,15 +236,15 @@ void AliAlgSens::DPosTraDParGeomTRA(const double *tra, double* deriv, const AliA
 }
 
 //_________________________________________________________
-void AliAlgSens::DPosTraDParGeom(const double *tra, double* deriv, const AliAlgVol* parent) const
+void AliAlgSens::DPosTraDParGeom(const AliAlgPoint* pnt, double* deriv, const AliAlgVol* parent) const
 {
   // calculate point position derivatives in tracking frame of sensor
   // vs standard geometrical DOFs of its parent volume (if parent!=0) or sensor itself
   Frame_t frame = parent ? parent->GetVarFrame() : GetVarFrame();
   switch(frame) {
-  case kLOC : parent ? DPosTraDParGeomLOC(tra,deriv,parent) : DPosTraDParGeomLOC(tra,deriv);
+  case kLOC : parent ? DPosTraDParGeomLOC(pnt,deriv,parent) : DPosTraDParGeomLOC(pnt,deriv);
     break;
-  case kTRA : parent ? DPosTraDParGeomTRA(tra,deriv,parent) : DPosTraDParGeomTRA(tra,deriv);
+  case kTRA : parent ? DPosTraDParGeomTRA(pnt,deriv,parent) : DPosTraDParGeomTRA(pnt,deriv);
     break;
   default   : AliErrorF("Alignment frame %d is not implemented",parent->GetVarFrame()); 
     break;
@@ -360,5 +364,16 @@ void AliAlgSens::PrepareMatrixClAlg()
 //____________________________________________
 void AliAlgSens::UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const
 {
+  // update
   fDet->UpdatePointByTrackInfo(pnt,t);
 }
+
+//____________________________________________
+void AliAlgSens::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calibID,const AliAlgVol* parent) const
+{
+  // calculate point position X,Y,Z derivatives wrt calibration parameter calibID of given parent
+  // parent=0 means top detector object calibration 
+  //
+  deriv[0]=deriv[1]=deriv[2]=0;
+}
+

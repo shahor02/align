@@ -49,6 +49,7 @@ void tstAlg(int evID=-4) // for beam: data -> LHC10b_000117220_vpass1_pass4_1000
       //      printf("Event %d\n",iev);
       algSTEER->ProcessEvent(esdEv);
     }
+    algSTEER->Terminate();
   }
   if (0) {
     LoadEvent(evID);

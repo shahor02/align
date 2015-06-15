@@ -32,12 +32,13 @@ class AliAlgSens : public AliAlgVol
   void  IncrementStat()                                {fNProcPoints++;}
   //
   // derivatives calculation
-  virtual void DPosTraDParGeom(const double *tra, double* deriv,const AliAlgVol* parent=0) const;
+  virtual void DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calibID,const AliAlgVol* parent=0) const;
+  virtual void DPosTraDParGeom(const AliAlgPoint* pnt, double* deriv,const AliAlgVol* parent=0) const;
   //
-  virtual void DPosTraDParGeomLOC(const double *tra, double* deriv) const;
-  virtual void DPosTraDParGeomTRA(const double *tra, double* deriv) const;
-  virtual void DPosTraDParGeomLOC(const double *tra, double* deriv, const AliAlgVol* parent) const;
-  virtual void DPosTraDParGeomTRA(const double *tra, double* deriv, const AliAlgVol* parent) const;
+  virtual void DPosTraDParGeomLOC(const AliAlgPoint* pnt, double* deriv) const;
+  virtual void DPosTraDParGeomTRA(const AliAlgPoint* pnt, double* deriv) const;
+  virtual void DPosTraDParGeomLOC(const AliAlgPoint* pnt, double* deriv, const AliAlgVol* parent) const;
+  virtual void DPosTraDParGeomTRA(const AliAlgPoint* pnt, double* deriv, const AliAlgVol* parent) const;
   //
   void GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;

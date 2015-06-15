@@ -27,6 +27,8 @@ using namespace TMath;
 
 ClassImp(AliAlgDetTRD);
 
+const char* AliAlgDetTRD::fgkCalibDOFName[AliAlgDetTRD::kNCalibParams]={"DZdTglNRC"};
+
 //____________________________________________
 AliAlgDetTRD::AliAlgDetTRD(const char* title)
   : AliAlgDet()
@@ -40,6 +42,7 @@ AliAlgDetTRD::AliAlgDetTRD(const char* title)
   // ad hoc correction
   SetNonRCCorrDzDtgl();
   SetExtraErrRC();
+  fNCalibDOF = kNCalibParams;
 }
 
 
@@ -57,7 +60,7 @@ void AliAlgDetTRD::DefineVolumes()
   const int kNSect = 18, kNStacks = 5, kNLayers = 6;
   AliAlgSensTRD *chamb=0;
   //
-  int labDet = (GetDetID()+1)*1000000;
+  int labDet = GetDetLabel();
   //  AddVolume( volTRD = new AliAlgVol("TRD") ); // no main volume, why?
   AliAlgVol *sect[kNSect] = {0};
   //
@@ -111,8 +114,9 @@ AliAlgPoint* AliAlgDetTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointArr
     errYZ[2] += fExtraErrRC[1]*fExtraErrRC[1];
   }
   else { // account for probability to not cross the row
+    double calpar = fNonRCCorrDzDtgl+GetParVal(kCalibRCCorrDzDtgl);
     double* pYZ = (double*)pnt->GetYZTracking();
-    double corrZ = 1.055*tr->GetTgl();
+    double corrZ = calpar*tr->GetTgl();
     pYZ[1] += corrZ; 
     pYZ[0] += corrZ*Sign(kTilt,sgYZ);  // Y and Z are correlated
   }
@@ -130,3 +134,30 @@ void AliAlgDetTRD::Print(const Option_t *opt) const
   printf("Extra error for RC tracklets: Y:%e Z:%e\n",fExtraErrRC[0],fExtraErrRC[1]);
 }
  
+const char* AliAlgDetTRD::GetCalibDOFName(int i) const
+{
+  // return calibration DOF name
+  return i<kNCalibParams ? fgkCalibDOFName[i]:0;
+}
+
+//______________________________________________________
+void AliAlgDetTRD::WritePedeInfo(FILE* parOut, const Option_t *opt) const
+{
+  // contribute to params and constraints template files for PEDE
+  AliAlgDet::WritePedeInfo(parOut,opt);
+  //
+  // write calibration parameters
+  enum {kOff,kOn,kOnOn};
+  const char* comment[3] = {"  ","! ","!!"};
+  const char* kKeyParam = "parameter";
+  //
+  fprintf(parOut,"%s%s %s\t %d calibraction params for %s\n",comment[kOff],kKeyParam,comment[kOnOn],
+	  GetNCalibDOFs(),GetName());
+  //
+  for (int ip=0;ip<GetNCalibDOFs();ip++) {
+    int cmt = IsCondDOF(ip) ? kOff : kOn;
+    fprintf(parOut,"%s %9d %+e %+e\t%s %s p%d\n",comment[cmt],GetParLab(ip),
+	    GetParVal(ip),GetParErr(ip),comment[kOnOn],IsFreeDOF(ip) ? "  ":"FX",ip);
+  }
+  //
+}

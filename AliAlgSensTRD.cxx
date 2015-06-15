@@ -15,8 +15,10 @@
 
 #include "AliAlgSensTRD.h"
 #include "AliTRDgeometry.h"
+#include "AliAlgDetTRD.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
+#include "AliAlgPoint.h"
 ClassImp(AliAlgSensTRD)
 
 using namespace AliAlgAux;
@@ -65,5 +67,32 @@ void AliAlgSensTRD::PrepareMatrixT2L()
   }
   */
   SetMatrixT2L(t2l);
+  //
+}
+
+//____________________________________________
+void AliAlgSensTRD::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calibID,const AliAlgVol* parent) const
+{
+  // calculate point position X,Y,Z derivatives wrt calibration parameter calibID of given parent
+  // parent=0 means top detector object calibration 
+  //
+  deriv[0]=deriv[1]=deriv[2]=0;
+  //
+  if (!parent) { // TRD detector global calibration
+    //
+    switch (calibID) {
+    case AliAlgDetTRD::kCalibRCCorrDzDtgl:  
+      {  // correction for Non-Crossing tracklets Z,Y shift: Z -> Z + calib*tgl, Y -> Y + calib*tgl*tilt*sign(tilt);
+	double sgYZ = pnt->GetYZErrTracking()[1]; // makes sense only for nonRC tracklets   
+	if (Abs(sgYZ)>0.01) {
+	  const double kTilt = 2.*TMath::DegToRad();
+	  deriv[2] = pnt->GetTrParamWSA()[AliAlgPoint::kParTgl];
+	  deriv[1] = deriv[2]*kTilt*Sign(kTilt,sgYZ);
+	}
+	break;
+      }
+    default: break;
+    };
+  }
   //
 }

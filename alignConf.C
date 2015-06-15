@@ -28,7 +28,7 @@ void alignConf(AliAlgSteer* algSteer)
 {
   //
   algSteer->SetRefOCDBConfigMacro("configRefOCDB.C");
-  algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
+  //  algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
   algSteer->SetRecoOCDBConfigMacro(""); // Use ESD info
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
@@ -193,8 +193,12 @@ void ConfigTRD(AliAlgSteer* algSteer)
   det->SetNPointsSelColl(2);
   det->SetNPointsSelCosm(2);
   //
+  // allow variation of correction parameter for DZ,DY of non-crossing tracklets
+  det->SetFreeDOF(AliAlgDetTRD::kCalibRCCorrDzDtgl);
+  //
   // just repeat default settings
-  det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
+  det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
+  //  det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
   det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
   //  det->SetAddError(0.1,0.1);
   //
@@ -223,8 +227,8 @@ void ConfigTOF(AliAlgSteer* algSteer)
 {
   //
   const double kCondSigSMD[AliAlgVol::kNDOFGeom] = {1,5.,5.,1,1,1}; // precondition sigmas
-  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, 1,1,1}; // precondition sigmas
-  //  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
+  //  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, 1,1,1}; // precondition sigmas
+  const double kCondSigSTR[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.1, -1,-1,-1}; // precondition sigmas
   //
   AliAlgDetTOF* det = (AliAlgDetTOF*)algSteer->GetDetectorByDetID(AliAlgSteer::kTOF);
   if (!det||det->IsDisabled()) return;

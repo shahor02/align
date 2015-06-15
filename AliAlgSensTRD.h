@@ -23,6 +23,8 @@ class AliAlgSensTRD : public AliAlgSens
   Int_t GetSector()                      const {return fSector;}
   void  SetSector(UInt_t sc)                   {fSector = (UChar_t)sc;}
   //
+  virtual void DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calibID,const AliAlgVol* parent=0) const;
+  //
   //  virtual void   SetTrackingFrame();
   virtual void PrepareMatrixT2L();
   //

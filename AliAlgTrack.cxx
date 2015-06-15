@@ -19,6 +19,7 @@
 #include "AliLog.h"
 #include "AliAlgSens.h"
 #include "AliAlgVol.h"
+#include "AliAlgDet.h"
 #include "AliAlgAux.h"
 #include <TMatrixD.h>
 #include <TVectorD.h>
@@ -341,7 +342,7 @@ Bool_t AliAlgTrack::CalcResidDeriv(double *params,Bool_t invert,int pFrom,int pT
 Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
 {
   // calculate residuals derivatives over point's sensor and its parents global params
-  double derGeom[AliAlgVol::kNDOFGeom*3];
+  double deriv[AliAlgVol::kNDOFGeom*3];
   //
   const AliAlgSens* sens = pnt->GetSensor();
   const AliAlgVol* vol = sens;
@@ -356,13 +357,13 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
     // measurement residuals
     int nfree = vol->GetNDOFFree();
     if (!nfree) continue; // no free parameters?
-    sens->DPosTraDParGeom(pnt->GetXYZTracking(),derGeom,vol==sens ? 0:vol);
+    sens->DPosTraDParGeom(pnt,deriv,vol==sens ? 0:vol);
     //
     CheckExpandDerGloBuffer(fNGloPar+nfree);  // if needed, expand derivatives buffer
     //
     for (int ip=0;ip<AliAlgVol::kNDOFGeom;ip++) { // we need only free parameters
       if (!vol->IsFreeDOF(ip)) continue;
-      double* dXYZ = &derGeom[ip*3];   // tracking XYZ derivatives over this parameter
+      double* dXYZ = &deriv[ip*3];   // tracking XYZ derivatives over this parameter
       // residual is defined as diagonalized track_estimate - measured Y,Z in tracking frame
       // where the track is evaluated at measured X! 
       // -> take into account modified X using track parameterization at the point (paramWSA)
@@ -379,6 +380,24 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
     }
     //
   } while( (vol=vol->GetParent()) );
+  //
+  // eventual detector calibration parameters
+  const AliAlgDet* det = sens->GetDetector();
+  int ndof=0;
+  if (det && (ndof=det->GetNCalibDOFs())) {
+    // if needed, expand derivatives buffer
+    CheckExpandDerGloBuffer(fNGloPar+det->GetNCalibDOFsFree());
+    for (int idf=0;idf<ndof;idf++) {
+      if (!det->IsFreeDOF(idf)) continue;
+      sens->DPosTraDParCalib(pnt,deriv,idf,0);
+      pnt->DiagonalizeResiduals((deriv[AliAlgPoint::kX]*slpY - deriv[AliAlgPoint::kY]),
+				(deriv[AliAlgPoint::kX]*slpZ - deriv[AliAlgPoint::kZ]),
+				fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
+      // and register global ID of varied parameter
+      fGloParIDA[fNGloPar] = det->GetParGloID(idf);
+      fNGloPar++;
+    }
+  } 
   //
   pnt->SetNGloDOFs(fNGloPar-pnt->GetDGloOffs());  // mark number of global derivatives filled
   //
@@ -1095,8 +1114,8 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   for (int ip=pFrom;ip!=pTo;ip+=pinc) { // inward fit from outer point
     AliAlgPoint* pnt = GetPoint(ip);
     //
-    //    printf("*** FitLeg %d (%d %d)\n",ip,pFrom,pTo);
-    //    printf("Before propagate: "); trc.Print();
+    printf("*** FitLeg %d (%d %d)\n",ip,pFrom,pTo);
+    printf("Before propagate: "); trc.Print();
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       if (pnt->GetNeedUpdateFromTrack()) pnt->UpdatePointByTrackInfo(&trc); 
@@ -1105,7 +1124,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
       double chi = trc.GetPredictedChi2(yz,errYZ);
       //printf("***>> fitleg-> Y: %+e %+e / Z: %+e %+e -> Chi2: %e | %+e %+e\n",yz[0],trc.GetY(),yz[1],trc.GetZ(),chi,
       //  trc.Phi(),trc.GetAlpha());
-      //printf("Before update at %e %e\n",yz[0],yz[1]); trc.Print();
+      printf("Before update at %e %e\n",yz[0],yz[1]); trc.Print();
       if (!trc.Update(yz,errYZ)) {
 #if DEBUG>3
 	AliWarningF("Failed on Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
@@ -1114,8 +1133,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
 	return kFALSE;
       }
       fChi2 += chi;
-      //printf("After update: (%f) -> %f\n",chi,fChi2); 
-      //trc.Print();
+      printf("After update: (%f) -> %f\n",chi,fChi2); trc.Print();
     }
   }
   //

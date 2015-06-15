@@ -44,7 +44,7 @@ void AliAlgDetTOF::DefineVolumes()
   // define TOF volumes
   //
   const int kNSect = 18, kNStrips = AliTOFGeometry::NStripA()+2*AliTOFGeometry::NStripB()+2*AliTOFGeometry::NStripC();
-  int labDet = (GetDetID()+1)*1000000;
+  int labDet = GetDetLabel();
   AliAlgSensTOF *strip=0;
   //
   //  AddVolume( volTOF = new AliAlgVol("TOF") ); // no main volume, why?
