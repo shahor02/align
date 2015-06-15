@@ -179,6 +179,7 @@ class AliAlgSteer : public TObject
   //
   AliAlgPoint* GetRefPoint()                              const {return (AliAlgPoint*)fRefPoint;}
   //
+  AliAlgRes* GetContResid()                               const {return (AliAlgRes*)fCResid;}
   AliAlgMPRecord* GetMPRecord()                           const {return (AliAlgMPRecord*)fMPRecord;}
   TTree*    GetMPRecTree()                                const {return fMPRecTree;}
   AliAlgTrack* GetAlgTrack()                              const {return (AliAlgTrack*)fAlgTrack;}

@@ -161,6 +161,7 @@ void AliAlgRes::Clear(const Option_t *)
   fTimeStamp = 0;
   fTrackID = 0;
   fChi2 = 0;
+  fChi2K= 0;
   fQ2Pt = 0;
   //
 }
@@ -174,8 +175,8 @@ void AliAlgRes::Print(const Option_t *opt) const
   printf("%5sTr.",IsCosmic() ? "Cosm.":"Coll.");
   if (IsCosmic()) printf("%2d/%2d ",fTrackID>>16,fTrackID&0xffff);
   else            printf("%5d ",fTrackID);
-  printf("Run:%6d Bz:%+4.1f Np: %3d q/Pt:%+.4f | Chi2:%6.1f |Vtx:%3s| TStamp:%d\n",
-	 fRun,fBz,fNPoints,fQ2Pt,fChi2,HasVertex() ? "ON":"OFF",fTimeStamp);
+  printf("Run:%6d Bz:%+4.1f Np: %3d q/Pt:%+.4f | Chi2: Ini: %6.1f LinSol:%6.1f Kalm:%6.1f |Vtx:%3s| TStamp:%d\n",
+	 fRun,fBz,fNPoints,fQ2Pt,fChi2Ini,fChi2,fChi2K,HasVertex() ? "ON":"OFF",fTimeStamp);
   if (opts.Contains("r")) {
     Bool_t ers = opts.Contains("e");
     printf("%5s %7s %s %7s %7s %7s %5s %5s %9s %9s",

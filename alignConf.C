@@ -28,7 +28,7 @@ void alignConf(AliAlgSteer* algSteer)
 {
   //
   algSteer->SetRefOCDBConfigMacro("configRefOCDB.C");
-  //  algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
+  algSteer->SetRecoOCDBConfigMacro("configRecoOCDB.C");  
   algSteer->SetRecoOCDBConfigMacro(""); // Use ESD info
   //
   algSteer->AddDetector(AliAlgSteer::kITS);
