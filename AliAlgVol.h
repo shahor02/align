@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 class TObjArray;
+class AliAlgDOFStat;
 class TH1;
 
 
@@ -78,8 +79,8 @@ class AliAlgVol : public TNamed
   Double_t   GetAlpTracking()                    const {return fAlp;}
   //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
-  Int_t      FinalizeStat(TH1* h=0);
-  void       FillDOFHisto(TH1* h)                const;
+  Int_t      FinalizeStat(AliAlgDOFStat* h=0);
+  void       FillDOFStat(AliAlgDOFStat* h)       const;
   //
   Float_t*   GetParVals()                        const {return fParVals;}
   Double_t   GetParVal(int par)                  const {return fParVals[par];}

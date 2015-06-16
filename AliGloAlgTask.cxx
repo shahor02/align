@@ -24,6 +24,7 @@
 #include "AliGloAlgTask.h"
 #include "AliLog.h"
 #include "AliAlgSteer.h"
+#include "AliAlgDOFStat.h"
 
 ClassImp(AliGloAlgTask)
 
@@ -117,10 +118,10 @@ void AliGloAlgTask::Terminate(Option_t *)
   Printf("Terminating...");
   fAlgSteer->Terminate();
   //
-  TH1* hstat;
-  hstat = fAlgSteer->GetHistoDOF();
-  if (hstat) fOutput->Add(hstat);
-  fAlgSteer->DetachHistoDOF();
+  TH1* hstat = 0;
+  AliAlgDOFStat* dofSt= fAlgSteer->GetDOFStat();
+  if (dofSt) fOutput->Add(dofSt);
+  fAlgSteer->DetachDOFStat();
   //
   hstat = fAlgSteer->GetHistoStat();
   if (hstat) fOutput->Add(hstat);

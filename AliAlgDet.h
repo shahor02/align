@@ -7,6 +7,7 @@
 #include "AliAlgAux.h"
 #include "AliESDtrack.h"
 class AliAlgTrack;
+class AliAlgDOFStat;
 class AliAlgPoint;
 class AliAlgSens;
 class AliAlgVol;
@@ -66,12 +67,14 @@ class AliAlgDet : public TNamed
   Bool_t      IsFreeDOF(Int_t dof)              const {return (fCalibDOF&(0x1<<dof))!=0;}
   Bool_t      IsCondDOF(Int_t dof)              const;
   ULong64_t   GetFreeDOFPattern()               const {return fCalibDOF;}
-  virtual const char* GetCalibDOFName(int)       const {return 0;}
+  Int_t       GetNProcessedPoints()             const {return fNProcPoints;}
+  virtual const char* GetCalibDOFName(int)      const {return 0;}
   //
   virtual Int_t InitGeom();
   virtual Int_t AssignDOFs();
   virtual void  InitDOFs();
-  virtual void  Terminate(TH1* hdof=0);
+  virtual void  Terminate();
+  void          FillDOFStat(AliAlgDOFStat* dofst=0) const;
   virtual void  AddVolume(AliAlgVol* vol);
   virtual void  DefineVolumes();
   virtual void  DefineMatrices();

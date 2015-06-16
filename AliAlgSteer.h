@@ -26,6 +26,7 @@ class AliAlgMPRecord;
 class AliAlgRes;
 class AliAlgResFast;
 class AliAlgConstraint;
+class AliAlgDOFStat;
 class TTree;
 class TFile;
 //
@@ -77,7 +78,8 @@ class AliAlgSteer : public TObject
 
   void     InitDetectors();
   void     InitDOFs();  
-  void     Terminate(Bool_t dohisto=kTRUE);
+  void     Terminate(Bool_t dostat=kTRUE);
+  void     SetStatHistoLabels(TH1* h)                     const;
   //
   void     SetInitGeomDone()                                    {SetBit(kInitGeomDone);}
   Bool_t   GetInitGeomDone()                              const {return TestBit(kInitGeomDone);}
@@ -257,16 +259,16 @@ class AliAlgSteer : public TObject
   void     GenPedeSteerFile(const Option_t *opt="")        const;
   void     WritePedeConstraints()                          const;
   void     CheckConstraints(const char* params=0);
-  TH1*     GetHistoDOF()                                   const {return fHistoDOF;}
-  void     SetHistoDOF(TH1F* h)                                  {fHistoDOF = h;}
-  void     DetachHistoDOF()                                      {SetHistoDOF(0);}
+  AliAlgDOFStat* GetDOFStat()                              const {return fDOFStat;}
+  void     SetDOFStat(AliAlgDOFStat* st)                        {fDOFStat = st;}
+  void     DetachDOFStat()                                      {SetDOFStat(0);}
   TH1*     GetHistoStat()                                  const {return fHistoStat;}
   void     DetachHistoStat()                                     {SetHistoStat(0);}
   void     SetHistoStat(TH1F* h)                                 {fHistoStat = h;}
   void     FillStatHisto(int type, float w=1);
   void     CreateStatHisto();
-  void     FixLowStatFromHisto(Int_t thresh=40);
-  void     LoadStatHistos(const char* flname);
+  void     FixLowStatFromDOFStat(Int_t thresh=40);
+  void     LoadStat(const char* flname);
   //
   //----------------------------------------
   void   SetRefOCDBConfigMacro(const char* nm="configRefOCDB.C") {fRefOCDBConf = nm;}
@@ -277,6 +279,7 @@ class AliAlgSteer : public TObject
   //
   virtual void Print(const Option_t *opt="")              const;
   void         PrintLabels()                              const;
+  Char_t*      GetDOFLabelTxt(int idf)                    const;
   //
   static Char_t* GetDetNameByDetID(Int_t id)              {return (Char_t*)fgkDetectorName[id];}
   static void    MPRec2Mille(const char* mprecfile,const char* millefile="mpData.mille",Bool_t bindata=kTRUE);
@@ -370,7 +373,7 @@ class AliAlgSteer : public TObject
   TString         fOutCDBResponsible;                     // optional responsible for output metadata
   Int_t           fOutCDBRunRange[2];                     // run range for output storage
   //
-  TH1F*           fHistoDOF;                              // histo with entries per dof
+  AliAlgDOFStat*  fDOFStat;                               // stat of entries per dof
   TH1F*           fHistoStat;                             // histo with general statistics
   //
   // input related

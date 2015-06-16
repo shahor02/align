@@ -28,6 +28,7 @@
 #include "AliAlgRes.h"
 #include "AliAlgResFast.h"
 #include "AliAlgConstraint.h"
+#include "AliAlgDOFStat.h"
 #include "AliTrackerBase.h"
 #include "AliESDCosmicTrack.h"
 #include "AliESDtrack.h"
@@ -121,7 +122,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fOutCDBComment("AliAlgSteer")
   ,fOutCDBResponsible("")
   //
-  ,fHistoDOF(0)
+  ,fDOFStat(0)
   ,fHistoStat(0)
   //
   ,fConfMacroName(configMacro)
@@ -181,7 +182,7 @@ AliAlgSteer::~AliAlgSteer()
   for (int i=0;i<fNDet;i++) delete fDetectors[i];
   delete fVtxSens;
   delete fRefPoint;
-  delete fHistoDOF;
+  delete fDOFStat;
   delete fHistoStat;
   //
 }
@@ -1388,24 +1389,39 @@ AliAlgVol* AliAlgSteer::GetVolOfDOFID(int id) const
 }
 
 //________________________________________________________
-void AliAlgSteer::Terminate(Bool_t dohisto)
+void AliAlgSteer::Terminate(Bool_t doStat)
 {
   // finalize processing
   if (fRunNumber>0) FillStatHisto( kRunDone );
-  if (dohisto) {
-    fHistoDOF = new TH1F("DOFstat","DOF statistics",fNDOFs,0.5,fNDOFs+0.5);
-    fHistoDOF->SetDirectory(0);
-    AliInfoF("Preparing histo with stat/DOF %s",fHistoDOF->GetName());
+  if (doStat) {
+    if (fDOFStat) delete fDOFStat;
+    fDOFStat = new AliAlgDOFStat(fNDOFs);
   }
-  if (fVtxSens) fVtxSens->FillDOFHisto(fHistoDOF);
+  if (fVtxSens) fVtxSens->FillDOFStat(fDOFStat);
   //
-  for (int i=fNDet;i--;) GetDetector(i)->Terminate(fHistoDOF);
+  for (int i=fNDet;i--;) GetDetector(i)->Terminate();
   CloseMPRecOutput();
   CloseMilleOutput();
   CloseResidOutput();
   Print("stat");
   //
 }
+
+//________________________________________________________
+Char_t* AliAlgSteer::GetDOFLabelTxt(int idf) const
+{
+  // get DOF full label
+  AliAlgVol* vol = GetVolOfDOFID(idf);
+  if (vol) return Form("%d_%s_%s",GetGloParLab(idf),vol->GetSymName(),
+		       vol->GetDOFName(idf-vol->GetFirstParGloID()));
+  //
+  // this might be detector-specific calibration dof
+  AliAlgDet* det = GetDetOfDOFID(idf);
+  if (det) return Form("%d_%s_%s",GetGloParLab(idf),det->GetName(),
+		       det->GetCalibDOFName(idf-det->GetFirstParGloID()));
+  return 0;
+}
+
 
 //********************* interaction with PEDE **********************
 
@@ -1638,12 +1654,7 @@ void AliAlgSteer::CreateStatHisto()
 void AliAlgSteer::PrintLabels() const
 {
   // print global IDs and Labels
-  for (int i=0;i<fNDOFs;i++) {
-    AliAlgVol* vol = GetVolOfDOFID(i);
-    if (!vol) {printf("DOF %d is orphan: Lb:%d\n",i,fGloParLab[i]); continue;}
-    printf("%5d %9d ! %s %s\n",i,fGloParLab[i],vol->GetSymName(),
-	   vol->GetDOFName(i-vol->GetFirstParGloID()));
-  }
+  for (int i=0;i<fNDOFs;i++) printf("%5d %s\n",i,GetDOFLabelTxt(i));
 }
 
 //____________________________________________________________
@@ -1680,68 +1691,53 @@ void AliAlgSteer::WritePedeConstraints() const
 }
 
 //____________________________________________________________
-void AliAlgSteer::FixLowStatFromHisto(Int_t thresh)
+void AliAlgSteer::FixLowStatFromDOFStat(Int_t thresh)
 {
   // fix DOFs having stat below threshold
   //
-  if (!fHistoDOF) {
-    AliError("No histo with DOFs statistics");
+  if (!fDOFStat) {
+    AliError("No object with DOFs statistics");
     return;
   }
-  TAxis*  xax = fHistoDOF->GetXaxis();
-  int nb = xax->GetNbins();
-  for (int ib=1;ib<=nb;ib++) {
-    if (fHistoDOF->GetBinContent(ib)>=thresh) continue;
-    TString lb = xax->GetBinLabel(ib);
-    int id = lb.First('_');
-    if (id<0) {
-      AliErrorF("Failed to extract DOF label from bin %d: %s",ib,lb.Data());
-      if (lb.IsNull()) continue;
-      else             return;
-    }
-    lb.Resize(id);
-    if (!lb.IsDigit()) {
-      AliErrorF("Label for bin %d is not digit: %s",ib,lb.Data());
-      return;
-    }
-    int lbID = lb.Atoi();
-    int parID = Label2ParID(lbID);
-    if (parID<0) {
-      AliErrorF("Did not find parameter for label %d of bin %d: %s",lbID,ib,xax->GetBinLabel(ib));
-      return;
-    }
-    AliInfoF("Fixing DOF (stat: %4d) %s",int(fHistoDOF->GetBinContent(ib)),xax->GetBinLabel(ib));
+  if (fNDOFs != fDOFStat->GetNDOFs()) {
+    AliErrorF("Discrepancy between NDOFs=%d of and statistics object: %d",fNDOFs,fDOFStat->GetNDOFs());
+    return;
+  }
+  for (int parID=0;parID<fNDOFs;parID++) {
+    if (fDOFStat->GetStat(parID)>=thresh) continue;
     fGloParErr[parID] = -999.;
   }
   //
 }
 
 //____________________________________________________________
-void AliAlgSteer::LoadStatHistos(const char* flname)
+void AliAlgSteer::LoadStat(const char* flname)
 {
   // load statistics histos from external file produced by alignment task
   TFile* fl = TFile::Open(flname);
   //
-  TH1F *hdf=0,*hst=0;
+  TObject *hdfO=0,*hstO=0;
   TList* lst = (TList*)fl->Get("clist");
   if (lst) {
-    hdf = (TH1F*)lst->FindObject("DOFstat");
-    if (hdf) lst->Remove(hdf);
-    hst = (TH1F*)lst->FindObject("stat");
-    if (hst) lst->Remove(hst);
+    hdfO = lst->FindObject("DOFstat");
+    if (hdfO) lst->Remove(hdfO);
+    hstO = lst->FindObject("stat");
+    if (hstO) lst->Remove(hstO);
     delete lst;
   }
   else {
-    hdf = (TH1F*)fl->Get("DOFstat");
-    hst = (TH1F*)fl->Get("stat");
+    hdfO = fl->Get("DOFstat");
+    hstO = fl->Get("stat");
   }
-  if (hdf) hdf->SetDirectory(0);
-  else AliWarning("did not fine DOFstat histo");
-  if (hst) hst->SetDirectory(0);
-  else AliWarning("did not fine stat histo");
+  TH1F* hst = 0;
+  if (hstO && (hst=dynamic_cast<TH1F*>(hstO))) hst->SetDirectory(0);
+  else AliWarning("did not find stat histo");
+  //
+  AliAlgDOFStat* dofSt = 0;
+  if (!hdfO || !(dofSt=dynamic_cast<AliAlgDOFStat*>(hdfO))) AliWarning("did not find DOFstat object");
   //
   SetHistoStat(hst);
-  SetHistoDOF(hdf);
+  SetDOFStat(dofSt);
   //
   fl->Close();
   delete fl;
@@ -1875,7 +1871,11 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
       double parVal = GetGloParVal()[idP];
       //      resid[irs] -= parVal*recDGlo[ig];
       resid[irs] += parVal*recDGlo[ig];
-      if (!ig) volID[irs] = GetVolOfDOFID(idP)->GetVolID();
+      if (!ig) {
+	AliAlgVol* vol = GetVolOfDOFID(idP);
+	if (vol) volID[irs] = vol->GetVolID();
+	else volID[irs] = -2; // calibration DOF !!! TODO 
+      }
     }
     //
     double  sg2inv = rec->GetResErr(irs);

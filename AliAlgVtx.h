@@ -29,7 +29,11 @@ class AliAlgVtx : public AliAlgSens
   virtual void   PrepareMatrixL2G(Bool_t=0)      {fMatL2G.Clear();} // unit matrix
   virtual void   PrepareMatrixL2GIdeal() {fMatL2GIdeal.Clear();} // unit matrix
   virtual void   PrepareMatrixT2L();
-
+  //
+ protected:
+  AliAlgVtx(const AliAlgVtx&);
+  AliAlgVtx& operator=(const AliAlgVtx&);
+  //
  protected:
   //
   ClassDef(AliAlgVtx,1);

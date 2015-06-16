@@ -18,6 +18,7 @@
 #include "AliAlgDet.h"
 #include "AliAlgSteer.h"
 #include "AliAlgTrack.h"
+#include "AliAlgDOFStat.h"
 #include "AliAlgConstraint.h"
 #include "AliLog.h"
 #include "AliGeomManager.h"
@@ -526,6 +527,9 @@ Bool_t AliAlgDet::OwnsDOFID(Int_t id) const
     AliAlgVol* vol = GetVolume(iv); // check only top level volumes
     if (!vol->GetParent() && vol->OwnsDOFID(id)) return kTRUE;
   }
+  // calibration DOF?
+  if (id>=fFirstParGloID && id<fFirstParGloID+fNCalibDOF) return kTRUE;
+  //
   return kFALSE;
 }
 
@@ -542,17 +546,19 @@ AliAlgVol* AliAlgDet::GetVolOfDOFID(Int_t id) const
 }
 
 //______________________________________________________
-void AliAlgDet::Terminate(TH1* h)
+void AliAlgDet::Terminate()
 {
   // called at the end of processing
   //  if (IsDisabled()) return;
   int nvol = GetNVolumes();
   fNProcPoints = 0;
+  AliAlgDOFStat* st = fAlgSteer->GetDOFStat();
   for (int iv=0;iv<nvol;iv++) {
     AliAlgVol *vol = GetVolume(iv);
     // call init for root level volumes, they will take care of their children
-    if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat(h);
+    if (!vol->GetParent()) fNProcPoints += vol->FinalizeStat(st);
   }
+  FillDOFStat(st); // fill stat for calib dofs
 }
 
 //________________________________________
@@ -698,6 +704,21 @@ void AliAlgDet::CalcFree(Bool_t condFix)
       continue;
     }
     fNCalibDOFFree++;
+  }
+  //
+}
+
+//______________________________________________________
+void AliAlgDet::FillDOFStat(AliAlgDOFStat* st) const
+{
+  // fill statistics info hist
+  if (!st) return;
+  int ndf = GetNCalibDOFs();
+  int dof0 = GetFirstParGloID();
+  int stat = GetNProcessedPoints();
+  for (int idf=0;idf<ndf;idf++) {
+    int dof = idf+dof0;
+    st->AddStat(dof,stat);
   }
   //
 }

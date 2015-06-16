@@ -24,6 +24,7 @@
 #pragma link C++ class AliAlgRes+;
 #pragma link C++ class AliAlgResFast+;
 #pragma link C++ class AliAlgConstraint+;
+#pragma link C++ class AliAlgDOFStat+;
 #pragma link C++ class AliAlgAux;
 
 #endif

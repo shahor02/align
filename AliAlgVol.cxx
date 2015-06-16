@@ -97,6 +97,7 @@
 
 #include "AliAlgVol.h"
 #include "AliAlgSens.h"
+#include "AliAlgDOFStat.h"
 #include "AliAlgConstraint.h"
 #include "AliAlignObjParams.h"
 #include "AliGeomManager.h"
@@ -461,17 +462,17 @@ Bool_t AliAlgVol::IsCondDOF(Int_t i) const
 }
 
 //______________________________________________________
-Int_t AliAlgVol::FinalizeStat(TH1* h)
+Int_t AliAlgVol::FinalizeStat(AliAlgDOFStat* st)
 {
   // finalize statistics on processed points
   if (!IsSensor()) {
     fNProcPoints = 0;
     for (int ich=GetNChildren();ich--;) {
       AliAlgVol* child = GetChild(ich);
-      fNProcPoints += child->FinalizeStat(h);
+      fNProcPoints += child->FinalizeStat(st);
     }
   }
-  if (h) FillDOFHisto(h);
+  if (st) FillDOFStat(st);
   return fNProcPoints;
 }
 
@@ -741,7 +742,7 @@ const char* AliAlgVol::GetDOFName(int i) const
 }
 
 //______________________________________________________
-void AliAlgVol::FillDOFHisto(TH1* h) const
+void AliAlgVol::FillDOFStat(AliAlgDOFStat* h) const
 {
   // fill statistics info hist
   if (!h) return;
@@ -749,11 +750,9 @@ void AliAlgVol::FillDOFHisto(TH1* h) const
   int dof0 = GetFirstParGloID();
   int stat = GetNProcessedPoints();
   for (int idf=0;idf<ndf;idf++) {
-    int dof = idf+dof0+1;
-    h->SetBinContent(dof,stat);
-    h->GetXaxis()->SetBinLabel(dof,Form("%d_%s_%s",GetParLab(idf),GetSymName(),GetDOFName(idf)));
+    int dof = idf+dof0;
+    h->AddStat(dof,stat);
   }
-  //
 }
 
 //________________________________________
