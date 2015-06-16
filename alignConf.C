@@ -61,8 +61,7 @@ void alignConf(AliAlgSteer* algSteer)
   //
   algSteer->SetPtMinColl(0.7);
   algSteer->SetPtMinCosm(1.0);
-
-
+  //
   algSteer->SetVtxMinCont(5);   // accept events with min number of vertexTracks contributors
   algSteer->SetVtxMinContVC(10); // use for vertex constraint only those with min number of contributors
   algSteer->SetMaxDCAforVC(0.05,0.3); // dcaR/Z primary selection to allow vertex constraint
@@ -149,12 +148,12 @@ void ConfigITS(AliAlgSteer* algSteer)
   }
   //
   //  det->SetAddError(2,2);
-  //  det->SetAddErrorLr(0,20e-4,100e-4);
-  //  det->SetAddErrorLr(1,20e-4,100e-4);
-  det->SetAddErrorLr(2,500e-4,10e-4);
-  det->SetAddErrorLr(3,500e-4,10e-4);
-  //  det->SetAddErrorLr(4,20e-4,500e-4);
-  //  det->SetAddErrorLr(5,20e-4,500e-4);   
+  det->SetAddErrorLr(0,10e-4,50e-4);
+  det->SetAddErrorLr(1,10e-4,50e-4);
+  det->SetAddErrorLr(2,1000e-4,10e-4);
+  det->SetAddErrorLr(3,1000e-4,10e-4);
+  det->SetAddErrorLr(4,20e-4,100e-4);
+  det->SetAddErrorLr(5,20e-4,100e-4);   
 
 }
 
@@ -201,10 +200,10 @@ void ConfigTRD(AliAlgSteer* algSteer)
   det->SetFreeDOF(AliAlgDetTRD::kCalibRCCorrDzDtgl);
   //
   // just repeat default settings
-  det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
-  //  det->SetNonRCCorrDzDtgl(1.055); // correct DZ,DY of non-crossing tracklets
+  //  det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
+  det->SetNonRCCorrDzDtgl(1.6745); // correct DZ,DY of non-crossing tracklets
   det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
-  //  det->SetAddError(0.1,0.1);
+  det->SetAddError(0.05,0.05);
   //
   // precondition
   for (int idf=0;idf<AliAlgVol::kNDOFGeom;idf++) {

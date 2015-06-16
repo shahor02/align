@@ -16,7 +16,6 @@
 
 void ProcResK(const char* inpData, const char* outName="halgResK", const char* outDir="r");
 TChain* LoadChain(const char* inpData, const char* chName="res");
-void DoOffsets();
 void BookHistos();
 void BookHistosVTX(HistoManager* hm);
 void BookHistosITS(HistoManager* hm);
@@ -53,14 +52,11 @@ TCanvas* repCanv=0;
 
 //---------------------------------------------------
 enum {kHOffsVTX=1000,kHOffsITS=100000,kHOffsTRD=300000,kHOffsTOF=400000};
-enum {kDYSnp,kDZSnp,kDYPullSnp,kDZPullSnp};
+enum {kDY,kDZ,kDYPull,kDZPull};
 enum {kNLrITS=6,kNLrTRD=6};
 //
 const char* kFitOptGS = "qmr"; // "qmrl"
 const char* kFitOptP1 = "qmr"; //
-
-int kITSLrOffs[kNLrITS] = {0};
-int kTRDLrOffs[kNLrTRD] = {0};
 //
 const int kNBinPull = 50;
 const double kMaxPull = 5;
@@ -69,18 +65,10 @@ const int kNBinsResVTX = 100;
 const int kNBinsAlpVTX = 36;
 //
 const int kNBinsResITS = 100;
-const int kNBinsSnpITS = 10;
 //
 const int kNBinsResTRD = 100;
-const int kNBinsSnpTRD = 10;
 //
 const int kNBinsResTOF = 100;
-const int kNBinsSnpTOF = 10;
-//
-const double kSnpMaxITS = 0.6;
-const double kSnpMaxTRD = 0.6;
-const double kSnpMaxTOF = 0.6;
-//
 //
 const double kMaxDYVTX = 0.05;
 const double kMaxDZVTX = 0.1;
@@ -160,16 +148,14 @@ void FillITS(int ip)
 {
   int volID = res->GetVolID(ip);
   int modID = 0;
-  int lrID = AliGeomManager::VolUIDToLayer(volID,modID);
-  int offs = kHOffsITS + (kITSLrOffs[lrID-AliGeomManager::kSPD1]+modID)*10;
-  hman->GetHisto2F(offs+kDYSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip));
-  hman->GetHisto2F(offs+kDZSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip));
-  hman->GetHisto2F(offs+kDYPullSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip)/
-					  TMath::Sqrt(res->GetSigY2(ip)+
-						      res->GetSigY2K(ip)));
-  hman->GetHisto2F(offs+kDZPullSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip)/
-					  TMath::Sqrt(res->GetSigZ2(ip)+
-						      res->GetSigZ2K(ip)));
+  int lrID = AliGeomManager::VolUIDToLayer(volID,modID)-AliGeomManager::kSPD1;
+  int offs = kHOffsITS + lrID*10;
+  hman->GetHisto2F(offs+kDY)->Fill(modID,res->GetDYK(ip));
+  hman->GetHisto2F(offs+kDZ)->Fill(modID,res->GetDZK(ip));
+  hman->GetHisto2F(offs+kDYPull)->Fill(modID,res->GetDYK(ip)/
+				       TMath::Sqrt(res->GetSigY2(ip)+res->GetSigY2K(ip)));
+  hman->GetHisto2F(offs+kDZPull)->Fill(modID,res->GetDZK(ip)/
+				       TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
   //
 }
 
@@ -178,16 +164,16 @@ void FillTRD(int ip)
 {
   int volID = res->GetVolID(ip);
   int modID = 0;
-  int lrID = AliGeomManager::VolUIDToLayer(volID,modID);
-  int offs = kHOffsTRD + (kTRDLrOffs[lrID-AliGeomManager::kTRD1]+modID)*10;
-  hman->GetHisto2F(offs+kDYSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip));
-  hman->GetHisto2F(offs+kDZSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip));
-  hman->GetHisto2F(offs+kDYPullSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip)/
-					  TMath::Sqrt(res->GetSigY2(ip)+
-						      res->GetSigY2K(ip)));
-  hman->GetHisto2F(offs+kDZPullSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip)/
-					  TMath::Sqrt(res->GetSigZ2(ip)+
-						      res->GetSigZ2K(ip)));
+  int lrID = AliGeomManager::VolUIDToLayer(volID,modID)-AliGeomManager::kTRD1;
+  int offs = kHOffsTRD + lrID*10;
+  hman->GetHisto2F(offs+kDY)->Fill(modID,res->GetDYK(ip));
+  hman->GetHisto2F(offs+kDZ)->Fill(modID,res->GetDZK(ip));
+  hman->GetHisto2F(offs+kDYPull)->Fill(modID,res->GetDYK(ip)/
+				       TMath::Sqrt(res->GetSigY2(ip)+
+						   res->GetSigY2K(ip)));
+  hman->GetHisto2F(offs+kDZPull)->Fill(modID,res->GetDZK(ip)/
+				       TMath::Sqrt(res->GetSigZ2(ip)+
+						   res->GetSigZ2K(ip)));
   //
 }
 
@@ -197,13 +183,14 @@ void FillTOF(int ip)
   int volID = res->GetVolID(ip);
   int modID = 0;
   AliGeomManager::VolUIDToLayer(volID,modID);
-  int offs = kHOffsTOF + modID*10;
-  hman->GetHisto2F(offs+kDYSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip));
-  hman->GetHisto2F(offs+kDZSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip));
-  hman->GetHisto2F(offs+kDYPullSnp)->Fill(res->GetSnp(ip),res->GetDYK(ip)/
-					  TMath::Sqrt(res->GetSigY2(ip)+res->GetSigY2K(ip)));
-  hman->GetHisto2F(offs+kDZPullSnp)->Fill(res->GetSnp(ip),res->GetDZK(ip)/
-					  TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
+  int offs = kHOffsTOF + (modID/91)*100;
+  modID = modID%91;
+  hman->GetHisto2F(offs+kDY)->Fill(modID,res->GetDYK(ip));
+  hman->GetHisto2F(offs+kDZ)->Fill(modID,res->GetDZK(ip));
+  hman->GetHisto2F(offs+kDYPull)->Fill(modID,res->GetDYK(ip)/
+				       TMath::Sqrt(res->GetSigY2(ip)+res->GetSigY2K(ip)));
+  hman->GetHisto2F(offs+kDZPull)->Fill(modID,res->GetDZK(ip)/
+				       TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
   //
 }
 
@@ -211,11 +198,11 @@ void FillTOF(int ip)
 void FillVTX(int ip)
 {
   int offs = kHOffsVTX;
-  hman->GetHisto2F(offs+kDYSnp)->Fill(res->GetAlpha(ip),res->GetDYK(ip));
-  hman->GetHisto2F(offs+kDZSnp)->Fill(res->GetAlpha(ip),res->GetDZK(ip));
-  hman->GetHisto2F(offs+kDYPullSnp)->Fill(res->GetAlpha(ip),res->GetDYK(ip)/
+  hman->GetHisto2F(offs+kDY)->Fill(res->GetAlpha(ip),res->GetDYK(ip));
+  hman->GetHisto2F(offs+kDZ)->Fill(res->GetAlpha(ip),res->GetDZK(ip));
+  hman->GetHisto2F(offs+kDYPull)->Fill(res->GetAlpha(ip),res->GetDYK(ip)/
 					  TMath::Sqrt(res->GetSigY2(ip)+res->GetSigY2K(ip)));
-  hman->GetHisto2F(offs+kDZPullSnp)->Fill(res->GetAlpha(ip),res->GetDZ(ip)/
+  hman->GetHisto2F(offs+kDZPull)->Fill(res->GetAlpha(ip),res->GetDZ(ip)/
 					  TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
   //
 }
@@ -263,7 +250,6 @@ TChain* LoadChain(const char* inpData, const char* chName)
 //___________________________________________
 void BookHistos()
 {
-  DoOffsets();
   hman = new HistoManager();
   hmanProc = new HistoManager();
   BookHistosVTX(hman);
@@ -280,57 +266,42 @@ void BookHistosITS(HistoManager* hm)
   TH2* h2=0;
   TString hnm,htl;
   int hoffs = kHOffsITS;
-  int cntM = 0;
   for (int ilr=0;ilr<kNLrITS;ilr++) {
+    int moffs = hoffs + ilr*10;
     int nmod = AliGeomManager::LayerSize(ilr+AliGeomManager::kSPD1);
-    for (int imod=0;imod<nmod;imod++) {
-      int moffs = hoffs + cntM*10;
-      //
-      hnm = Form("ITSDYvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("ITS #DeltaY vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpITS,-kSnpMaxITS,kSnpMaxITS,
-		    kNBinsResITS,-kMaxDYITS[ilr],kMaxDYITS[ilr]);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaY");
-      //
-      hm->AddHisto(h2, moffs + kDYSnp);
-      //
-      hnm = Form("ITSDZvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("ITS #DeltaZ vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpITS,-kSnpMaxITS,kSnpMaxITS,
-		    kNBinsResITS,-kMaxDZITS[ilr],kMaxDZITS[ilr]);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaZ");
-      //
-      hm->AddHisto(h2, moffs + kDZSnp);
-      //
-      //--------------------
-      //
-      hnm = Form("ITSDYPullvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("ITS #DeltaY Pull vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpITS,-kSnpMaxITS,kSnpMaxITS,
-		    kNBinPull,-kMaxPull,kMaxPull);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaY Pull");
-      //
-      hm->AddHisto(h2, moffs + kDYPullSnp);
-      //
-      hnm = Form("ITSDZPullvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("ITS #DeltaZ Pull vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpITS,-kSnpMaxITS,kSnpMaxITS,
-		    kNBinPull,-kMaxPull,kMaxPull);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaZ Pull");
-      //
-      hm->AddHisto(h2, moffs + kDZPullSnp);
-      //
-      //
-      cntM++;
-    }
+    hnm = Form("ITSDY_L%d",ilr);
+    htl = Form("ITS #DeltaY Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,kNBinsResITS,-kMaxDYITS[ilr],kMaxDYITS[ilr]);
+    h2->SetXTitle("module");
+    h2->SetYTitle("#DeltaY");
+    hm->AddHisto(h2, moffs + kDY);
+    //
+    hnm = Form("ITSDZ_L%d",ilr);
+    htl = Form("ITS #DeltaZ Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,kNBinsResITS,-kMaxDZITS[ilr],kMaxDZITS[ilr]);
+    h2->SetXTitle("module");
+    h2->SetYTitle("#DeltaZ");
+    hm->AddHisto(h2, moffs + kDZ);
+    //
+    //--------------------
+    //
+    hnm = Form("ITSDYPull_L%d",ilr);
+    htl = Form("ITS #DeltaY Pull Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,kNBinPull,-kMaxPull,kMaxPull);
+    h2->SetXTitle("module");
+    h2->SetYTitle("#DeltaY Pull");
+    hm->AddHisto(h2, moffs + kDYPull);
+    //
+    hnm = Form("ITSDZPull_L%d",ilr);
+    htl = Form("ITS #DeltaZ Pull Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,kNBinPull,-kMaxPull,kMaxPull);
+    h2->SetXTitle("module");
+    h2->SetYTitle("#DeltaZ Pull");
+    hm->AddHisto(h2, moffs + kDZPull);
   }
 }
 
@@ -342,55 +313,47 @@ void BookHistosTRD(HistoManager* hm)
   TH2* h2=0;
   TString hnm,htl;
   int hoffs = kHOffsTRD;
-  int cntM = 0;
   for (int ilr=0;ilr<kNLrTRD;ilr++) {
     int nmod = AliGeomManager::LayerSize(ilr+AliGeomManager::kTRD1);
-    for (int imod=0;imod<nmod;imod++) {
-      int moffs = hoffs + cntM*10;
-      //
-      hnm = Form("TRDYvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("TRD #DeltaY vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpTRD,-kSnpMaxTRD,kSnpMaxTRD,
-		    kNBinsResTRD,-kMaxDYTRD[ilr],kMaxDYTRD[ilr]);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaY");
-      //
-      hm->AddHisto(h2, moffs + kDYSnp);
-      //
-      hnm = Form("TRDDZvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("TRD #DeltaZ vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpTRD,-kSnpMaxTRD,kSnpMaxTRD,
-		    kNBinsResTRD,-kMaxDZTRD[ilr],kMaxDZTRD[ilr]);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaZ");
-      //
-      hm->AddHisto(h2, moffs + kDZSnp);
-      //
-      //---------------------------------
-      hnm = Form("TRDYPullvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("TRD #DeltaY Pull vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpTRD,-kSnpMaxTRD,kSnpMaxTRD,
-		    kNBinPull,-kMaxPull,kMaxPull);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaY Pull");
-      //
-      hm->AddHisto(h2, moffs + kDYPullSnp);
-      //
-      hnm = Form("TRDZPullvsSnp_L%d_M%d",ilr,imod);
-      htl = Form("TRD #DeltaZ Pull vs Snp Lr%d Mod%d",ilr,imod);
-      h2 = new TH2F(hnm.Data(),htl.Data(),
-		    kNBinsSnpTRD,-kSnpMaxTRD,kSnpMaxTRD,
-		    kNBinPull,-kMaxPull,kMaxPull);
-      h2->SetXTitle("snp");
-      h2->SetYTitle("#DeltaZ Pull");
-      //
-      hm->AddHisto(h2, moffs + kDZPullSnp);
-      //
-      cntM++;
-    }
+    int moffs = hoffs + ilr*10;
+    //
+    hnm = Form("TRDY_L%d",ilr);
+    htl = Form("TRD #DeltaY Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,
+		  kNBinsResTRD,-kMaxDYTRD[ilr],kMaxDYTRD[ilr]);
+    h2->SetXTitle("ch");
+    h2->SetYTitle("#DeltaY");
+    hm->AddHisto(h2, moffs + kDY);
+    //
+    hnm = Form("TRDZ_L%d",ilr);
+    htl = Form("TRD #DeltaZ Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,
+		  kNBinsResTRD,-kMaxDZTRD[ilr],kMaxDZTRD[ilr]);
+    h2->SetXTitle("ch");
+    h2->SetYTitle("#DeltaZ");
+    hm->AddHisto(h2, moffs + kDZ);
+    //
+    //---------------------------------
+    //
+    hnm = Form("TRDYPull_L%d",ilr);
+    htl = Form("TRD #DeltaY Pull Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,
+		  kNBinPull,-kMaxPull,kMaxPull);
+    h2->SetXTitle("ch");
+    h2->SetYTitle("#DeltaY Pull");
+    hm->AddHisto(h2, moffs + kDYPull);
+    //
+    hnm = Form("TRDZPull_L%d",ilr);
+    htl = Form("TRD #DeltaZ Pull Lr%d",ilr);
+    h2 = new TH2F(hnm.Data(),htl.Data(),
+		  nmod,0,nmod,
+		  kNBinPull,-kMaxPull,kMaxPull);
+    h2->SetXTitle("ch");
+    h2->SetYTitle("#DeltaZ Pull");
+    hm->AddHisto(h2, moffs + kDZPull);
   }
 }
 
@@ -401,52 +364,48 @@ void BookHistosTOF(HistoManager* hm)
   TH2* h2=0;
   TString hnm,htl;
   int hoffs = kHOffsTOF;
-  int cntM = 0;
-  int nmod = AliGeomManager::LayerSize(AliGeomManager::kTOF);
-  for (int imod=0;imod<nmod;imod++) {
-    int moffs = hoffs + cntM*10;
+  int nmod = AliGeomManager::LayerSize(AliGeomManager::kTOF)/18;
+  for (int isc=0;isc<18;isc++) {
+    int moffs = hoffs + isc*100;
     //
-    hnm = Form("TOFYvsSnp_M%d",imod);
-    htl = Form("TOF #DeltaY vs Snp Mod%d",imod);
+    hnm = Form("TOFY_SM%d",isc);
+    htl = Form("TOF #DeltaY SM%d",isc);
     h2 = new TH2F(hnm.Data(),htl.Data(),
-		  kNBinsSnpTOF,-kSnpMaxTOF,kSnpMaxTOF,
+		  nmod,0,nmod,
 		  kNBinsResTOF,-kMaxDYTOF,kMaxDYTOF);
-    h2->SetXTitle("snp");
+    h2->SetXTitle("#strip");
     h2->SetYTitle("#DeltaY");
+    hm->AddHisto(h2, moffs + kDY);
     //
-    hm->AddHisto(h2, moffs + kDYSnp);
-    //
-    hnm = Form("TOFDZvsSnp_M%d",imod);
-    htl = Form("TOF #DeltaZ vs Snp Mod%d",imod);
+    hnm = Form("TOFZ_SM%d",isc);
+    htl = Form("TOF #DeltaZ SM%d",isc);
     h2 = new TH2F(hnm.Data(),htl.Data(),
-		  kNBinsSnpTOF,-kSnpMaxTOF,kSnpMaxTOF,
+		  nmod,0,nmod,
 		  kNBinsResTOF,-kMaxDZTOF,kMaxDZTOF);
-    h2->SetXTitle("snp");
+    h2->SetXTitle("#strip");
     h2->SetYTitle("#DeltaZ");
+    hm->AddHisto(h2, moffs + kDZ);
     //
-    hm->AddHisto(h2, moffs + kDZSnp);
+    //-----------------
     //
-    hnm = Form("TOFYPullvsSnp_M%d",imod);
-    htl = Form("TOF #DeltaY Pull vs Snp Mod%d",imod);
+    hnm = Form("TOFYPull_SM%d",isc);
+    htl = Form("TOF #DeltaYPull SM%d",isc);
     h2 = new TH2F(hnm.Data(),htl.Data(),
-		  kNBinsSnpTOF,-kSnpMaxTOF,kSnpMaxTOF,
-		  kNBinPull,-kMaxPull,kMaxPull);
-    h2->SetXTitle("snp");
-    h2->SetYTitle("#DeltaY Pull");
+		  nmod,0,nmod,
+		  kNBinsResTOF,-kMaxPull,kMaxPull);
+    h2->SetXTitle("#strip");
+    h2->SetYTitle("#DeltaYPull");
+    hm->AddHisto(h2, moffs + kDYPull);
     //
-    hm->AddHisto(h2, moffs + kDYPullSnp);
-    //
-    hnm = Form("TOFDZPullvsSnp_M%d",imod);
-    htl = Form("TOF #DeltaZ Pull vs Snp Mod%d",imod);
+    hnm = Form("TOFZPull_SM%d",isc);
+    htl = Form("TOF #DeltaZPull SM%d",isc);
     h2 = new TH2F(hnm.Data(),htl.Data(),
-		  kNBinsSnpTOF,-kSnpMaxTOF,kSnpMaxTOF,
-		  kNBinPull,-kMaxPull,kMaxPull);
-    h2->SetXTitle("snp");
-    h2->SetYTitle("#DeltaZ Pull");
+		  nmod,0,nmod,
+		  kNBinsResTOF,-kMaxPull,kMaxPull);
+    h2->SetXTitle("#strip");
+    h2->SetYTitle("#DeltaZPull");
+    hm->AddHisto(h2, moffs + kDZPull);
     //
-    hm->AddHisto(h2, moffs + kDZPullSnp);
-    //
-    cntM++;
   }
 }
 
@@ -466,7 +425,7 @@ void BookHistosVTX(HistoManager* hm)
   h2->SetXTitle("#alpha");
   h2->SetYTitle("#DeltaY");
   //
-  hm->AddHisto(h2, hoffs + kDYSnp);
+  hm->AddHisto(h2, hoffs + kDY);
   //
   hnm = Form("VTXDZvsAlp");
   htl = Form("VTX #DeltaZ vs #alpha");
@@ -476,7 +435,7 @@ void BookHistosVTX(HistoManager* hm)
   h2->SetXTitle("#alpha");
   h2->SetYTitle("#DeltaZ");
   //
-  hm->AddHisto(h2, hoffs + kDZSnp);
+  hm->AddHisto(h2, hoffs + kDZ);
   //
   hnm = Form("VTXYPullvsAlp");
   htl = Form("VTX #DeltaY Pull vs #alpha");
@@ -486,7 +445,7 @@ void BookHistosVTX(HistoManager* hm)
   h2->SetXTitle("#alpha");
   h2->SetYTitle("#DeltaY Pull");
   //
-  hm->AddHisto(h2, hoffs + kDYPullSnp);
+  hm->AddHisto(h2, hoffs + kDYPull);
   //
   hnm = Form("VTXDZPullvsAlp");
   htl = Form("VTX #DeltaZ Pull vs #alpha");
@@ -496,7 +455,7 @@ void BookHistosVTX(HistoManager* hm)
   h2->SetXTitle("#alpha");
   h2->SetYTitle("#DeltaZ Pull");
   //
-  hm->AddHisto(h2, hoffs + kDZPullSnp);
+  hm->AddHisto(h2, hoffs + kDZPull);
   //
 }
 
@@ -520,25 +479,25 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   TH2* h;
   TH1* h1;
   //
-  h = hm->GetHisto2F(hoffs + kDYSnp);
+  h = hm->GetHisto2F(hoffs + kDY);
   if (h) arrY.Add(h);
-  h = hm->GetHisto2F(hoffs + kDZSnp);
+  h = hm->GetHisto2F(hoffs + kDZ);
   if (h) arrZ.Add(h);
-  h = hm->GetHisto2F(hoffs + kDYPullSnp);
+  h = hm->GetHisto2F(hoffs + kDYPull);
   if (h) arrYP.Add(h);
-  h = hm->GetHisto2F(hoffs + kDZPullSnp);
+  h = hm->GetHisto2F(hoffs + kDZPull);
   if (h) arrZP.Add(h);
   //
   if (FitProfile(&arrY)) {
     h1 = (TH1*)arrY.RemoveAt(0);
     if (h1) {
       h1->SetNameTitle("DCA_Y_Mean","DCA_{Y} mean");
-      hmProc->AddHisto(h1, kHOffsVTX + kDYSnp*10+0);
+      hmProc->AddHisto(h1, kHOffsVTX + kDY*10+0);
     }
     h1 = (TH1*)arrY.RemoveAt(1);
     if (h1) {
       h1->SetNameTitle("DCA_Y_Sigm","DCA_{Y} sigma");
-      hmProc->AddHisto(h1, kHOffsVTX + kDYSnp*10+1);
+      hmProc->AddHisto(h1, kHOffsVTX + kDY*10+1);
     }
   }
   //
@@ -546,12 +505,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     h1 = (TH1*)arrZ.RemoveAt(0);
     if (h1) {
       h1->SetNameTitle("DCA_Z_Mean","DCA_{Z} mean");
-      hmProc->AddHisto(h1, kHOffsVTX + kDZSnp*10+0);
+      hmProc->AddHisto(h1, kHOffsVTX + kDZ*10+0);
     }
     h1 = (TH1*)arrZ.RemoveAt(1);
     if (h1) {
       h1->SetNameTitle("DCA_Z_Sigm","DCA_{Z} sigma");      
-      hmProc->AddHisto(h1, kHOffsVTX + kDZSnp*10+1);
+      hmProc->AddHisto(h1, kHOffsVTX + kDZ*10+1);
     }
   }
   //
@@ -559,12 +518,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     h1 = (TH1*)arrYP.RemoveAt(0);
     if (h1) {
       h1->SetNameTitle("DCA_YPull_Mean","DCA_{YPull} mean");
-      hmProc->AddHisto(h1, kHOffsVTX + kDYPullSnp*10+0);
+      hmProc->AddHisto(h1, kHOffsVTX + kDYPull*10+0);
     }
     h1 = (TH1*)arrYP.RemoveAt(1);
     if (h1) {
       h1->SetNameTitle("DCA_YPull_Sigm","DCA_{YPull} sigma");      
-      hmProc->AddHisto(h1, kHOffsVTX + kDYPullSnp*10+1);
+      hmProc->AddHisto(h1, kHOffsVTX + kDYPull*10+1);
     }
   }
   //
@@ -572,12 +531,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     h1 = (TH1*)arrZP.RemoveAt(0);
     if (h1) {
       h1->SetNameTitle("DCA_ZPull_Mean","DCA_{ZPull} mean");
-      hmProc->AddHisto(h1, kHOffsVTX + kDZPullSnp*10+0);
+      hmProc->AddHisto(h1, kHOffsVTX + kDZPull*10+0);
     }
     h1 = (TH1*)arrZP.RemoveAt(1);
     if (h1) {
       h1->SetNameTitle("DCA_ZPull_Sigm","DCA_{ZPull} sigma");      
-      hmProc->AddHisto(h1, kHOffsVTX + kDZPullSnp*10+1);
+      hmProc->AddHisto(h1, kHOffsVTX + kDZPull*10+1);
     }
   }
   //
@@ -588,71 +547,69 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
 void PostProcessTOF(HistoManager* hm,HistoManager* hmProc)
 {
   // process filled histos
-  int hoffs = kHOffsTOF;
   TObjArray arrY,arrZ,arrYP,arrZP;
   TH2* h=0;
+  TH1* h1=0;
   // 
-  int cntM=0;
-  int nmod = AliGeomManager::LayerSize(AliGeomManager::kTOF);
-  int nmodSM = nmod/18;
-  //
   for (int isc=0;isc<18;isc++) {
-    for (int im=0;im<nmodSM;im++) {
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYSnp);      if (h) arrY.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZSnp);      if (h) arrZ.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYPullSnp);  if (h) arrYP.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZPullSnp);  if (h) arrZP.Add(h);
-      cntM++;
-    }
     //
-    //    arrY.Print();
-    if (FitMeanSlope(&arrY)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrY[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TOF_DY_SM%d_%s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TOF DY SM%d %s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+isc*100 + kDYSnp*10 + i*2+j);
-	}
+    int hoffs = kHOffsTOF + isc*100;
+    h = hm->GetHisto2F(hoffs + kDY);
+    if (h) arrY.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZ);
+    if (h) arrZ.Add(h);
+    h = hm->GetHisto2F(hoffs + kDYPull);
+    if (h) arrYP.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZPull);
+    if (h) arrZP.Add(h);
+    //
+    if (FitProfile(&arrY)) {
+      h1 = (TH1*)arrY.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDY*10+0);
+      }
+      h1 = (TH1*)arrY.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDY*10+1);
       }
     }
+    //
+    if (FitProfile(&arrZ)) {
+      h1 = (TH1*)arrZ.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDZ*10+0);
+      }
+      h1 = (TH1*)arrZ.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDZ*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrYP)) {
+      h1 = (TH1*)arrYP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDYPull*10+0);
+      }
+      h1 = (TH1*)arrYP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDYPull*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrZP)) {
+      h1 = (TH1*)arrZP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDZPull*10+0);
+      }
+      h1 = (TH1*)arrZP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffs + kDZPull*10+1);
+      }
+    }
+    //
     arrY.Clear();
-    //
-    if (FitMeanSlope(&arrZ)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZ[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TOF_DZ_SM%d_%s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TOF DZ SM%d %s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+isc*100 + kDZSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZ.Clear();
-    //
-    //
-    if (FitMeanSlope(&arrYP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrYP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TOF_DYPull_SM%d_%s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TOF DY Pull SM%d %s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+isc*100 + kDYPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrYP.Clear();
-    //
-    if (FitMeanSlope(&arrZP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TOF_DZPull_SM%d_%s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TOF DZ Pull SM%d %s%s",isc,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+isc*100 + kDZPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZP.Clear();
     //
   }
@@ -664,157 +621,149 @@ void PostProcessTOF(HistoManager* hm,HistoManager* hmProc)
 void PostProcessITS(HistoManager* hm, HistoManager* hmProc) 
 {
   // process filled histos
-  int hoffs = kHOffsITS;
   TObjArray arrY,arrZ,arrYP,arrZP;
   TH2* h=0;
+  TH1* h1=0;
   // 
-  int cntM=0;
   for (int ilr=0;ilr<6;ilr++) {
-    int nmod = AliGeomManager::LayerSize(AliGeomManager::kSPD1+ilr);
-    for (int im=0;im<nmod;im++) {
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYSnp);      if (h) arrY.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZSnp);      if (h) arrZ.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYPullSnp);  if (h) arrYP.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZPullSnp);  if (h) arrZP.Add(h);
-      cntM++;
-    }
     //
-    //    arrY.Print();
-    if (FitMeanSlope(&arrY)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrY[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("ITS_DY_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("ITS DY Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDYSnp*10 + i*2+j);
-	}
+    int hoffs = kHOffsITS + ilr*10;
+    int hoffsP= kHOffsITS + ilr*100;
+    h = hm->GetHisto2F(hoffs + kDY);
+    if (h) arrY.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZ);
+    if (h) arrZ.Add(h);
+    h = hm->GetHisto2F(hoffs + kDYPull);
+    if (h) arrYP.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZPull);
+    if (h) arrZP.Add(h);
+    //
+    if (FitProfile(&arrY)) {
+      h1 = (TH1*)arrY.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDY*10+0);
+      }
+      h1 = (TH1*)arrY.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDY*10+1);
       }
     }
+    //
+    if (FitProfile(&arrZ)) {
+      h1 = (TH1*)arrZ.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZ*10+0);
+      }
+      h1 = (TH1*)arrZ.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZ*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrYP)) {
+      h1 = (TH1*)arrYP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDYPull*10+0);
+      }
+      h1 = (TH1*)arrYP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDYPull*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrZP)) {
+      h1 = (TH1*)arrZP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZPull*10+0);
+      }
+      h1 = (TH1*)arrZP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZPull*10+1);
+      }
+    }
+    //
     arrY.Clear();
-    //
-    if (FitMeanSlope(&arrZ)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZ[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("ITS_DZ_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("ITS DZ Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDZSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZ.Clear();
-    //
-    //
-    if (FitMeanSlope(&arrYP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrYP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("ITS_DYPull_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("ITS DY Pull Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDYPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrYP.Clear();
-    //
-    if (FitMeanSlope(&arrZP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("ITS_DZPull_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("ITS DZ Pull Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDZPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZP.Clear();
     //
   }
-  //  
   //
 }
-
 
 //_______________________________________________________
 void PostProcessTRD(HistoManager* hm, HistoManager* hmProc)
 {
   // postprocess histos
   //
-  int hoffs = kHOffsTRD;
   TObjArray arrY,arrZ,arrYP,arrZP;
   TH2* h=0;
+  TH1* h1=0;
   // 
-  int cntM=0;
   for (int ilr=0;ilr<6;ilr++) {
-    int nmod = AliGeomManager::LayerSize(AliGeomManager::kTRD1+ilr);
-    for (int im=0;im<nmod;im++) {
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYSnp);      if (h) arrY.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZSnp);      if (h) arrZ.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDYPullSnp);  if (h) arrYP.Add(h);
-      h = hm->GetHisto2F(hoffs+cntM*10+kDZPullSnp);  if (h) arrZP.Add(h);
-      cntM++;
-    }
     //
-    //    arrY.Print();
-    if (FitMeanSlope(&arrY)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrY[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TRD_DY_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TRD DY Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDYSnp*10 + i*2+j);
-	}
+    int hoffs = kHOffsTRD + ilr*10;
+    int hoffsP = kHOffsTRD + ilr*100;
+    h = hm->GetHisto2F(hoffs + kDY);
+    if (h) arrY.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZ);
+    if (h) arrZ.Add(h);
+    h = hm->GetHisto2F(hoffs + kDYPull);
+    if (h) arrYP.Add(h);
+    h = hm->GetHisto2F(hoffs + kDZPull);
+    if (h) arrZP.Add(h);
+    //
+    if (FitProfile(&arrY)) {
+      h1 = (TH1*)arrY.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDY*10+0);
+      }
+      h1 = (TH1*)arrY.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDY*10+1);
       }
     }
+    //
+    if (FitProfile(&arrZ)) {
+      h1 = (TH1*)arrZ.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZ*10+0);
+      }
+      h1 = (TH1*)arrZ.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZ*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrYP)) {
+      h1 = (TH1*)arrYP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDYPull*10+0);
+      }
+      h1 = (TH1*)arrYP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDYPull*10+1);
+      }
+    }
+    //
+    if (FitProfile(&arrZP)) {
+      h1 = (TH1*)arrZP.RemoveAt(0);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZPull*10+0);
+      }
+      h1 = (TH1*)arrZP.RemoveAt(1);
+      if (h1) {
+	hmProc->AddHisto(h1, hoffsP + kDZPull*10+1);
+      }
+    }
+    //
     arrY.Clear();
-    //
-    if (FitMeanSlope(&arrZ)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZ[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TRD_DZ_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TRD DZ Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDZSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZ.Clear();
-    //
-    //
-    if (FitMeanSlope(&arrYP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrYP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TRD_DYPull_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TRD DY Pull Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDYPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrYP.Clear();
-    //
-    if (FitMeanSlope(&arrZP)) {
-      for (int i=0;i<2;i++) {
-	for (int j=0;j<2;j++) {
-	  TH1* h1 = (TH1*)arrZP[i*2+j]; if (!h1) continue;
-	  h1->SetName(Form("TRD_DZPull_Lr%d_%s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  h1->SetTitle(Form("TRD DZ Pull Lr%d %s%s",ilr,i ? "Sigma":"Mean", j ? "P1":"P0"));
-	  hmProc->AddHisto(h1, hoffs+ilr*100 + kDZPullSnp*10 + i*2+j);
-	}
-      }
-    }
     arrZP.Clear();
     //
   }
   //  
-}
-
-
-//___________________________________________
-void DoOffsets()
-{
-  for (int i=0,n=0;i<kNLrITS;i++) {kITSLrOffs[i] = n; n += AliGeomManager::LayerSize(i+AliGeomManager::kSPD1);}
-  for (int i=0,n=0;i<kNLrTRD;i++) {kTRDLrOffs[i] = n; n += AliGeomManager::LayerSize(i+AliGeomManager::kTRD1);}
 }
 
 //___________________________________________
@@ -886,13 +835,19 @@ Bool_t FitProfile(TObjArray *histos, int minEnt)
   TF1* gs = new TF1("gs","gaus",-range,range);
   TObjArray hfarr;
   h->FitSlicesY(gs,0,-1,0,kFitOptGS,&hfarr);
+  hfarr.SetOwner(kFALSE);
   TH1* hmean = (TH1*)hfarr[1];
   TH1* hsig  = (TH1*)hfarr[2];
   if (!hmean || !hsig) {hfarr.Delete(); return kFALSE;}
   delete gs;
   histos->Clear();
-  histos->AddAtAndExpand(hfarr.RemoveAt(1),0);
-  histos->AddAtAndExpand(hfarr.RemoveAt(2),1);
+  hmean->SetName(Form("%s_%s",h->GetName(),"Mean"));
+  hmean->SetTitle(Form("%s %s",h->GetTitle(),"Mean"));
+  hsig->SetName(Form("%s_%s",h->GetName(),"Sigma"));
+  hsig->SetTitle(Form("%s %s",h->GetTitle(),"Sigma"));
+  histos->AddAtAndExpand(hmean,0);
+  histos->AddAtAndExpand(hsig,1);
+  hfarr.Clear();
   //
   return kTRUE;
 }
@@ -904,7 +859,7 @@ void DrawReport(TObjArray* hmans, const char* psname)
   //
   repCanv = new TCanvas("algCanv","algCanv",700,900);
   TString psnm1 = psname;
-  if (psnm1.IsNull()) psnm1 = Form("algRep");
+  if (psnm1.IsNull()) psnm1 = Form("algRepK");
   if (!psnm1.EndsWith(".ps")) psnm1 += ".ps";
   TString psnm0 = psnm1 + "["; 
   TString psnm2 = psnm1 + "]";
@@ -930,14 +885,14 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
   repCanv->Divide(2,2);
   //
   repCanv->cd(1);
-  DrawHistos(hmans, kHOffsVTX + kDYSnp*10+0,rangeY);
+  DrawHistos(hmans, kHOffsVTX + kDY*10+0,rangeY);
   repCanv->cd(2);
-  DrawHistos(hmans, kHOffsVTX + kDYSnp*10+1,rangeZ);
+  DrawHistos(hmans, kHOffsVTX + kDY*10+1,rangeYSig,0);
   //
   repCanv->cd(3);
-  DrawHistos(hmans, kHOffsVTX + kDYPullSnp*10+0);
+  DrawHistos(hmans, kHOffsVTX + kDYPull*10+0);
   repCanv->cd(4);
-  DrawHistos(hmans, kHOffsVTX + kDYPullSnp*10+1);
+  DrawHistos(hmans, kHOffsVTX + kDYPull*10+1);
   //
   repCanv->cd();
   repCanv->Print(psnm); // Y
@@ -946,14 +901,14 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
   repCanv->Divide(2,2);
   //  
   repCanv->cd(1);
-  DrawHistos(hmans, kHOffsVTX + kDZSnp*10+0);
+  DrawHistos(hmans, kHOffsVTX + kDZ*10+0,rangeZ);
   repCanv->cd(2);
-  DrawHistos(hmans, kHOffsVTX + kDZSnp*10+1);
+  DrawHistos(hmans, kHOffsVTX + kDZ*10+1,rangeZSig);
   //
   repCanv->cd(3);
-  DrawHistos(hmans, kHOffsVTX + kDZPullSnp*10+0);
+  DrawHistos(hmans, kHOffsVTX + kDZPull*10+0);
   repCanv->cd(4);
-  DrawHistos(hmans, kHOffsVTX + kDZPullSnp*10+1);
+  DrawHistos(hmans, kHOffsVTX + kDZPull*10+1);
   //
   repCanv->cd();
   repCanv->Print(psnm); // Z
@@ -964,17 +919,13 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
 void DrawReportITS(TObjArray* hmans, const char* psnm)
 {
   int icn;
-  float drRangeY[4][6] = {
+  float drRangeY[2][6] = {
     { 50e-4 ,300e-4, 300e-4,300e-4,400e-4, 400e-4},
-    { 0.001, 0.001,   0.1, 0.1 ,0.001, 0.001},
-    { 0.001, 0.002, 0.05,  0.02,0.001, 0.001},
-    { -1, -1, -1, -1, -1, -1}
+    { 0.03, 0.01,   0.1, 0.1 ,0.01, 0.01}
   };
-  float drRangeZ[4][6] = {
-    {100e-4 ,300e-4, 80e-4, 500e-4, 500e-4, 1000e-4},
-    {300e-4, 300e-4, 50e-4, 0.01,  0.1, 0.1},
-    {150e-4, 200e-4, 30e-4, 0.01,  0.1, 0.1},
-    { -1, -1, -1, -1, -1, -1}
+  float drRangeZ[2][6] = {
+    {100e-4 ,300e-4, 500e-4, 500e-4, 1000e-4, 1000e-4},
+    {500e-4, 500e-4, 0.2 , 0.2,  0.2, 0.2}
   };
   
   for (int ilr=0;ilr<6;ilr++) {
@@ -982,13 +933,11 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYSnp*10 + 0, drRangeY[0][ilr]); // meanY
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDY*10 + 0, drRangeY[0][ilr]); // meanY
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYSnp*10 + 1, drRangeY[1][ilr]); // slope meanY vs snp
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYSnp*10 + 2, drRangeY[2][ilr],0); // sigma Y
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDY*10 + 1, drRangeY[1][ilr],0); // sigma
       //
       repCanv->Print(psnm);
     }
@@ -996,13 +945,11 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPullSnp*10 + 0, 1); // pullY
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPull*10 + 0, 1); // pullY
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPullSnp*10 + 1, 1); // slope pullY vs snp
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPullSnp*10 + 2, 1, 0); // sigma pull Y
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPull*10 + 1, 2,0); // pullY sigma
       //
       repCanv->Print(psnm);
     }
@@ -1010,13 +957,11 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZSnp*10 + 0, drRangeZ[0][ilr]); // meanZ
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZ*10 + 0, drRangeZ[0][ilr]); // meanZ
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZSnp*10 + 1, drRangeZ[1][ilr]); // slope meanZ vs snp
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZSnp*10 + 2, drRangeZ[2][ilr],0); // sigma Z
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZ*10 + 1, drRangeZ[1][ilr],0); // sigma 
       //
       repCanv->Print(psnm);
     }
@@ -1024,13 +969,11 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPullSnp*10 + 0, 1); // pullZ
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPull*10 + 0, 1); // pullZ
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPullSnp*10 + 1, 1); // slope pullZ vs snp
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPullSnp*10 + 2, 1, 0); // sigma pull Z
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPull*10 + 1, 2,0); // sigma 
       //
       repCanv->Print(psnm);
     }
@@ -1041,17 +984,13 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
 //____________________________________________
 void DrawReportTRD(TObjArray* hmans, const char* psnm)
 {
-  float drRangeY[4][6] = {
+  float drRangeY[2][6] = {
     { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2},
-    { 0.05, 0.05, 0.05, 0.05, 0.05, 0.05},
-    { 0.2,  0.2,  0.2 , 0.2 , 0.2 , 0.2} ,
-    { -1, -1, -1, -1, -1, -1}
+    { 0.4, 0.4, 0.4, 0.4, 0.4, 0.4}
   };
-  float drRangeZ[4][6] = {
+  float drRangeZ[2][6] = {
     { 2. , 2., 2., 2., 2., 2.},
-    { 1. , 1 , 1., 1., 1., 1.},
-    { 5. , 5., 5., 5., 5., 5,},
-    { -1, -1, -1, -1, -1, -1}
+    { 5. , 5. , 5., 5., 5., 5.}
   };
   //
   int icn;
@@ -1059,13 +998,11 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     { // Y
       icn=0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYSnp*10 + 0,drRangeY[0][ilr]);
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDY*10 + 0,drRangeY[0][ilr]);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYSnp*10 + 1,drRangeY[1][ilr]);   
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYSnp*10 + 2,drRangeY[2][ilr],0);   
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDY*10 + 1,drRangeY[1][ilr],0);   
       //
       repCanv->Print(psnm);
     }
@@ -1073,13 +1010,11 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     { // Y pull
       icn=0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPullSnp*10 + 0, 1);
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPull*10 + 0, 1);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPullSnp*10 + 1, 1);   
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPullSnp*10 + 2, 1, 0);   
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDYPull*10 + 1, 2,0);   
       //
       repCanv->Print(psnm);
     }
@@ -1088,13 +1023,11 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     { // Z
       icn=0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZSnp*10 + 0,drRangeZ[0][ilr]);
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZ*10 + 0,drRangeZ[0][ilr]);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZSnp*10 + 1,drRangeZ[1][ilr]);   
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZSnp*10 + 2,drRangeZ[2][ilr],0);   
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZ*10 + 1,drRangeZ[1][ilr],0);   
       //
       repCanv->Print(psnm);
     }
@@ -1102,13 +1035,11 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
     { // Z pull
       icn=0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPullSnp*10 + 0, 1);
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPull*10 + 0, 1);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPullSnp*10 + 1, 1);   
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPullSnp*10 + 2, 3, 0);   
+      DrawHistos(hmans, kHOffsTRD + ilr*100 + kDZPull*10 + 1, 2,0);   
       //
       repCanv->Print(psnm);
     }
@@ -1119,8 +1050,8 @@ void DrawReportTRD(TObjArray* hmans, const char* psnm)
 //____________________________________________
 void DrawReportTOF(TObjArray* hmans, const char* psnm)
 {
-  float drRangeY[4] = {6., 2, 3,-1};
-  float drRangeZ[4] = {6., 2, 3,-1};
+  float drRangeY[2] = {5., 10.};
+  float drRangeZ[2] = {5., 10.};
   // 
   int icn=0;
   for (int isc=0;isc<18;isc++) {
@@ -1128,52 +1059,44 @@ void DrawReportTOF(TObjArray* hmans, const char* psnm)
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYSnp*10 + 0,drRangeY[0]);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDY*10 + 0,drRangeY[0]);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYSnp*10 + 1,drRangeY[1]);
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYSnp*10 + 2,drRangeY[2],0);      
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDY*10 + 1,drRangeY[1],0);
       repCanv->Print(psnm);
     }
     //
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPullSnp*10 + 0, 1);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPull*10 + 0, 1);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPullSnp*10 + 1, 1);
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPullSnp*10 + 2, 3,0);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDYPull*10 + 1, 2,0);
       repCanv->Print(psnm);
     }
     //
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZSnp*10 + 0,drRangeZ[0]);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZ*10 + 0,drRangeZ[0]);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZSnp*10 + 1,drRangeZ[1]);
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZSnp*10 + 2,drRangeZ[2],0);      
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZ*10 + 1,drRangeZ[1],0);
       repCanv->Print(psnm);
     }
     //
     {
       icn = 0;
       repCanv->Clear();
-      repCanv->Divide(1,3);
+      repCanv->Divide(1,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPullSnp*10 + 0, 2);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPull*10 + 0, 2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPullSnp*10 + 1, 2);
-      repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPullSnp*10 + 2, 3,0);
+      DrawHistos(hmans, kHOffsTOF + isc*100 + kDZPull*10 + 1, 2,0);
       repCanv->Print(psnm);
     }
     //
