@@ -1114,8 +1114,8 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
   for (int ip=pFrom;ip!=pTo;ip+=pinc) { // inward fit from outer point
     AliAlgPoint* pnt = GetPoint(ip);
     //
-    printf("*** FitLeg %d (%d %d)\n",ip,pFrom,pTo);
-    printf("Before propagate: "); trc.Print();
+    //    printf("*** FitLeg %d (%d %d)\n",ip,pFrom,pTo);
+    //   printf("Before propagate: "); trc.Print();
     if (!PropagateToPoint(trc,pnt,kMinNStep, kMaxDefStep, kTRUE)) return kFALSE;
     if (pnt->ContainsMeasurement()) {
       if (pnt->GetNeedUpdateFromTrack()) pnt->UpdatePointByTrackInfo(&trc); 
@@ -1124,7 +1124,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
       double chi = trc.GetPredictedChi2(yz,errYZ);
       //printf("***>> fitleg-> Y: %+e %+e / Z: %+e %+e -> Chi2: %e | %+e %+e\n",yz[0],trc.GetY(),yz[1],trc.GetZ(),chi,
       //  trc.Phi(),trc.GetAlpha());
-      printf("Before update at %e %e\n",yz[0],yz[1]); trc.Print();
+      //  printf("Before update at %e %e\n",yz[0],yz[1]); trc.Print();
       if (!trc.Update(yz,errYZ)) {
 #if DEBUG>3
 	AliWarningF("Failed on Update %f,%f {%f,%f,%f}",yz[0],yz[1],errYZ[0],errYZ[1],errYZ[2]);
@@ -1133,7 +1133,7 @@ Bool_t AliAlgTrack::FitLeg(AliExternalTrackParam& trc, int pFrom,int pTo, Bool_t
 	return kFALSE;
       }
       fChi2 += chi;
-      printf("After update: (%f) -> %f\n",chi,fChi2); trc.Print();
+      //printf("After update: (%f) -> %f\n",chi,fChi2); trc.Print();
     }
   }
   //
