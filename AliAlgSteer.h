@@ -135,6 +135,10 @@ class AliAlgSteer : public TObject
   void     SetEtaMaxColl(double eta=1.5)                        {SetEtaMax(AliAlgAux::kColl,eta);}
   void     SetEtaMaxCosm(double eta=1.5)                        {SetEtaMax(AliAlgAux::kCosm,eta);}
   //
+  void     SetDefPtBOffCosm(double pt=5.0)                      {fDefPtBOff[AliAlgAux::kCosm] = pt>0.3 ? pt:0.3;}
+  void     SetDefPtBOffColl(double pt=0.6)                      {fDefPtBOff[AliAlgAux::kColl] = pt>0.3 ? pt:0.3;}
+  Double_t GetDefPtBOff(Bool_t tp)                              {return fDefPtBOff[tp];}
+  //
   Int_t    GetMinDetAcc(Bool_t tp)                        const {return fMinDetAcc[tp];}
   void     SetMinDetAcc(Bool_t tp, int n)                       {fMinDetAcc[tp] = n;}
   void     SetMinDetAccColl(int n=1)                            {SetMinDetAcc(AliAlgAux::kColl,n);}
@@ -310,6 +314,7 @@ class AliAlgSteer : public TObject
   Bool_t        fCosmicSelStrict;                         // if true, each cosmic track leg selected like separate track
   Int_t         fMinPoints[AliAlgAux::kNTrackTypes][2];   // require min points per leg (case Boff,Bon)
   Int_t         fMinDetAcc[AliAlgAux::kNTrackTypes];      // min number of detector required in track
+  Double_t      fDefPtBOff[AliAlgAux::kNTrackTypes];      // nominal pt for tracks in Boff run
   Double_t      fPtMin[AliAlgAux::kNTrackTypes];          // min pT of tracks to consider
   Double_t      fEtaMax[AliAlgAux::kNTrackTypes];         // eta cut on tracks
   Int_t         fVtxMinCont;                              // require min number of contributors in Vtx

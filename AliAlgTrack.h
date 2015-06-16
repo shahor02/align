@@ -83,6 +83,7 @@ class AliAlgTrack: public AliExternalTrackParam
   Double_t GetChi2CosmUp()                       const {return fChi2CosmUp;}
   Double_t GetChi2CosmDn()                       const {return fChi2CosmDn;}
   //
+  void   ImposePtBOff(double pt)                       {fP[kParQ2Pt] = 1./pt;}
   // propagation methods
   void   CopyFrom(const AliExternalTrackParam* etp);
   Bool_t ApplyMatCorr(AliExternalTrackParam& trPar, const Double_t *corrDiag, const AliAlgPoint* pnt);

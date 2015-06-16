@@ -153,6 +153,8 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   SetMaxDCAforVC();
   SetMaxChi2forVC();
   SetOutCDBRunRange();
+  SetDefPtBOffCosm();
+  SetDefPtBOffColl();
   //
   // run config macro if provided
   if (!fConfMacroName.IsNull()) {
@@ -444,7 +446,7 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 	   IsCosmic() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
 #endif
   //
-  SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmostZeroF);
+  SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmost0Field);
   if (!IsCosmic() && !CheckSetVertex(esdEv->GetPrimaryVertexTracks())) return kFALSE;
   FillStatHisto( kEvVtx );
   //
@@ -463,9 +465,10 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
     ntr = esdEv->GetNumberOfTracks();
     FillStatHisto( kTrackInp, ntr);
     for (int itr=0;itr<ntr;itr++) {
-      int accTrOld = accTr;
+      //      int accTrOld = accTr;
       accTr += ProcessTrack(esdEv->GetTrack(itr));      
-      if (accTr>accTrOld) {
+      /*
+      if (accTr>accTrOld && fCResid) {
 	int ndf = fCResid->GetNPoints()*2-5;
 	if (fCResid->GetChi2()/ndf>20 || !fCResid->GetKalmanDone() 
 	    || fCResid->GetChi2K()/ndf>20) {
@@ -473,6 +476,7 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
 	}
        	fCResid->Print("er");
       }
+      */
     }
     if (accTr) fStat[kAccStat][kEventColl]++;
   }    
@@ -526,6 +530,7 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDtrack* esdTr)
   fAlgTrack->AddPoint(fRefPoint); // reference point which the track will refer to
   //
   fAlgTrack->CopyFrom(esdTr);
+  if (!GetFieldOn()) fAlgTrack->ImposePtBOff(fDefPtBOff[AliAlgAux::kColl]);
   fAlgTrack->SetFieldON( GetFieldOn() );
   fAlgTrack->SortPoints();
   //
@@ -649,7 +654,8 @@ Bool_t AliAlgSteer::ProcessTrack(const AliESDCosmicTrack* cosmTr)
   if (!CheckDetectorPoints(npsel)) return kFALSE;
   //
   fAlgTrack->CopyFrom(cosmTr);
-  fAlgTrack->SetFieldON( Abs(AliTrackerBase::GetBz())>kAlmost0Field );
+  if (!GetFieldOn()) fAlgTrack->ImposePtBOff(fDefPtBOff[AliAlgAux::kCosm]);
+  fAlgTrack->SetFieldON(  GetFieldOn() );
   fAlgTrack->SortPoints();
    //
   // at this stage the points are sorted from maxX to minX, the latter corresponding to
