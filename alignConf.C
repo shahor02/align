@@ -59,6 +59,10 @@ void alignConf(AliAlgSteer* algSteer)
   //
   ConfigVTX(algSteer);
   //
+  algSteer->SetPtMinColl(0.7);
+  algSteer->SetPtMinCosm(1.0);
+
+
   algSteer->SetVtxMinCont(5);   // accept events with min number of vertexTracks contributors
   algSteer->SetVtxMinContVC(10); // use for vertex constraint only those with min number of contributors
   algSteer->SetMaxDCAforVC(0.05,0.3); // dcaR/Z primary selection to allow vertex constraint
@@ -273,7 +277,7 @@ void ConfigTOF(AliAlgSteer* algSteer)
     vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
     //
     // ATTENTION: to limit R scaling fix TOF X, see if can be removed with cosmics added
-    vol->SetParErr(AliAlgVol::kDOFTX, -999);
+    //    vol->SetParErr(AliAlgVol::kDOFTX, -999);
   }
   //  for (int is=det->GetNSensors();is--;) det->GetSensor(is)->SetVarFrame(AliAlgVol::kLOC);
   tmpArr.Clear();

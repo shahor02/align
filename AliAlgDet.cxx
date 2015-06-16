@@ -372,7 +372,7 @@ void AliAlgDet::InitDOFs()
   if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
   //
   // process calibration DOFs
-  for (int i=0;i<fNCalibDOF;i++) if (fParErrs[i]<0 && IsZeroAbs(fParVals[i])) FixDOF(i);
+  for (int i=0;i<fNCalibDOF;i++) if (fParErrs[i]<-9999 && IsZeroAbs(fParVals[i])) FixDOF(i);
   //
   int nvol = GetNVolumes();
   for (int iv=0;iv<nvol;iv++) GetVolume(iv)->InitDOFs();

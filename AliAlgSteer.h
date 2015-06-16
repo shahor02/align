@@ -129,7 +129,7 @@ class AliAlgSteer : public TObject
   //
   Double_t GetPtMin(Bool_t tp)                            const {return fPtMin[tp];}
   void     SetPtMin(Bool_t tp,double pt)                        {fPtMin[tp] = pt;}
-  void     SetPtMinColl(double pt=0.5)                          {SetPtMin(AliAlgAux::kColl,pt);}
+  void     SetPtMinColl(double pt=0.7)                          {SetPtMin(AliAlgAux::kColl,pt);}
   void     SetPtMinCosm(double pt=1.0)                          {SetPtMin(AliAlgAux::kCosm,pt);}
   //
   Double_t GetEtaMax(Bool_t tp)                           const {return fEtaMax[tp];}

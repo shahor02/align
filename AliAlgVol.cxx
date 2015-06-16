@@ -401,7 +401,7 @@ void AliAlgVol::InitDOFs()
   //
   // Do we need this strict condition?
   if (GetInitDOFsDone()) AliFatalF("Something is wrong, DOFs are already initialized for %s",GetName());
-  for (int i=0;i<fNDOFs;i++) if (fParErrs[i]<0 && IsZeroAbs(fParVals[i])) FixDOF(i);
+  for (int i=0;i<fNDOFs;i++) if (fParErrs[i]<-9999 && IsZeroAbs(fParVals[i])) FixDOF(i);
   CalcFree(kTRUE);
   //
   SetInitDOFsDone();
