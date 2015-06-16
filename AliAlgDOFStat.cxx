@@ -71,7 +71,6 @@ TH1F* AliAlgDOFStat::CreateHisto(AliAlgSteer* st) const
 Long64_t AliAlgDOFStat::Merge(TCollection *list) 
 {
   // merge statistics
-  printf("MERGING\n");
   int nmerged = 0;
   TIter next(list);
   TObject *obj;
