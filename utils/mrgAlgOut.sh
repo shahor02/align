@@ -17,8 +17,8 @@ do
 #
  dir=`echo $dir | sed "s/\/$//"`
  echo doing $dir
-# mrgfl.sh -f ${dir}/$control ${dir}/*/$control
-# mrgfl.sh -f ${dir}/$stat ${dir}/*/$stat
+ mrgfl.sh -f ${dir}/$control ${dir}/*/$control
+ mrgfl.sh -f ${dir}/$stat ${dir}/*/$stat
  mrgfl.sh -f ${dir}/$mpdat ${dir}/*/$mpdat
 
 #

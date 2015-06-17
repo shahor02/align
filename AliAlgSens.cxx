@@ -14,6 +14,7 @@
  **************************************************************************/
 
 #include <stdio.h>
+#include <TClonesArray.h>
 #include "AliAlgSens.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
@@ -21,6 +22,7 @@
 #include "AliExternalTrackParam.h"
 #include "AliAlgPoint.h"
 #include "AliAlgDet.h"
+#include "AliAlgDOFStat.h"
 
 ClassImp(AliAlgSens)
 
@@ -32,6 +34,7 @@ AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid)
   : AliAlgVol(name,iid)
   ,fDet(0)
   ,fMatClAlg()  
+  ,fMatClAlgRecoI()
 {
   // def c-tor
   SetVolID(vid);
@@ -332,6 +335,8 @@ void AliAlgSens::Print(const Option_t *opt) const
     GetMatrixT2L().Print();
     printf("ClAlg       : "); 
     GetMatrixClAlg().Print();
+    printf("ClAlgRecoI-I: "); 
+    GetMatrixClAlgRecoI().Inverse().Print();
   }
   //
 }
@@ -362,6 +367,19 @@ void AliAlgSens::PrepareMatrixClAlg()
 }
 
 //____________________________________________
+void AliAlgSens::PrepareMatrixClAlgRecoI()
+{
+  // prepare alignment matrix
+  TGeoHMatrix ma = GetMatrixT2L();
+  ma.MultiplyLeft(&GetMatrixL2GReco());
+  ma.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
+  ma.MultiplyLeft(&GetMatrixT2L().Inverse());
+  ma = ma.Inverse();
+  SetMatrixClAlgRecoI(ma);
+  //
+}
+
+//____________________________________________
 void AliAlgSens::UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const
 {
   // update
@@ -377,3 +395,23 @@ void AliAlgSens::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calib
   deriv[0]=deriv[1]=deriv[2]=0;
 }
 
+//______________________________________________________
+Int_t AliAlgSens::FinalizeStat(AliAlgDOFStat* st)
+{
+  // finalize statistics on processed points
+  if (st) FillDOFStat(st);
+  return fNProcPoints;
+}
+
+//_________________________________________________________________
+void AliAlgSens::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMatrix *cumulDelta)
+{
+  // recreate fMatL2GReco matrices from ideal L2G matrix and alignment objects
+  // used during data reconstruction. 
+  // On top of what each volume does, also update misalignment matrix inverse
+  //
+  AliAlgVol::UpdateL2GRecoMatrices(algArr,cumulDelta);
+  PrepareMatrixClAlgRecoI();
+  //
+}
+ 

@@ -79,7 +79,7 @@ class AliAlgVol : public TNamed
   Double_t   GetAlpTracking()                    const {return fAlp;}
   //
   Int_t      GetNProcessedPoints()               const {return fNProcPoints;}
-  Int_t      FinalizeStat(AliAlgDOFStat* h=0);
+  virtual Int_t FinalizeStat(AliAlgDOFStat* h=0);
   void       FillDOFStat(AliAlgDOFStat* h)       const;
   //
   Float_t*   GetParVals()                        const {return fParVals;}

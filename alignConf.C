@@ -90,7 +90,7 @@ void ConfigVTX(AliAlgSteer* algSteer)
 {
   //
   AliAlgVtx *vtx = algSteer->GetVertexSensor();
-  vtx->SetAddError(0.003,0.003);
+  vtx->SetAddError(0.001,0.001);
   // fix vertex by precondition
   for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
     vtx->SetParErr(idf,-999);
@@ -150,8 +150,8 @@ void ConfigITS(AliAlgSteer* algSteer)
   //  det->SetAddError(2,2);
   det->SetAddErrorLr(0,10e-4,50e-4);
   det->SetAddErrorLr(1,10e-4,50e-4);
-  det->SetAddErrorLr(2,1000e-4,10e-4);
-  det->SetAddErrorLr(3,1000e-4,10e-4);
+  det->SetAddErrorLr(2,5000e-4,10e-4);
+  det->SetAddErrorLr(3,5000e-4,10e-4);
   det->SetAddErrorLr(4,20e-4,100e-4);
   det->SetAddErrorLr(5,20e-4,100e-4);   
 

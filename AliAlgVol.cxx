@@ -465,12 +465,10 @@ Bool_t AliAlgVol::IsCondDOF(Int_t i) const
 Int_t AliAlgVol::FinalizeStat(AliAlgDOFStat* st)
 {
   // finalize statistics on processed points
-  if (!IsSensor()) {
-    fNProcPoints = 0;
-    for (int ich=GetNChildren();ich--;) {
-      AliAlgVol* child = GetChild(ich);
-      fNProcPoints += child->FinalizeStat(st);
-    }
+  fNProcPoints = 0;
+  for (int ich=GetNChildren();ich--;) {
+    AliAlgVol* child = GetChild(ich);
+    fNProcPoints += child->FinalizeStat(st);
   }
   if (st) FillDOFStat(st);
   return fNProcPoints;

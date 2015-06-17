@@ -8,7 +8,8 @@ class AliAlgDet;
 class AliAlgPoint;
 class TObjArray;
 class AliExternalTrackParam;
-
+class AliAlgDOFStat;
+class TCloneArray;
 
 /*--------------------------------------------------------
   End-chain alignment volume in detector branch, where the actual measurement is done.
@@ -53,10 +54,16 @@ class AliAlgSens : public AliAlgVol
   virtual void   Print(const Option_t *opt="")    const;
   //
   virtual void UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
+  virtual void   UpdateL2GRecoMatrices(const TClonesArray* algArr,const TGeoHMatrix* cumulDelta);
+  //
+  virtual Int_t FinalizeStat(AliAlgDOFStat* h=0);
   //
   virtual void PrepareMatrixClAlg();
+  virtual void PrepareMatrixClAlgRecoI();
   const TGeoHMatrix&  GetMatrixClAlg()            const {return fMatClAlg;}
+  const TGeoHMatrix&  GetMatrixClAlgRecoI()       const {return fMatClAlgRecoI;}
   void  SetMatrixClAlg(const TGeoHMatrix& m)            {fMatClAlg = m;}
+  void  SetMatrixClAlgRecoI(const TGeoHMatrix& m)       {fMatClAlgRecoI = m;}
   //
  protected:
   //
@@ -72,6 +79,7 @@ class AliAlgSens : public AliAlgVol
   Double_t fAddError[2];              // additional error increment for measurement
   const AliAlgDet* fDet;              // pointer on detector
   TGeoHMatrix fMatClAlg;              // reference cluster alignment matrix in tracking frame
+  TGeoHMatrix fMatClAlgRecoI;         // reco-time cluster alignment matrix inverse! in tracking frame
 
   //
   ClassDef(AliAlgSens,1)
