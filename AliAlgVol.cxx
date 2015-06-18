@@ -96,7 +96,6 @@
 
 
 #include "AliAlgVol.h"
-#include "AliAlgSens.h"
 #include "AliAlgDOFStat.h"
 #include "AliAlgConstraint.h"
 #include "AliAlignObjParams.h"

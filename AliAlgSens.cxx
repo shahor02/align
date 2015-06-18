@@ -34,7 +34,7 @@ AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid)
   : AliAlgVol(name,iid)
   ,fDet(0)
   ,fMatClAlg()  
-  ,fMatClAlgRecoI()
+  ,fMatClAlgReco()
 {
   // def c-tor
   SetVolID(vid);
@@ -335,8 +335,8 @@ void AliAlgSens::Print(const Option_t *opt) const
     GetMatrixT2L().Print();
     printf("ClAlg       : "); 
     GetMatrixClAlg().Print();
-    printf("ClAlgRecoI-I: "); 
-    GetMatrixClAlgRecoI().Inverse().Print();
+    printf("ClAlgReco: "); 
+    GetMatrixClAlgReco().Print();
   }
   //
 }
@@ -367,15 +367,14 @@ void AliAlgSens::PrepareMatrixClAlg()
 }
 
 //____________________________________________
-void AliAlgSens::PrepareMatrixClAlgRecoI()
+void AliAlgSens::PrepareMatrixClAlgReco()
 {
   // prepare alignment matrix
   TGeoHMatrix ma = GetMatrixT2L();
   ma.MultiplyLeft(&GetMatrixL2GReco());
   ma.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
   ma.MultiplyLeft(&GetMatrixT2L().Inverse());
-  ma = ma.Inverse();
-  SetMatrixClAlgRecoI(ma);
+  SetMatrixClAlgReco(ma);
   //
 }
 
@@ -411,7 +410,15 @@ void AliAlgSens::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMa
   // On top of what each volume does, also update misalignment matrix inverse
   //
   AliAlgVol::UpdateL2GRecoMatrices(algArr,cumulDelta);
-  PrepareMatrixClAlgRecoI();
+  PrepareMatrixClAlgReco();
   //
 }
  
+//_________________________________________________________________
+AliAlgPoint* AliAlgSens::TrackPoint2AlgPoint(int, const AliTrackPointArray*, const AliESDtrack*)
+{
+  // dummy convertert
+  AliError("Generic method, must be implemented in specific sensor");
+  return 0;
+}
+

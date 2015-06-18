@@ -4,6 +4,8 @@
 #include "AliAlgVol.h"
 #include <TMath.h>
 
+class AliTrackPointArray;
+class AliESDtrack;
 class AliAlgDet;
 class AliAlgPoint;
 class TObjArray;
@@ -53,17 +55,19 @@ class AliAlgSens : public AliAlgVol
   virtual Bool_t IsSensor()                       const {return kTRUE;}
   virtual void   Print(const Option_t *opt="")    const;
   //
-  virtual void UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
+  virtual void   UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
   virtual void   UpdateL2GRecoMatrices(const TClonesArray* algArr,const TGeoHMatrix* cumulDelta);
+  //
+  AliAlgPoint*   TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* t);
   //
   virtual Int_t FinalizeStat(AliAlgDOFStat* h=0);
   //
   virtual void PrepareMatrixClAlg();
-  virtual void PrepareMatrixClAlgRecoI();
+  virtual void PrepareMatrixClAlgReco();
   const TGeoHMatrix&  GetMatrixClAlg()            const {return fMatClAlg;}
-  const TGeoHMatrix&  GetMatrixClAlgRecoI()       const {return fMatClAlgRecoI;}
+  const TGeoHMatrix&  GetMatrixClAlgReco()        const {return fMatClAlgReco;}
   void  SetMatrixClAlg(const TGeoHMatrix& m)            {fMatClAlg = m;}
-  void  SetMatrixClAlgRecoI(const TGeoHMatrix& m)       {fMatClAlgRecoI = m;}
+  void  SetMatrixClAlgReco(const TGeoHMatrix& m)        {fMatClAlgReco = m;}
   //
  protected:
   //
@@ -79,7 +83,7 @@ class AliAlgSens : public AliAlgVol
   Double_t fAddError[2];              // additional error increment for measurement
   const AliAlgDet* fDet;              // pointer on detector
   TGeoHMatrix fMatClAlg;              // reference cluster alignment matrix in tracking frame
-  TGeoHMatrix fMatClAlgRecoI;         // reco-time cluster alignment matrix inverse! in tracking frame
+  TGeoHMatrix fMatClAlgReco;          // reco-time cluster alignment matrix in tracking frame
 
   //
   ClassDef(AliAlgSens,1)

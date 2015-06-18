@@ -5,6 +5,9 @@
 
 
 class TObjArray;
+class AliTrackPointArray;
+class AliESDtrack;
+class AliAlgPoint;
 
 
 /*--------------------------------------------------------
@@ -20,6 +23,8 @@ class AliAlgSensITS : public AliAlgSens
   AliAlgSensITS(const char* name=0, Int_t vid=0, Int_t iid=0);
   virtual ~AliAlgSensITS();
   //
+  AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* t);
+
   //  virtual void   SetTrackingFrame();
   //
  protected:
