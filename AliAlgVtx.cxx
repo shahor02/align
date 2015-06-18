@@ -64,4 +64,5 @@ AliAlgPoint* AliAlgVtx::TrackPoint2AlgPoint(int, const AliTrackPointArray*, cons
   // convert the pntId-th point to AliAlgPoint
   static int cnt=0;
   AliErrorF("This method shound not have been called, %d",cnt++);
+  return 0;
 }

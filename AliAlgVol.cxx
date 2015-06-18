@@ -628,6 +628,29 @@ void AliAlgVol::CreateLocDeltaMatrix(TGeoHMatrix &deltaM) const
   //
 }
 
+/*
+//_________________________________________________________________
+void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
+{
+  // create final alignment matrix, accounting for eventual prealignment
+  //
+  //  Delta_j = Product_{i=0,j} [ G_i * delta_i * Gideal_i^-1]
+  // where delta_i is local correction matrix, G_i is pre-misaligned reference L2G
+  // and Gideal is L2GIdeal
+  alg.Clear();
+  const AliAlgVol* vol = this;
+  while(vol) {
+    TGeoHMatrix delLoc;
+    vol->CreateLocDeltaMatrix(delLoc);
+    delLoc.Multiply( &vol->GetMatrixL2GIdeal().Inverse() );
+    delLoc.MultiplyLeft( &vol->GetMatrixL2G() );
+    alg.MultiplyLeft(&delLoc);
+    vol =  vol->GetParent();
+  }
+  //
+}
+*/
+
 //_________________________________________________________________
 void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
 {
