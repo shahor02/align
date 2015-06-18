@@ -43,7 +43,7 @@ void tstAlg(int evID=-4) // for beam: data -> LHC10b_000117220_vpass1_pass4_1000
     evFirst = evID;
     evLast  = evID;    
   }
-  if (1) {
+  if (0) {
     for (int iev=evFirst;iev<=evLast;iev++) {
       LoadEvent(iev);
       //      printf("Event %d\n",iev);
@@ -51,7 +51,7 @@ void tstAlg(int evID=-4) // for beam: data -> LHC10b_000117220_vpass1_pass4_1000
     }
     algSTEER->Terminate();
   }
-  if (0) {
+  if (1) {
     LoadEvent(evID);
     algSTEER->SetESDEvent(esdEv);
     algSTEER->SetFieldOn(1);

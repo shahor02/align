@@ -136,6 +136,9 @@ AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray*
   matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix 
   matT2L.MasterToLocal(loc,traId); // go to tracking frame 
   //
+  printf("Check for %5d Loc: ",sens->GetVolID());for (int i=0;i<3;i++) printf("%+e ",loc[i]); 
+  printf("  Tid: "); for (int i=0;i<3;i++) printf("%+e ",traId[i]); printf("\n");
+  //
   sens->GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
   //
   if (!fUseErrorParam) {
