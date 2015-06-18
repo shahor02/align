@@ -16,6 +16,11 @@
 #include "AliAlgSensTPC.h"
 #include "AliAlgAux.h"
 #include "AliLog.h"
+#include "AliTrackPointArray.h"
+#include "AliESDtrack.h"
+#include "AliAlgPoint.h"
+#include "AliAlgDet.h"
+
 ClassImp(AliAlgSensTPC)
 
 using namespace AliAlgAux;
@@ -64,5 +69,68 @@ void AliAlgSensTPC::PrepareMatrixT2L()
   }
   */
   SetMatrixT2L(t2l);
+  //
+}
+
+//____________________________________________
+AliAlgPoint* AliAlgSensTPC::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack*)
+{
+  // convert the pntId-th point to AliAlgPoint
+  //
+  AliAlgDet* det = GetDetector();
+  AliAlgPoint* pnt = det->GetPointFromPool();
+  pnt->SetSensor(this);
+  //
+  double tra[3],traId[3],loc[3],
+    glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
+  const TGeoHMatrix& matL2Grec = GetMatrixL2GReco(); // local to global matrix used for reconstruction
+  const TGeoHMatrix& matT2L    = GetMatrixT2L();     // matrix for tracking to local frame translation
+  //
+  // undo reco-time alignment
+  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix, here we recover ideal measurement 
+  //
+  matT2L.MasterToLocal(loc,traId);  // go to tracking frame 
+  //
+  GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
+  //
+  if (!det->GetUseErrorParam()) {
+    // convert error
+    TGeoHMatrix hcov;
+    Double_t hcovel[9];
+    const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
+    hcovel[0] = double(pntcov[0]);
+    hcovel[1] = double(pntcov[1]);
+    hcovel[2] = double(pntcov[2]);
+    hcovel[3] = double(pntcov[1]);
+    hcovel[4] = double(pntcov[3]);
+    hcovel[5] = double(pntcov[4]);
+    hcovel[6] = double(pntcov[2]);
+    hcovel[7] = double(pntcov[4]);
+    hcovel[8] = double(pntcov[5]);
+    hcov.SetRotation(hcovel);
+    hcov.Multiply(&matL2Grec);                
+    hcov.MultiplyLeft(&matL2Grec.Inverse());    // errors in local frame
+    hcov.Multiply(&matT2L);
+    hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
+    //
+    Double_t *hcovscl = hcov.GetRotationMatrix();
+    const double *sysE = GetAddError(); // additional syst error
+    pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
+  }
+  else { // errors will be calculated just before using the point in the fit, using track info
+    pnt->SetYZErrTracking(0,0,0);
+    pnt->SetNeedUpdateFromTrack();
+  }
+  pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
+  pnt->SetAlphaSens(GetAlpTracking());
+  pnt->SetXSens(GetXTracking());
+  pnt->SetDetID(det->GetDetID());
+  pnt->SetSID(GetSID());
+  //
+  pnt->SetContainsMeasurement();
+  //
+  pnt->Init();
+  //
+  return pnt;
   //
 }

@@ -56,34 +56,25 @@ void AliAlgSensITS::SetTrackingFrame()
 //____________________________________________
 AliAlgPoint* AliAlgSensITS::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack*)
 {
-  // convert the pntId-th point to AliAlgPoint, detectors may override this method
+  // convert the pntId-th point to AliAlgPoint
   //
-  // ATTENTION: due to the bug in the aliroot alignment framework, 
-  // https://alice.its.cern.ch/jira/browse/ALIROOT-6094
-  // the trackpoints stored in the friends have alignment applied twice
-  // need to account for that by applying inverse reco-time alignment
-  //
-  AliAlgPoint* pnt = GetDetector()->GetPointFromPool();
+  AliAlgDet* det = GetDetector();
+  AliAlgPoint* pnt = det->GetPointFromPool();
   pnt->SetSensor(this);
   //
   double tra[3],traId[3],loc[3],
     glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
-  const TGeoHMatrix& matL2Grec = sens->GetMatrixL2GReco(); // local to global matrix used for reconstruction
-  //const TGeoHMatrix& matL2G    = sens->GetMatrixL2G();     // local to global orig matrix used as a reference 
-  const TGeoHMatrix& matT2L    = sens->GetMatrixT2L();     // matrix for tracking to local frame translation
+  const TGeoHMatrix& matL2Grec = GetMatrixL2GReco(); // local to global matrix used for reconstruction
+  const TGeoHMatrix& matT2L    = GetMatrixT2L();     // matrix for tracking to local frame translation
   //
   // undo reco-time alignment
-  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix 
+  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix, here we recover ideal measurement 
   //
-  // account for the bug!!!
-  double locFix[3];
-  GetMatrix();
-
   matT2L.MasterToLocal(loc,traId);  // go to tracking frame 
   //
-  sens->GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
+  GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
   //
-  if (!fUseErrorParam) {
+  if (!det->GetUseErrorParam()) {
     // convert error
     TGeoHMatrix hcov;
     Double_t hcovel[9];
@@ -104,7 +95,7 @@ AliAlgPoint* AliAlgSensITS::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
     hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
     //
     Double_t *hcovscl = hcov.GetRotationMatrix();
-    const double *sysE = sens->GetAddError(); // additional syst error
+    const double *sysE = GetAddError(); // additional syst error
     pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
   }
   else { // errors will be calculated just before using the point in the fit, using track info
@@ -112,10 +103,10 @@ AliAlgPoint* AliAlgSensITS::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
     pnt->SetNeedUpdateFromTrack();
   }
   pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
-  pnt->SetAlphaSens(sens->GetAlpTracking());
-  pnt->SetXSens(sens->GetXTracking());
-  pnt->SetDetID(GetDetID());
-  pnt->SetSID(sid);
+  pnt->SetAlphaSens(GetAlpTracking());
+  pnt->SetXSens(GetXTracking());
+  pnt->SetDetID(det->GetDetID());
+  pnt->SetSID(GetSID());
   //
   pnt->SetContainsMeasurement();
   //

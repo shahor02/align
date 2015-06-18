@@ -2,8 +2,9 @@
 #define ALIALGSENSTRD_H
 
 #include "AliAlgSens.h"
-
-
+class AliTrackPointArray;
+class AliESDtrack;
+class AliAlgPoint;
 class TObjArray;
 
 
@@ -22,6 +23,8 @@ class AliAlgSensTRD : public AliAlgSens
   //
   Int_t GetSector()                      const {return fSector;}
   void  SetSector(UInt_t sc)                   {fSector = (UChar_t)sc;}
+  //
+  virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* t);
   //
   virtual void DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int calibID,const AliAlgVol* parent=0) const;
   //

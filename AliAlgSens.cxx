@@ -32,6 +32,7 @@ using namespace TMath;
 //_________________________________________________________
 AliAlgSens::AliAlgSens(const char* name,Int_t vid, Int_t iid) 
   : AliAlgVol(name,iid)
+  ,fSID(0)
   ,fDet(0)
   ,fMatClAlg()  
   ,fMatClAlgReco()
@@ -414,6 +415,7 @@ void AliAlgSens::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMa
   //
 }
  
+/*
 //_________________________________________________________________
 AliAlgPoint* AliAlgSens::TrackPoint2AlgPoint(int, const AliTrackPointArray*, const AliESDtrack*)
 {
@@ -421,4 +423,4 @@ AliAlgPoint* AliAlgSens::TrackPoint2AlgPoint(int, const AliTrackPointArray*, con
   AliError("Generic method, must be implemented in specific sensor");
   return 0;
 }
-
+*/

@@ -101,8 +101,10 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, 
   int npSel(0);
   AliAlgPoint* apnt(0);
   for (int ip=0;ip<np;ip++) {
-    if (!SensorOfDetector(trP->GetVolumeID()[ip])) continue;
-    if (!(apnt=TrackPoint2AlgPoint(ip, trP, esdTr))) continue;
+    int vid = trP->GetVolumeID()[ip];
+    if (!SensorOfDetector(vid)) continue;
+    apnt = GetSensorByVolId(vid)->TrackPoint2AlgPoint(ip, trP, esdTr);
+    if (!apnt) continue;
     algTrack->AddPoint(apnt);
     if (inv) apnt->SetInvDir();
     npSel++;
@@ -307,7 +309,10 @@ void AliAlgDet::SortSensors()
   }
   fSensors.Sort();
   fSID2VolID = new Int_t[fNSensors]; // cash id's for fast binary search
-  for (int i=0;i<fNSensors;i++) fSID2VolID[i] = GetSensor(i)->GetVolID();
+  for (int i=0;i<fNSensors;i++) {
+    fSID2VolID[i] = GetSensor(i)->GetVolID();
+    GetSensor(i)->SetSID(i);
+  }
   //
 }
 

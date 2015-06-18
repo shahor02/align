@@ -30,6 +30,7 @@ class AliAlgDetTRD : public AliAlgDet
   virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp, const AliESDtrack* tr);
   virtual void         WritePedeInfo(FILE* parOut,const Option_t *opt="") const;
   //
+  Double_t GetNonRCCorrDzDtglWithCal()                    const {return GetNonRCCorrDzDtgl()+GetParVal(kCalibRCCorrDzDtgl);}
   Double_t GetNonRCCorrDzDtgl()                           const {return fNonRCCorrDzDtgl;}
   void     SetNonRCCorrDzDtgl(double v=1.055)                   {fNonRCCorrDzDtgl = v;}
   //

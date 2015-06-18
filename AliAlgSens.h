@@ -29,8 +29,11 @@ class AliAlgSens : public AliAlgVol
   //
   virtual void AddChild(AliAlgVol*);
   //
-  void       SetDetector(const AliAlgDet* det)         {fDet = det;}
-  const AliAlgDet* GetDetector()                 const {return fDet;}
+  void  SetDetector(AliAlgDet* det)                    {fDet = det;}
+  AliAlgDet* GetDetector()                       const {return fDet;}
+  //
+  Int_t GetSID()                                 const {return fSID;}
+  void  SetSID(int s)                                  {fSID = s;}
   //
   void  IncrementStat()                                {fNProcPoints++;}
   //
@@ -58,7 +61,7 @@ class AliAlgSens : public AliAlgVol
   virtual void   UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
   virtual void   UpdateL2GRecoMatrices(const TClonesArray* algArr,const TGeoHMatrix* cumulDelta);
   //
-  AliAlgPoint*   TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* t);
+  virtual AliAlgPoint*   TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* t) = 0;
   //
   virtual Int_t FinalizeStat(AliAlgDOFStat* h=0);
   //
@@ -80,8 +83,9 @@ class AliAlgSens : public AliAlgVol
   //
  protected:
   //
-  Double_t fAddError[2];              // additional error increment for measurement
-  const AliAlgDet* fDet;              // pointer on detector
+  Int_t       fSID;                   // sensor id in detector
+  Double_t    fAddError[2];           // additional error increment for measurement
+  AliAlgDet*  fDet;                   // pointer on detector
   TGeoHMatrix fMatClAlg;              // reference cluster alignment matrix in tracking frame
   TGeoHMatrix fMatClAlgReco;          // reco-time cluster alignment matrix in tracking frame
 
