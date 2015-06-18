@@ -114,77 +114,6 @@ Int_t AliAlgDet::ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack, 
   return npSel;
 }
 
-//____________________________________________
-AliAlgPoint* AliAlgDet::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack*)
-{
-  // convert the pntId-th point to AliAlgPoint, detectors may override this method
-  //
-  // convert to detector tracking frame
-  UShort_t vid = trpArr->GetVolumeID()[pntId];
-  Int_t sid = VolID2SID(vid); // sensor index within the detector
-  if (!sid<0) return 0;
-  AliAlgSens* sens = GetSensor(sid);
-  if (sens->GetSkip()) return 0;
-  AliAlgPoint* pnt = GetPointFromPool();
-  pnt->SetSensor(sens);
-  //
-  double tra[3],traId[3],loc[3],
-    glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
-  const TGeoHMatrix& matL2Grec = sens->GetMatrixL2GReco(); // local to global matrix used for reconstruction
-  //const TGeoHMatrix& matL2G    = sens->GetMatrixL2G();     // local to global orig matrix used as a reference 
-  const TGeoHMatrix& matT2L    = sens->GetMatrixT2L();     // matrix for tracking to local frame translation
-  //
-  // undo reco-time alignment
-  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix 
-  matT2L.MasterToLocal(loc,traId); // go to tracking frame 
-  //
-  printf("Check for %5d Loc: ",sens->GetVolID());for (int i=0;i<3;i++) printf("%+e ",loc[i]); 
-  printf("  Tid: "); for (int i=0;i<3;i++) printf("%+e ",traId[i]); printf("\n");
-  //
-  sens->GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
-  //
-  if (!fUseErrorParam) {
-    // convert error
-    TGeoHMatrix hcov;
-    Double_t hcovel[9];
-    const Float_t *pntcov = trpArr->GetCov()+pntId*6; // 6 elements per error matrix
-    hcovel[0] = double(pntcov[0]);
-    hcovel[1] = double(pntcov[1]);
-    hcovel[2] = double(pntcov[2]);
-    hcovel[3] = double(pntcov[1]);
-    hcovel[4] = double(pntcov[3]);
-    hcovel[5] = double(pntcov[4]);
-    hcovel[6] = double(pntcov[2]);
-    hcovel[7] = double(pntcov[4]);
-    hcovel[8] = double(pntcov[5]);
-    hcov.SetRotation(hcovel);
-    hcov.Multiply(&matL2Grec);                
-    hcov.MultiplyLeft(&matL2Grec.Inverse());    // errors in local frame
-    hcov.Multiply(&matT2L);
-    hcov.MultiplyLeft(&matT2L.Inverse());       // errors in tracking frame
-    //
-    Double_t *hcovscl = hcov.GetRotationMatrix();
-    const double *sysE = sens->GetAddError(); // additional syst error
-    pnt->SetYZErrTracking(hcovscl[4]+sysE[0]*sysE[0],hcovscl[5],hcovscl[8]+sysE[1]*sysE[1]);
-  }
-  else { // errors will be calculated just before using the point in the fit, using track info
-    pnt->SetYZErrTracking(0,0,0);
-    pnt->SetNeedUpdateFromTrack();
-  }
-  pnt->SetXYZTracking(tra[0],tra[1],tra[2]);
-  pnt->SetAlphaSens(sens->GetAlpTracking());
-  pnt->SetXSens(sens->GetXTracking());
-  pnt->SetDetID(GetDetID());
-  pnt->SetSID(sid);
-  //
-  pnt->SetContainsMeasurement();
-  //
-  pnt->Init();
-  //
-  return pnt;
-  //
-}
-
 //_________________________________________________________
 void AliAlgDet::AcknowledgeNewRun(Int_t run)
 {
@@ -211,6 +140,15 @@ void AliAlgDet::UpdateL2GRecoMatrices()
     if (!vol->GetParent()) vol->UpdateL2GRecoMatrices(algArr,0);
   }
   //
+}
+
+
+//_________________________________________________________
+void  AliAlgDet::ApplyAlignmentFromMPSol()
+{
+  // apply alignment from millepede solution array to reference alignment level
+  AliInfo("Applying alignment from Millepede solution");
+  for (int isn=GetNSensors();isn--;) GetSensor(isn)->ApplyAlignmentFromMPSol();
 }
 
 //_________________________________________________________

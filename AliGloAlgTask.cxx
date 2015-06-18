@@ -38,6 +38,7 @@ AliGloAlgTask::AliGloAlgTask(const char *name)
   ,fConfMacroName()
   ,fStopWatch()
   ,fChunks(0)
+  ,fApplyMPSolAlignment(kFALSE)
 {
   // Constructor
   DefineOutput(1, TList::Class());
@@ -151,6 +152,7 @@ void AliGloAlgTask::LocalInit()
   if (!fIniParFileName.IsNull() && !gSystem->AccessPathName(fIniParFileName.Data(), kFileExists)) {
     AliInfoF("Imposing initial parameters from %s",fIniParFileName.Data());
     fAlgSteer->ReadParameters(fIniParFileName.Data());
+    if (fApplyMPSolAlignment) fAlgSteer->ApplyAlignmentFromMPSol();
   }
   fAlgSteer->Print();
 }

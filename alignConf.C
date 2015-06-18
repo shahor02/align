@@ -200,7 +200,7 @@ void ConfigTRD(AliAlgSteer* algSteer)
   det->SetFreeDOF(AliAlgDetTRD::kCalibRCCorrDzDtgl);
   //
   // just repeat default settings
-  //  det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
+  //det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
   det->SetNonRCCorrDzDtgl(1.6745); // correct DZ,DY of non-crossing tracklets
   det->SetExtraErrRC(0.2,1.0);    // assign extra error to crossing tracklets
   det->SetAddError(0.05,0.05);

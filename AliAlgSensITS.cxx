@@ -74,6 +74,17 @@ AliAlgPoint* AliAlgSensITS::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
   //
   GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
   //
+  /*
+  double gloT[3]; 
+  TGeoHMatrix t2g;
+  GetMatrixT2G(t2g); t2g.LocalToMaster(tra,gloT);
+  printf("\n%5d %s\n",GetVolID(), GetSymName());
+  printf("GloOR: %+.4e %+.4e %+.4e\n",glo[0],glo[1],glo[2]);
+  printf("LocID: %+.4e %+.4e %+.4e\n",loc[0],loc[1],loc[2]);
+  printf("TraID: %+.4e %+.4e %+.4e\n",traId[0],traId[1],traId[2]);
+  printf("GloRL: %+.4e %+.4e %+.4e\n",gloT[0],gloT[1],gloT[2]);
+  */
+  //
   if (!det->GetUseErrorParam()) {
     // convert error
     TGeoHMatrix hcov;

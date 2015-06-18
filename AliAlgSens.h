@@ -49,6 +49,8 @@ class AliAlgSens : public AliAlgVol
   void GetModifiedMatrixT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;
   void GetModifiedMatrixT2LmodTRA(TGeoHMatrix& matMod, const Double_t *delta) const;
   //
+  virtual void ApplyAlignmentFromMPSol();
+  //
   void            SetAddError(double y, double z)            {fAddError[0]=y;fAddError[1]=z;}
   const Double_t* GetAddError()                        const {return fAddError;} 
   //

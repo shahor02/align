@@ -936,6 +936,7 @@ void AliAlgSteer::Print(const Option_t *opt) const
   printf("%5d DOFs in %d detectors",fNDOFs,fNDet);
   if (!fConfMacroName.IsNull()) printf("(config: %s)",fConfMacroName.Data());
   printf("\n");
+  if (GetMPAlignDone()) printf("ALIGNMENT FROM MILLEPEDE SOLUTION IS APPLIED\n");
   //
   for (int idt=0;idt<kNDetectors;idt++) {
     AliAlgDet* det = GetDetectorByDetID(idt);
@@ -2027,4 +2028,18 @@ Bool_t AliAlgSteer::CheckSol(AliAlgMPRecord* rec,
   delete[] resid;
   delete[] volID;
   return kTRUE;
+}
+
+//______________________________________________
+void AliAlgSteer::ApplyAlignmentFromMPSol()
+{
+  // apply alignment from millepede solution array to reference alignment level
+  AliInfo("Applying alignment from Millepede solution");
+  for (int idt=0;idt<kNDetectors;idt++) {
+    AliAlgDet* det = GetDetectorByDetID(idt);
+    if (!det || det->IsDisabled()) continue;
+    det->ApplyAlignmentFromMPSol();
+  }
+  SetMPAlignDone();
+  //
 }

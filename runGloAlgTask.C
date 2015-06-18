@@ -6,8 +6,8 @@ Bool_t InputHandlerSetup(TString formatFr = "AliESDfriends_Barrel.root");
 //====================================================================
 void runGloAlgTask
 (
- TString data="wn.xml",
- // TString data="algColl.txt",
+ //TString data="wn.xml",
+ TString data="algColl.txt",
  Int_t nEvents=-1,
  UInt_t trigSel = AliVEvent::kAny,
  TString formatFr = "AliESDfriends_Barrel.root"
@@ -19,16 +19,15 @@ void runGloAlgTask
     if (!gGrid) {printf("Cannot connect\n");exit(1);}
   }
   //
-  gROOT->ProcessLine(".include $ALICE_ROOT/include $ALICE_PHYSICS/include ./");
-  gSystem->SetIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include -I./");
-  
+  gROOT->ProcessLine(Form(".include $ALICE_ROOT/include $ALICE_PHYSICS/include ./ %s",gSystem->pwd()));
+  gSystem->SetIncludePath(Form("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include -I./ -I%s",gSystem->pwd()));
+  printf("Include line: %s",gSystem->GetIncludePath());
+  //
   if (gClassTable->GetID("AliAlgSteer")<0) {
-    gSystem->Load("libALIGN.so");
+    gSystem->Load("libAlg.so");
   }
   //
-  if (gClassTable->GetID("AliGloAlgTask")<0) {
-    gROOT->ProcessLine(".L AliGloAlgTask.cxx++g");
-  }
+  gROOT->ProcessLine(".L AliGloAlgTask.cxx++g");
   //
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   if (!mgr) mgr = new AliAnalysisManager("mgr");
@@ -45,6 +44,9 @@ void runGloAlgTask
   //-------------------------------------------
   algTask->SetTriggerSelection(trigSel);
   algTask->SetConfMacroName("alignConf.C");
+  //  algTask->SetConfMacroName("pedeF/alignConf.C");
+  algTask->SetIniParFileName("pedeF/millepede.res");
+  //  algTask->SetApplyMPSolAlignment(kTRUE);
   //-------------------------------------------
   AliAnalysisDataContainer *coutput1 = 
     mgr->CreateContainer("clist", TList::Class(),AliAnalysisManager::kOutputContainer,"mpStatOut.root");
@@ -68,7 +70,8 @@ Bool_t InputHandlerSetup(TString esdFName)
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   AliAnalysisDataContainer *cin = mgr->GetCommonInputContainer();
   if (cin) return;
-  AliESDInputHandler *esdInputHandler = dynamic_cast<AliESDInputHandler*>(AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler());
+  AliESDInputHandler *esdInputHandler = 
+    dynamic_cast<AliESDInputHandler*>(AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler());
   if (!esdInputHandler) {
     Info("CustomAnalysisTaskInputSetup", "Creating esdInputHandler ...");
     esdInputHandler = new AliESDInputHandler();

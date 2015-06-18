@@ -95,42 +95,13 @@ Bool_t AliAlgDetTRD::AcceptTrack(const AliESDtrack* trc,Int_t trtype) const
   return kTRUE;
 }
 
-//____________________________________________
-AliAlgPoint* AliAlgDetTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp, const AliESDtrack* tr)
-{
-  // custom correction for non-crossing points, to account for the dependence of Z bias
-  // on track inclination (prob. to not cross pads)
-  //
-  const double kTilt = 2.*TMath::DegToRad();
-  AliAlgPoint* pnt = AliAlgDet::TrackPoint2AlgPoint(pntId,trp,tr); // process in usual way
-  if (!pnt) return 0;
-  //
-  // is it pad crrossing?
-  double* errYZ = (double*) pnt->GetYZErrTracking();
-  double sgYZ = errYZ[1];
-  if (TMath::Abs(sgYZ)<0.01) {  // crossing
-    // increase errors since the error 
-    errYZ[0] += fExtraErrRC[0]*fExtraErrRC[0];
-    errYZ[2] += fExtraErrRC[1]*fExtraErrRC[1];
-  }
-  else { // account for probability to not cross the row
-    double calpar = fNonRCCorrDzDtgl+GetParVal(kCalibRCCorrDzDtgl);
-    double* pYZ = (double*)pnt->GetYZTracking();
-    double corrZ = calpar*tr->GetTgl();
-    pYZ[1] += corrZ; 
-    pYZ[0] += corrZ*Sign(kTilt,sgYZ);  // Y and Z are correlated
-  }
-  return pnt;
-  //
-}
-
 //__________________________________________
 //____________________________________________
 void AliAlgDetTRD::Print(const Option_t *opt) const
 {
   // print info
   AliAlgDet::Print(opt);
-  printf("Correction dZ/dTgl NonRC: %f\n",fNonRCCorrDzDtgl);
+  printf("Correction dZ/dTgl NonRC: %f\n",GetNonRCCorrDzDtglWithCal());
   printf("Extra error for RC tracklets: Y:%e Z:%e\n",fExtraErrRC[0],fExtraErrRC[1]);
 }
  

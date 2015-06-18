@@ -79,7 +79,7 @@ void AliAlgConstraint::WriteChildrenConstraints(FILE* conOut) const
   // otherwise Alice global frame is assumed to be the parent -> Unit matrix 
   if (fParent && doJac) { 
     if (fParent->IsFrameTRA()) fParent->GetMatrixT2G(mPar); // tracking to global
-    else                       mPar = fParent->GetMatrixL2G(); // local to global
+    else                       mPar = fParent->GetMatrixL2GIdeal(); // local to global
     mPar = mPar.Inverse();
   }
   //
@@ -91,7 +91,7 @@ void AliAlgConstraint::WriteChildrenConstraints(FILE* conOut) const
     if (doJac) { // calculate jacobian
       TGeoHMatrix matRel;
       if (child->IsFrameTRA()) child->GetMatrixT2G(matRel); // tracking to global
-      else                     matRel = child->GetMatrixL2G(); // local to global
+      else                     matRel = child->GetMatrixL2GIdeal(); // local to global
       matRel.MultiplyLeft(&mPar);
       ConstrCoefGeom(matRel,jac);
       //
@@ -171,7 +171,7 @@ void AliAlgConstraint::CheckConstraint() const
   // otherwise Alice global frame is assumed to be the parent -> Unit matrix 
   if (fParent && doJac) { 
     if (fParent->IsFrameTRA()) fParent->GetMatrixT2G(mPar); // tracking to global
-    else                       mPar = fParent->GetMatrixL2G(); // local to global
+    else                       mPar = fParent->GetMatrixL2GIdeal(); // local to global
     mPar = mPar.Inverse();
   }
   //
@@ -194,7 +194,7 @@ void AliAlgConstraint::CheckConstraint() const
     if (doJac) {
       TGeoHMatrix matRel;
       if (child->IsFrameTRA()) child->GetMatrixT2G(matRel); // tracking to global
-      else                     matRel = child->GetMatrixL2G(); // local to global
+      else                     matRel = child->GetMatrixL2GIdeal(); // local to global
       //
       matRel.MultiplyLeft(&mPar);
       ConstrCoefGeom(matRel,jac); // Jacobian for analytical constraint used by MillePeded

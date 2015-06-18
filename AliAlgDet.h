@@ -37,6 +37,7 @@ class AliAlgDet : public TNamed
   virtual void  CacheReferenceOCDB();
   virtual void  AcknowledgeNewRun(Int_t run);
   virtual void  UpdateL2GRecoMatrices();
+  virtual void  ApplyAlignmentFromMPSol();
   //
   Int_t   VolID2SID(Int_t vid)                  const;
   Int_t   SID2VolID(Int_t sid)                  const {return sid<GetNSensors() ? fSID2VolID[sid] : -1;} //todo
@@ -80,7 +81,6 @@ class AliAlgDet : public TNamed
   virtual void  DefineMatrices();
   virtual void  Print(const Option_t *opt="")    const;
   virtual Int_t ProcessPoints(const AliESDtrack* esdTr, AliAlgTrack* algTrack,Bool_t inv=kFALSE);
-  virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trp, const AliESDtrack* tr);
   virtual void  UpdatePointByTrackInfo(AliAlgPoint* pnt, const AliExternalTrackParam* t) const;
   virtual void  SetUseErrorParam(Int_t v=0);
   Int_t         GetUseErrorParam()                   const {return fUseErrorParam;}

@@ -18,8 +18,6 @@ class AliAlgDetTOF : public AliAlgDet
   virtual void DefineVolumes();  
   //
   Bool_t AcceptTrack(const AliESDtrack* trc,Int_t trtype) const;
-  virtual AliAlgPoint* TrackPoint2AlgPoint(int pntId, const AliTrackPointArray* trpArr, const AliESDtrack* tr);
-
   //
  protected:
   //

@@ -91,6 +91,7 @@ AliAlgPoint* AliAlgSensTOF::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
   const TGeoHMatrix& matT2L    = GetMatrixT2L();     // matrix for tracking to local frame translation
   //
   // >>>------------- here we fix the z by emulating Misalign action in the tracking frame ------>>>
+  /*
   TGeoHMatrix mT2G;
   const TGeoHMatrix &mClAlg = GetMatrixClAlg();
   GetMatrixT2G(mT2G);
@@ -100,6 +101,7 @@ AliAlgPoint* AliAlgSensTOF::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
   const double *rotmt = mClAlg.GetRotationMatrix();  
   tra[2] = trans[2] + traId[0]*rotmt[6]+traId[1]*rotmt[7]+tra[2]*rotmt[8]; //we got misaligned Z
   mT2G.LocalToMaster(tra,glo);
+  */
   // now continue as usual
   // <<<------------- here we fix the z by emulating Misalign action in the tracking frame ------<<<
   //

@@ -38,10 +38,9 @@
   In case the whole chain of nested volumes is aligned, the corrections pile-up as:
 
   G_0*delta_0 ... G^-1_{j-2}*G_{j-1}*delta_{j-1}*G^-1_{j-1}*G_j*delta_j =
-  Delta_j * Delta_{j-1} ... Delta_{1}*Delta_{0}... * G_j
-  = Delta_0*G_{0}*G^-1_{0}*Delta_1*G_1*...G^-1_{j-1}*Delta_{j-1}*G_j
+  Delta_0 * Delta_{1} ... Delta_{j-1}*Delta_{j}... * G_j
 
-  -> Delta_j = G'_j * G^-1_j * G_{j-1} * G'^-1_{i-1} 
+  -> Delta_j = G'_{j-1} * G^-1_{j-1} * G_j * G'^-1_j 
   where G and G' are modified and original L2G matrices
 
   From this by induction one gets relation between local and global deltas:
@@ -56,7 +55,7 @@
   of the new incremental alignment Delta_j must be combined with PDelta_j to 
   resulting matrix TDelta_j before writing new alignment object.
 
-  Derivation: if G_j and IG_j and final and ideal L2G matrices for level j, then 
+  Derivation: if G_j and IG_j are final and ideal L2G matrices for level j, then 
 
   G_j = TDelta_j * TDelta_{j-1} ... TDelta_0 * IG_j
   =     (Delta_j * Delta_{j-1} ... Delta_0)  * (PDelta_j * PDelta_{j-1} ... PDelta_0) * IG_j
@@ -177,14 +176,6 @@ void AliAlgVol::Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta) const
   //  
 }
 
-//__________________________________________________________________
-void AliAlgVol::GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const
-{
-  // prepare for modified L2G matrix from its current matrix 
-  // by applying local delta, i.e. glo = L2G*loc = L2G*delta*loc -> L2G = L2G*delta
-  Delta2Matrix(matMod, delta);
-  matMod.MultiplyLeft(&GetMatrixL2G());
-}
 
 //__________________________________________________________________
 void AliAlgVol::GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const

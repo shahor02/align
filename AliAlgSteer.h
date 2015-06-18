@@ -50,7 +50,7 @@ class AliAlgSteer : public TObject
   enum {kInpStat,kAccStat,kNStatCl};
   enum {kRun,kEventColl,kEventCosm,kTrackColl,kTrackCosm, kMaxStat};
   enum MPOut_t {kMille=BIT(0),kMPRec=BIT(1),kContR=BIT(2)};
-  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15)};
+  enum {kInitGeomDone=BIT(14),kInitDOFsDone=BIT(15),kMPAlignDone=BIT(16)};
   //
   enum {             // STAT histo entries
     kRunDone         // input runs
@@ -87,6 +87,9 @@ class AliAlgSteer : public TObject
   void     SetInitDOFsDone()                                    {SetBit(kInitDOFsDone);}
   Bool_t   GetInitDOFsDone()                              const {return TestBit(kInitDOFsDone);}
   //
+  void     SetMPAlignDone()                                     {SetBit(kMPAlignDone);}
+  Bool_t   GetMPAlignDone()                               const {return TestBit(kMPAlignDone);}
+
   void     AssignDOFs();
   //
   void     AddDetector(UInt_t id, AliAlgDet* det=0);
@@ -223,6 +226,7 @@ class AliAlgSteer : public TObject
   Float_t  GetControlFrac()                                const {return fControlFrac;}
   void     SetControlFrac(float v=1.)                            {fControlFrac = v;}
   void     WriteCalibrationResults()                       const;
+  void     ApplyAlignmentFromMPSol();
   const  char* GetOutCDBComment()                          const {return fOutCDBComment.Data();}
   const  char* GetOutCDBResponsible()                      const {return fOutCDBResponsible.Data();}
   const  char* GetOutCDBPath()                             const {return fOutCDBPath.Data();}

@@ -86,6 +86,7 @@ class AliAlgVol : public TNamed
   Double_t   GetParVal(int par)                  const {return fParVals[par];}
   Double_t   GetParErr(int par)                  const {return fParErrs[par];}
   Int_t      GetParLab(int par)                  const {return fParLabs[par];}
+  void       GetParValGeom(double* delta)        const {for (int i=kNDOFGeom;i--;) delta[i]=fParVals[i];}
   //
   void       SetParVals(Int_t npar,Double_t *vl,Double_t *er);
   void       SetParVal(Int_t par,Double_t v=0)          {fParVals[par] = v;}
@@ -117,7 +118,6 @@ class AliAlgVol : public TNamed
   void  SetMatrixT2L(const TGeoHMatrix& m);
   //
   void  Delta2Matrix(TGeoHMatrix& deltaM, const Double_t *delta)         const;
-  void  GetModifiedMatrixL2G(TGeoHMatrix& matMod, const Double_t *delta) const;
   //
   // preparation of variation matrices
   void GetDeltaT2LmodLOC(TGeoHMatrix& matMod, const Double_t *delta) const;

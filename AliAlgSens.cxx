@@ -424,3 +424,38 @@ AliAlgPoint* AliAlgSens::TrackPoint2AlgPoint(int, const AliTrackPointArray*, con
   return 0;
 }
 */
+
+//_________________________________________________________________
+void AliAlgSens::ApplyAlignmentFromMPSol()
+{
+  // apply to the tracking coordinates in the sensor frame the full chain
+  // of alignments found by MP for this sensor and its parents
+  double delta[kNDOFGeom]={0};
+  //
+  TGeoHMatrix matMod;
+  //
+  // sensor proper variation
+  GetParValGeom(delta);
+  IsFrameTRA() ? GetDeltaT2LmodTRA(matMod,delta) : GetDeltaT2LmodLOC(matMod,delta);
+  fMatClAlg.MultiplyLeft(&matMod); 
+  //
+  AliAlgVol* parent = this;
+  while ((parent==parent->GetParent())) {
+    // this is the matrix for transition from sensor to parent volume frame
+    parent->GetParValGeom(delta);
+    TGeoHMatrix matRel,t2gP;
+    if (parent->IsFrameTRA()) {
+      GetMatrixT2G(matRel);           // t2g matrix of child
+      parent->GetMatrixT2G(t2gP);     // t2g matrix of parent
+      matRel.MultiplyLeft(&t2gP.Inverse());
+      GetDeltaT2LmodTRA(matMod, delta, matRel);
+    }
+    else {
+      matRel = parent->GetMatrixL2GIdeal().Inverse(); 
+      matRel *= GetMatrixL2GIdeal();
+      GetDeltaT2LmodLOC(matMod, delta, matRel);
+    }
+    fMatClAlg.MultiplyLeft(&matMod);
+  }
+  //
+}
