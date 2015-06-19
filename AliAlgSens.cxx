@@ -358,11 +358,9 @@ void AliAlgSens::PrepareMatrixT2L()
 //____________________________________________
 void AliAlgSens::PrepareMatrixClAlg()
 {
-  // prepare alignment matrix
-  TGeoHMatrix ma = GetMatrixT2L();
-  ma.MultiplyLeft(&GetMatrixL2G());
-  ma.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
-  ma.MultiplyLeft(&GetMatrixT2L().Inverse());
+  // prepare alignment matrix in the LOCAL frame: delta = Gideal^-1 * G
+  TGeoHMatrix ma = GetMatrixL2GIdeal().Inverse();
+  ma *= GetMatrixL2G();
   SetMatrixClAlg(ma);
   //
 }
@@ -419,12 +417,39 @@ void AliAlgSens::UpdateL2GRecoMatrices(const TClonesArray* algArr, const TGeoHMa
 //_________________________________________________________________
 AliAlgPoint* AliAlgSens::TrackPoint2AlgPoint(int, const AliTrackPointArray*, const AliESDtrack*)
 {
-  // dummy convertert
+  // dummy converter
   AliError("Generic method, must be implemented in specific sensor");
   return 0;
 }
 */
 
+//_________________________________________________________________
+void AliAlgSens::ApplyAlignmentFromMPSol()
+{
+  // apply to the tracking coordinates in the sensor frame the full chain
+  // of alignments found by MP for this sensor and its parents
+  //
+  const AliAlgVol* vol = this;
+  TGeoHMatrix deltaG;
+  // create global combined delta:
+  // DeltaG = deltaG_0*...*deltaG_j, where delta_i is global delta of each member of hierarchy
+  while(vol) {
+    TGeoHMatrix deltaGJ;
+    vol->CreateAlignmenMatrix(deltaGJ);
+    deltaG.MultiplyLeft(&deltaGJ);
+    vol = vol->GetParent();
+  }
+  //
+  // update misaligned L2G matrix
+  deltaG *= GetMatrixL2GIdeal();
+  SetMatrixL2G(deltaG);
+  //
+  // update local misalignment matrix
+  PrepareMatrixClAlg();
+  //
+}
+
+/*
 //_________________________________________________________________
 void AliAlgSens::ApplyAlignmentFromMPSol()
 {
@@ -459,3 +484,5 @@ void AliAlgSens::ApplyAlignmentFromMPSol()
   }
   //
 }
+
+*/

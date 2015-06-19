@@ -85,32 +85,47 @@ AliAlgPoint* AliAlgSensTOF::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
   AliAlgPoint* pnt = det->GetPointFromPool();
   pnt->SetSensor(this);
   //
-  double tra[3],traId[3],loc[3],
+  double tra[3],locId[3],loc[3],traId[3],
     glo[3] = {trpArr->GetX()[pntId], trpArr->GetY()[pntId], trpArr->GetZ()[pntId]};
   const TGeoHMatrix& matL2Grec = GetMatrixL2GReco(); // local to global matrix used for reconstruction
   const TGeoHMatrix& matT2L    = GetMatrixT2L();     // matrix for tracking to local frame translation
   //
   // >>>------------- here we fix the z by emulating Misalign action in the tracking frame ------>>>
-  /*
+  //  /*
+  // we need alignment matrix in tracking frame, T^-1 * delta * T, where delta is local alignment matrix
+  TGeoHMatrix mClAlgT = GetMatrixClAlg();
+  mClAlgT.Multiply(&GetMatrixT2L());
+  mClAlgT.MultiplyLeft(&GetMatrixT2L().Inverse());
   TGeoHMatrix mT2G;
-  const TGeoHMatrix &mClAlg = GetMatrixClAlg();
   GetMatrixT2G(mT2G);
-  mT2G.MasterToLocal(glo,tra);
-  mClAlg.MasterToLocal(tra,traId); // here we have almost idead X,Y and wrong Z
-  const double *trans = mClAlg.GetTranslation();
-  const double *rotmt = mClAlg.GetRotationMatrix();  
+  mT2G.MasterToLocal(glo,tra);     // we are in tracking frame, with original wrong alignment
+  mClAlgT.MasterToLocal(tra,traId); // here we have almost ideal X,Y and wrong Z
+  const double *trans = mClAlgT.GetTranslation();
+  const double *rotmt = mClAlgT.GetRotationMatrix();  
   tra[2] = trans[2] + traId[0]*rotmt[6]+traId[1]*rotmt[7]+tra[2]*rotmt[8]; //we got misaligned Z
   mT2G.LocalToMaster(tra,glo);
-  */
+  //  */
   // now continue as usual
   // <<<------------- here we fix the z by emulating Misalign action in the tracking frame ------<<<
   //
   // undo reco-time alignment
-  matL2Grec.MasterToLocal(glo,loc); // go to local frame using reco-time matrix, here we recover ideal measurement 
+  matL2Grec.MasterToLocal(glo,locId); // go to local frame using reco-time matrix, here we recover ideal measurement 
   //
-  matT2L.MasterToLocal(loc,traId);  // go to tracking frame 
+  GetMatrixClAlg().LocalToMaster(locId,loc);   // apply alignment
   //
-  GetMatrixClAlg().LocalToMaster(traId,tra);   // apply alignment
+  matT2L.MasterToLocal(loc,tra);  // go to tracking frame 
+  //
+  /*
+  double gloT[3]; 
+  TGeoHMatrix t2g;
+  GetMatrixT2G(t2g); t2g.LocalToMaster(tra,gloT);
+  printf("\n%5d %s\n",GetVolID(), GetSymName());
+  printf("GloOR: %+.4e %+.4e %+.4e\n",glo[0],glo[1],glo[2]);
+  printf("LocID: %+.4e %+.4e %+.4e\n",locId[0],locId[1],locId[2]);
+  printf("LocML: %+.4e %+.4e %+.4e\n",loc[0],loc[1],loc[2]);
+  printf("Tra  : %+.4e %+.4e %+.4e\n",tra[0],tra[1],tra[2]);
+  printf("GloTR: %+.4e %+.4e %+.4e\n",gloT[0],gloT[1],gloT[2]);
+  */
   //
   if (!det->GetUseErrorParam()) {
     // convert error

@@ -19,9 +19,10 @@ void runGloAlgTask
     if (!gGrid) {printf("Cannot connect\n");exit(1);}
   }
   //
-  gROOT->ProcessLine(".include $ALICE_ROOT/include $ALICE_PHYSICS/include ./");
-  gSystem->SetIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include -I./");
-  
+  gROOT->ProcessLine(Form(".include $ALICE_ROOT/include $ALICE_PHYSICS/include ./ %s",gSystem->pwd()));
+  gSystem->SetIncludePath(Form("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include -I./ -I%s",gSystem->pwd()));
+  printf("Include line: %s",gSystem->GetIncludePath());
+  //
   if (gClassTable->GetID("AliAlgSteer")<0) {
     gSystem->Load("libAlg.so");
   }
@@ -43,7 +44,9 @@ void runGloAlgTask
   //-------------------------------------------
   algTask->SetTriggerSelection(trigSel);
   algTask->SetConfMacroName("alignConf.C");
+  //  algTask->SetConfMacroName("pedeF/alignConf.C");
   algTask->SetIniParFileName("millepede.res");
+  //  algTask->SetApplyMPSolAlignment(kTRUE);
   //-------------------------------------------
   AliAnalysisDataContainer *coutput1 = 
     mgr->CreateContainer("clist", TList::Class(),AliAnalysisManager::kOutputContainer,"mpStatOut.root");

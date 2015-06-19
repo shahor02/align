@@ -28,6 +28,7 @@
 #include "AliAlignObj.h"
 #include "AliCDBId.h"
 #include "AliExternalTrackParam.h"
+#include "AliAlignObjParams.h"
 #include <TString.h>
 #include <TH1.h>
 #include <stdio.h>
@@ -155,6 +156,19 @@ void  AliAlgDet::ApplyAlignmentFromMPSol()
 void AliAlgDet::CacheReferenceOCDB()
 {
   // if necessary, detector may fetch here some reference OCDB data
+  //
+  // cache global deltas to avoid preicision problem
+  AliCDBManager* man = AliCDBManager::Instance();
+  AliCDBEntry* ent = man->Get(Form("%s/Align/Data",GetName()));
+  TObjArray* arr = (TObjArray*)ent->GetObject();
+  for (int i=arr->GetEntriesFast();i--;) {
+    const AliAlignObjParams* par = (const AliAlignObjParams*)arr->At(i);
+    AliAlgVol* vol = GetVolume(par->GetSymName());
+    if (!vol) {AliErrorF("Volume %s not found",par->GetSymName()); continue;}
+    TGeoHMatrix delta;
+    par->GetMatrix(delta);
+    vol->SetGlobalDeltaRef(delta);
+  }
 }
 
 

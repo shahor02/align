@@ -6,8 +6,8 @@ Bool_t InputHandlerSetup(TString formatFr = "AliESDfriends_Barrel.root");
 //====================================================================
 void runGloAlgTask
 (
- //TString data="wn.xml",
- TString data="algColl.txt",
+ TString data="wn.xml",
+ //TString data="algColl.txt",
  Int_t nEvents=-1,
  UInt_t trigSel = AliVEvent::kAny,
  TString formatFr = "AliESDfriends_Barrel.root"
@@ -45,7 +45,7 @@ void runGloAlgTask
   algTask->SetTriggerSelection(trigSel);
   algTask->SetConfMacroName("alignConf.C");
   //  algTask->SetConfMacroName("pedeF/alignConf.C");
-  algTask->SetIniParFileName("pedeF/millepede.res");
+  algTask->SetIniParFileName("millepede.res");
   //  algTask->SetApplyMPSolAlignment(kTRUE);
   //-------------------------------------------
   AliAnalysisDataContainer *coutput1 = 

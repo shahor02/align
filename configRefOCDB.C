@@ -2,14 +2,14 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-//TString specOCDB = "";// "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
-TString specOCDB = "outOCDB";
+TString specOCDB = "";// "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+//TString specOCDB = "outOCDB";
 
 void configRefOCDB(int run = 188503) 
 {
   //
-  int ver = 0;
-  int sver = 0;
+  int ver = -1;
+  int sver = -1;
 
   AliAlgAux::CleanOCDB();
   AliCDBManager* man = AliCDBManager::Instance();

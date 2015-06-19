@@ -194,6 +194,8 @@ void AliAlgSteer::InitDetectors()
   //
   if (GetInitGeomDone()) return;
   //
+
+  //
   fAlgTrack = new AliAlgTrack();
   fRefPoint = new AliAlgPoint();
   //

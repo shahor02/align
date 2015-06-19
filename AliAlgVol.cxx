@@ -29,6 +29,7 @@
 
   1) local delta:   l'_j = delta_j * l_j
   hence g'  = G_j * delta_j = G'_j*l_j 
+  or as 
   2) global Delta:  g' = Delta_j * G_j * l_j = G'_j*l_j 
   
   Hence Delta and delta are linked as 
@@ -42,6 +43,7 @@
 
   -> Delta_j = G'_{j-1} * G^-1_{j-1} * G_j * G'^-1_j 
   where G and G' are modified and original L2G matrices
+
 
   From this by induction one gets relation between local and global deltas:
 
@@ -147,6 +149,7 @@ AliAlgVol::AliAlgVol(const char* symname, int iid) :
   ,fMatL2G()
   ,fMatL2GIdeal()
   ,fMatT2L()
+  ,fMatDeltaRefGlo()
 {
   // def c-tor
   SetVolID(0); // volumes have no VID, unless it is sensor
@@ -519,6 +522,20 @@ void AliAlgVol::CreateGloDeltaMatrix(TGeoHMatrix &deltaM) const
   // This deltaM does not account for eventual prealignment
   // Volume knows if its variation was done in TRA or LOC frame
   //
+  CreateLocDeltaMatrix(deltaM);
+  deltaM.Multiply(&GetMatrixL2G().Inverse());
+  deltaM.MultiplyLeft(&GetMatrixL2G());
+  //
+}
+
+/*
+//_________________________________________________________________
+void AliAlgVol::CreateGloDeltaMatrix(TGeoHMatrix &deltaM) const
+{
+  // Create global matrix deltaM from fParVals array containing corrections.
+  // This deltaM does not account for eventual prealignment
+  // Volume knows if its variation was done in TRA or LOC frame
+  //
   // deltaM = Z * deltaL * Z^-1 
   // where deltaL is local correction matrix and Z is matrix defined as 
   // Z = [ Prod_{k=0}^{j-1} G_k * deltaL_k * G^-1_k ] * G_j
@@ -538,6 +555,7 @@ void AliAlgVol::CreateGloDeltaMatrix(TGeoHMatrix &deltaM) const
   deltaM.Multiply( &zMat.Inverse() );
   //
 }
+*/
 
 //_________________________________________________________________
 void AliAlgVol::CreatePreGloDeltaMatrix(TGeoHMatrix &deltaM) const
@@ -628,29 +646,48 @@ void AliAlgVol::CreateLocDeltaMatrix(TGeoHMatrix &deltaM) const
   //
 }
 
-/*
 //_________________________________________________________________
 void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
 {
   // create final alignment matrix, accounting for eventual prealignment
   //
-  //  Delta_j = Product_{i=0,j} [ G_i * delta_i * Gideal_i^-1]
-  // where delta_i is local correction matrix, G_i is pre-misaligned reference L2G
-  // and Gideal is L2GIdeal
-  alg.Clear();
-  const AliAlgVol* vol = this;
-  while(vol) {
-    TGeoHMatrix delLoc;
-    vol->CreateLocDeltaMatrix(delLoc);
-    delLoc.Multiply( &vol->GetMatrixL2GIdeal().Inverse() );
-    delLoc.MultiplyLeft( &vol->GetMatrixL2G() );
-    alg.MultiplyLeft(&delLoc);
-    vol =  vol->GetParent();
+  // if the correction for this volume at level j is TAU (global delta) then the combined
+  // correction (accounting for reference prealignment) is 
+  // (Delta_0 * .. Delta_{j-1})^-1 * TAU ( Delta_0 * .. Delta_j)
+  // where Delta_i is prealigment global delta of volume i (0 is top)
+  // In principle, it can be obtained as:
+  // GIdeal_{j-1} * G_{j-1}^-1 * TAU * G_{j}^-1 * GIdeal_{j}^-1
+  // where G_i is pre-misaligned reference L2G and GIdeal_i is L2GIdeal,
+  // but this creates precision problem. 
+  // Therefore we use explicitly cached Deltas from prealignment object.
+  //
+  CreateGloDeltaMatrix(alg);
+  //
+  const AliAlgVol* par = GetParent();
+  if (par) {
+    TGeoHMatrix dchain;
+    while (par) {
+      dchain.MultiplyLeft(&par->GetGlobalDeltaRef());
+      par = par->GetParent();
+    }
+    alg.Multiply(&dchain);
+    alg.MultiplyLeft(&dchain.Inverse());
   }
+  alg *= GetGlobalDeltaRef();
+
+
+  /* // bad precision ?
+  alg.Multiply(&GetMatrixL2G());
+  alg.Multiply(&GetMatrixL2GIdeal().Inverse());
+  if (par) {
+    alg.MultiplyLeft(&par->GetMatrixL2G().Inverse());
+    alg.MultiplyLeft(&par->GetMatrixL2GIdeal());
+  }
+  */
   //
 }
-*/
 
+ /*
 //_________________________________________________________________
 void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
 {
@@ -677,6 +714,7 @@ void AliAlgVol::CreateAlignmenMatrix(TGeoHMatrix& alg) const
   alg *= matX.Inverse();
   //
 }
+*/
 
 //_________________________________________________________________
 void AliAlgVol::CreateAlignmentObjects(TClonesArray* arr) const

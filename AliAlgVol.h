@@ -105,9 +105,12 @@ class AliAlgVol : public TNamed
   const TGeoHMatrix&  GetMatrixL2G()             const {return fMatL2G;}
   const TGeoHMatrix&  GetMatrixL2GIdeal()        const {return fMatL2GIdeal;}
   const TGeoHMatrix&  GetMatrixL2GReco()         const {return fMatL2GReco;}
+  const TGeoHMatrix&  GetGlobalDeltaRef()        const {return fMatDeltaRefGlo;}
   void  SetMatrixL2G(const TGeoHMatrix& m)             {fMatL2G = m;}
   void  SetMatrixL2GIdeal(const TGeoHMatrix& m)        {fMatL2GIdeal = m;}
   void  SetMatrixL2GReco(const TGeoHMatrix& m)         {fMatL2GReco = m;}
+  void  SetGlobalDeltaRef(TGeoHMatrix& mat)            {fMatDeltaRefGlo = mat;}
+  //
   virtual void   PrepareMatrixL2G(Bool_t reco=kFALSE);
   virtual void   PrepareMatrixL2GIdeal();
   virtual void   UpdateL2GRecoMatrices(const TClonesArray* algArr,const TGeoHMatrix* cumulDelta);
@@ -189,12 +192,13 @@ class AliAlgVol : public TNamed
   TGeoHMatrix fMatL2G;                // local to global matrix, including current alignment
   TGeoHMatrix fMatL2GIdeal;           // local to global matrix, ideal
   TGeoHMatrix fMatT2L;                // tracking to local matrix (ideal)
+  TGeoHMatrix fMatDeltaRefGlo;        // global reference delta from Align/Data
   //
   static const char* fgkDOFName[kNDOFGeom];
   static const char* fgkFrameName[kNVarFrames];
   static UInt_t      fgDefGeomFree;
   //
-  ClassDef(AliAlgVol,1)
+  ClassDef(AliAlgVol,2)
 };
 
 //___________________________________________________________
