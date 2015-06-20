@@ -9,6 +9,7 @@
 #include <fstream>
 #include "AliAlgRes.h"
 #include "HistoManager.h"
+#include "SaveCanvas.h"
 #include "AliGeomManager.h"
 #include "AliITSgeomTGeo.h"
 #endif
@@ -61,6 +62,9 @@ const char* kFitOptP1 = "qmr"; //
 const int kNBinPull = 50;
 const double kMaxPull = 5;
 //
+const int kNBinsPtVTX =  15;
+const double kMaxPtVTX = 10;
+const double kMinPtVTX = 0.7;
 const int kNBinsResVTX = 100;
 const int kNBinsAlpVTX = 36;
 //
@@ -205,6 +209,18 @@ void FillVTX(int ip)
   hman->GetHisto2F(offs+kDZPull)->Fill(res->GetAlpha(ip),res->GetDZ(ip)/
 					  TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
   //
+  double pt = TMath::Abs(res->GetQ2Pt());
+  if (pt>0) {
+    offs += 5;
+    pt = 1./pt;
+    hman->GetHisto2F(offs+kDY)->Fill(pt,res->GetDYK(ip));
+    hman->GetHisto2F(offs+kDZ)->Fill(pt,res->GetDZK(ip));
+    hman->GetHisto2F(offs+kDYPull)->Fill(pt,res->GetDYK(ip)/
+					 TMath::Sqrt(res->GetSigY2(ip)+res->GetSigY2K(ip)));
+    hman->GetHisto2F(offs+kDZPull)->Fill(pt,res->GetDZ(ip)/
+					 TMath::Sqrt(res->GetSigZ2(ip)+res->GetSigZ2K(ip)));
+    
+  }
 }
 
 
@@ -457,6 +473,52 @@ void BookHistosVTX(HistoManager* hm)
   //
   hm->AddHisto(h2, hoffs + kDZPull);
   //
+  // DCA vs PT
+  //
+  hoffs += 5;
+
+  hnm = Form("VTXYvsPt");
+  htl = Form("VTX #DeltaY vs p_{T}");
+  h2 = new TH2F(hnm.Data(),htl.Data(),	       
+		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsResVTX,-kMaxDYVTX,kMaxDYVTX);
+  h2->SetXTitle("p_{T}");
+  h2->SetYTitle("#DeltaY");
+  //
+  hm->AddHisto(h2, hoffs + kDY);
+  //
+  hnm = Form("VTXDZvsPt");
+  htl = Form("VTX #DeltaZ vs p_{T}");
+  h2 = new TH2F(hnm.Data(),htl.Data(),
+		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsResVTX,-kMaxDZVTX,kMaxDZVTX);
+  h2->SetXTitle("p_{T}");
+  h2->SetYTitle("#DeltaZ");
+  //
+  hm->AddHisto(h2, hoffs + kDZ);
+  //
+  hnm = Form("VTXYPullvsPt");
+  htl = Form("VTX #DeltaY Pull vs p_{T}");
+  h2 = new TH2F(hnm.Data(),htl.Data(),	       
+		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinPull,-kMaxPull,kMaxPull);
+  h2->SetXTitle("p_{T}");
+  h2->SetYTitle("#DeltaY Pull");
+  //
+  hm->AddHisto(h2, hoffs + kDYPull);
+  //
+  hnm = Form("VTXDZPullvsPt");
+  htl = Form("VTX #DeltaZ Pull vs p_{T}");
+  h2 = new TH2F(hnm.Data(),htl.Data(),
+		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinPull,-kMaxPull,kMaxPull);
+  h2->SetXTitle("p_{T}");
+  h2->SetYTitle("#DeltaZ Pull");
+  //
+  hm->AddHisto(h2, hoffs + kDZPull);
+  //
+  
+
 }
 
 //___________________________________________
@@ -540,6 +602,76 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     }
   }
   //
+  // --- 
+  arrY.Clear();
+  arrZ.Clear();
+  arrYP.Clear();
+  arrZP.Clear();
+
+  hoffs += 5;
+  h = hm->GetHisto2F(hoffs + kDY);
+  if (h) arrY.Add(h);
+  h = hm->GetHisto2F(hoffs + kDZ);
+  if (h) arrZ.Add(h);
+  h = hm->GetHisto2F(hoffs + kDYPull);
+  if (h) arrYP.Add(h);
+  h = hm->GetHisto2F(hoffs + kDZPull);
+  if (h) arrZP.Add(h);
+  //
+  if (FitProfile(&arrY)) {
+    h1 = (TH1*)arrY.RemoveAt(0);
+    if (h1) {
+      h1->SetNameTitle("DCA_Y_Mean","DCA_{Y} mean");
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDY*10+0);
+    }
+    h1 = (TH1*)arrY.RemoveAt(1);
+    if (h1) {
+      h1->SetNameTitle("DCA_Y_Sigm","DCA_{Y} sigma");
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDY*10+1);
+    }
+  }
+  //
+  if (FitProfile(&arrZ)) {
+    h1 = (TH1*)arrZ.RemoveAt(0);
+    if (h1) {
+      h1->SetNameTitle("DCA_Z_Mean","DCA_{Z} mean");
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZ*10+0);
+    }
+    h1 = (TH1*)arrZ.RemoveAt(1);
+    if (h1) {
+      h1->SetNameTitle("DCA_Z_Sigm","DCA_{Z} sigma");      
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZ*10+1);
+    }
+  }
+  //
+  if (FitProfile(&arrYP)) {
+    h1 = (TH1*)arrYP.RemoveAt(0);
+    if (h1) {
+      h1->SetNameTitle("DCA_YPull_Mean","DCA_{YPull} mean");
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDYPull*10+0);
+    }
+    h1 = (TH1*)arrYP.RemoveAt(1);
+    if (h1) {
+      h1->SetNameTitle("DCA_YPull_Sigm","DCA_{YPull} sigma");      
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDYPull*10+1);
+    }
+  }
+  //
+  if (FitProfile(&arrZP)) {
+    h1 = (TH1*)arrZP.RemoveAt(0);
+    if (h1) {
+      h1->SetNameTitle("DCA_ZPull_Mean","DCA_{ZPull} mean");
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZPull*10+0);
+    }
+    h1 = (TH1*)arrZP.RemoveAt(1);
+    if (h1) {
+      h1->SetNameTitle("DCA_ZPull_Sigm","DCA_{ZPull} sigma");      
+      hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZPull*10+1);
+    }
+  }
+  //
+
+
 }
 
 
@@ -881,6 +1013,9 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
   double rangeZ = 50e-4;  
   double rangeYSig = 150e-4;
   double rangeZSig = 250e-4;  
+  //
+  // vs alpha
+  //
   repCanv->Clear();
   repCanv->Divide(2,2);
   //
@@ -909,6 +1044,41 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
   DrawHistos(hmans, kHOffsVTX + kDZPull*10+0);
   repCanv->cd(4);
   DrawHistos(hmans, kHOffsVTX + kDZPull*10+1);
+  //
+  repCanv->cd();
+  repCanv->Print(psnm); // Z
+  //
+  // 
+  // vs pt
+  //
+  repCanv->Clear();
+  repCanv->Divide(2,2);
+  //
+  repCanv->cd(1);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDY*10+0,rangeY);
+  repCanv->cd(2);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDY*10+1,rangeYSig,0);
+  //
+  repCanv->cd(3);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDYPull*10+0);
+  repCanv->cd(4);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDYPull*10+1);
+  //
+  repCanv->cd();
+  repCanv->Print(psnm); // Y
+  //
+  repCanv->Clear();
+  repCanv->Divide(2,2);
+  //  
+  repCanv->cd(1);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDZ*10+0,rangeZ);
+  repCanv->cd(2);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDZ*10+1,rangeZSig);
+  //
+  repCanv->cd(3);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDZPull*10+0);
+  repCanv->cd(4);
+  DrawHistos(hmans, kHOffsVTX + 100 + kDZPull*10+1);
   //
   repCanv->cd();
   repCanv->Print(psnm); // Z
