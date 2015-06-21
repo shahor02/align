@@ -33,6 +33,7 @@ const char* AliAlgDetTRD::fgkCalibDOFName[AliAlgDetTRD::kNCalibParams]={"DZdTglN
 AliAlgDetTRD::AliAlgDetTRD(const char* title)
   : AliAlgDet()
   ,fNonRCCorrDzDtgl(0)
+  ,fCorrDVT(0)
 {
   // default c-tor
   SetNameTitle(AliAlgSteer::GetDetNameByDetID(AliAlgSteer::kTRD),title);

@@ -14,7 +14,8 @@ class AliAlgDetTRD : public AliAlgDet
 {
  public:
   //
-  enum {kCalibRCCorrDzDtgl,  // correction parameter for NonRC tracklets
+  enum {kCalibNRCCorrDzDtgl,  // correction parameter for NonRC tracklets
+	kCalibDVT,            // global correction to Vdrift*t
 	kNCalibParams};  // calibration parameters
   //
   AliAlgDetTRD(const char* title="");
@@ -29,10 +30,14 @@ class AliAlgDetTRD : public AliAlgDet
   //
   virtual void         WritePedeInfo(FILE* parOut,const Option_t *opt="") const;
   //
-  Double_t GetNonRCCorrDzDtglWithCal()                    const {return GetNonRCCorrDzDtgl()+GetParVal(kCalibRCCorrDzDtgl);}
+  void     SetNonRCCorrDzDtgl(double v=0)                       {fNonRCCorrDzDtgl = v;}
   Double_t GetNonRCCorrDzDtgl()                           const {return fNonRCCorrDzDtgl;}
-  void     SetNonRCCorrDzDtgl(double v=1.055)                   {fNonRCCorrDzDtgl = v;}
+  Double_t GetNonRCCorrDzDtglWithCal()                    const {return GetNonRCCorrDzDtgl()+GetParVal(kCalibNRCCorrDzDtgl);}
   //
+  void     SetCorrDVT(double v=0)                               {fCorrDVT = 0;}
+  Double_t GetCorrDVT()                                   const {return fCorrDVT;}
+  Double_t GetCorrDVTWithCal()                            const {return GetCorrDVT() + GetParVal(kCalibDVT);}
+
   const Double_t* GetExtraErrRC()                         const {return fExtraErrRC;} 
   void     SetExtraErrRC(double y=0.2, double z=1.0)            {fExtraErrRC[0]=y;fExtraErrRC[1]=z;}
   //  
@@ -45,6 +50,7 @@ class AliAlgDetTRD : public AliAlgDet
  protected:
   //
   Double_t fNonRCCorrDzDtgl;     // correction in Z for non-crossing tracklets
+  Double_t fCorrDVT;             // correction to Vdrift*t
   Double_t fExtraErrRC[2];       // extra errors for RC tracklets
   //
   static const char* fgkCalibDOFName[kNCalibParams];

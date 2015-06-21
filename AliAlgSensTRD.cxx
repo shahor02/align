@@ -21,6 +21,7 @@
 #include "AliAlgPoint.h"
 #include "AliTrackPointArray.h"
 #include "AliESDtrack.h"
+#include "AliTrackerBase.h"
 
 ClassImp(AliAlgSensTRD)
 
@@ -84,7 +85,7 @@ void AliAlgSensTRD::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int ca
   if (!parent) { // TRD detector global calibration
     //
     switch (calibID) {
-    case AliAlgDetTRD::kCalibRCCorrDzDtgl:  
+    case AliAlgDetTRD::kCalibNRCCorrDzDtgl:  
       {  // correction for Non-Crossing tracklets Z,Y shift: Z -> Z + calib*tgl, Y -> Y + calib*tgl*tilt*sign(tilt);
 	double sgYZ = pnt->GetYZErrTracking()[1]; // makes sense only for nonRC tracklets   
 	if (Abs(sgYZ)>0.01) {
@@ -94,6 +95,16 @@ void AliAlgSensTRD::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int ca
 	}
 	break;
       }
+      //
+    case AliAlgDetTRD::kCalibDVT:  
+      { // correction for bias in VdriftT
+	// error in VdriftT equivalent to shift in X at which Y measurement is evaluated
+	// Y -> Y + dVdriftT * tg_phi, where tg_phi is the slope of the track in YX plane
+	double snp=pnt->GetTrParamWSA(AliAlgPoint::kParSnp),slpY=snp/Sqrt((1-snp)*(1+snp));
+	deriv[1] = slpY;
+	break;
+      }
+
     default: break;
     };
   }
@@ -169,21 +180,39 @@ AliAlgPoint* AliAlgSensTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
   //
   pnt->SetContainsMeasurement();
   //
-  const double kTilt = 2.*TMath::DegToRad();
-  // is it pad crrossing?
-  double* errYZ = (double*) pnt->GetYZErrTracking();
-  double sgYZ = errYZ[1];
-  if (TMath::Abs(sgYZ)<0.01) {  // crossing
-    // increase errors since the error 
-    const double* extraErrRC = det->GetExtraErrRC();
-    errYZ[0] += extraErrRC[0]*extraErrRC[0];
-    errYZ[2] += extraErrRC[1]*extraErrRC[1];
+  // Apply calibrations
+  // Correction for NonRC points to account for most probable Z for non-crossing
+  {
+    const double kTilt = 2.*TMath::DegToRad();
+    // is it pad crrossing?
+    double* errYZ = (double*) pnt->GetYZErrTracking();
+    double sgYZ = errYZ[1];
+    if (TMath::Abs(sgYZ)<0.01) {  // crossing
+      // increase errors since the error 
+      const double* extraErrRC = det->GetExtraErrRC();
+      errYZ[0] += extraErrRC[0]*extraErrRC[0];
+      errYZ[2] += extraErrRC[1]*extraErrRC[1];
+    }
+    else { // account for probability to not cross the row
+      double* pYZ = (double*)pnt->GetYZTracking();
+      double corrZ = det->GetNonRCCorrDzDtglWithCal()*tr->GetTgl();
+      pYZ[1] += corrZ; 
+      pYZ[0] += corrZ*Sign(kTilt,sgYZ);  // Y and Z are correlated
+    }
   }
-  else { // account for probability to not cross the row
-    double* pYZ = (double*)pnt->GetYZTracking();
-    double corrZ = det->GetNonRCCorrDzDtglWithCal()*tr->GetTgl();
-    pYZ[1] += corrZ; 
-    pYZ[0] += corrZ*Sign(kTilt,sgYZ);  // Y and Z are correlated
+  //
+  // Correction for DVT, equivalent to shift in X at which Y is evaluated: dY = tg_phi * dvt
+  {
+    double dvt = det->GetCorrDVTWithCal();
+    if (Abs(dvt)>kAlmostZeroD) {
+      AliExternalTrackParam trc = *tr;
+      if (!trc.RotateParamOnly(GetAlpTracking())) return 0;
+      double snp = trc.GetSnpAt(pnt->GetXPoint(),AliTrackerBase::GetBz());
+      if (Abs(snp)>1.-kAlmostOneD) return 0;
+      double slpY = snp/Sqrt((1-snp)*(1+snp));
+      double* pYZ = (double*)pnt->GetYZTracking();
+      pYZ[0] += dvt*slpY;
+    }
   }
   //
   pnt->Init();

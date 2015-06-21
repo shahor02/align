@@ -197,7 +197,7 @@ void ConfigTRD(AliAlgSteer* algSteer)
   det->SetNPointsSelCosm(2);
   //
   // allow variation of correction parameter for DZ,DY of non-crossing tracklets
-  det->SetFreeDOF(AliAlgDetTRD::kCalibRCCorrDzDtgl);
+  det->SetFreeDOF(AliAlgDetTRD::kCalibNRCCorrDzDtgl);
   //
   // just repeat default settings
   //det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets

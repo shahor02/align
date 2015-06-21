@@ -368,9 +368,9 @@ Bool_t AliAlgTrack::CalcResidDerivGlo(AliAlgPoint* pnt)
       // where the track is evaluated at measured X! 
       // -> take into account modified X using track parameterization at the point (paramWSA)
       // Attention: small simplifications(to be checked if it is ok!!!): 
-      // effect of changing X is accounted neglecting track curvature
+      // effect of changing X is accounted neglecting track curvature to preserve linearity
       //
-      // store diagonalize residuals in track buffer
+      // store diagonalized residuals in track buffer
       pnt->DiagonalizeResiduals((dXYZ[AliAlgPoint::kX]*slpY - dXYZ[AliAlgPoint::kY]),
 				(dXYZ[AliAlgPoint::kX]*slpZ - dXYZ[AliAlgPoint::kZ]),
 				fDResDGloA[0][fNGloPar],fDResDGloA[1][fNGloPar]);
