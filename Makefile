@@ -9,6 +9,7 @@ DICTO=	AliAlgDict.o
 
 SRC = 	AliAlgAux.cxx AliAlgDetTPC.cxx AliAlgSens.cxx AliAlgSensTRD.cxx  \
 	AliAlgDet.cxx AliAlgDetTRD.cxx AliAlgSensITS.cxx \
+	AliAlgDetHMPID.cxx AliAlgSensHMPID.cxx \
 	AliAlgSteer.cxx AliAlgDetITS.cxx  AliAlgMPRecord.cxx  AliAlgSensTOF.cxx \
 	AliAlgTrack.cxx AliAlgDetTOF.cxx  AliAlgPoint.cxx AliAlgSensTPC.cxx \
 	AliAlgVol.cxx AliAlgVtx.cxx AliAlgRes.cxx AliAlgResFast.cxx \
