@@ -6,7 +6,9 @@ AliAlgRes.{h,cxx}  AliAlgSensITS.{h,cxx} AliAlgSensTPC.{h,cxx}  AliAlgSteer.{h,c
 AliAlgVol.{h,cxx}  AliAlgDet.{h,cxx}  AliAlgDetTOF.{h,cxx}  AliAlgDetTRD.{h,cxx}  \
 AliAlgPoint.{h,cxx}  AliAlgSens.{h,cxx} AliAlgSensTOF.{h,cxx}  AliAlgSensTRD.{h,cxx} \
 AliAlgTrack.{h,cxx}  AliAlgVtx.{h,cxx} AliAlgConstraint.{h,cxx} AliAlgResFast.{h,cxx} \
+AliAlgDetHMPID.{h,cxx} AliAlgSensHMPID.{h,cxx} \
 AliAlgDOFStat.{h,cxx} AlgLinkDef.h \
 Mille.{h,cxx} \
+runGloAlgTask.C AliGloAlgTask.{h,cxx} \
 Makefile
 

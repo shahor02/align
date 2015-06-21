@@ -27,7 +27,7 @@ using namespace TMath;
 
 ClassImp(AliAlgDetTRD);
 
-const char* AliAlgDetTRD::fgkCalibDOFName[AliAlgDetTRD::kNCalibParams]={"DZdTglNRC"};
+const char* AliAlgDetTRD::fgkCalibDOFName[AliAlgDetTRD::kNCalibParams]={"DZdTglNRC","DVDriftT"};
 
 //____________________________________________
 AliAlgDetTRD::AliAlgDetTRD(const char* title)
