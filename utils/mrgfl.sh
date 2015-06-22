@@ -15,7 +15,7 @@ if [ "$1" == "-f" ] ; then
     if [ $# -lt 2 ] ; then Usage ;fi
 fi
 #
-mrglst="_mrglst.txt"
+mrglst="_mrglst_`date +%s`.txt"
 if [ -e $mrglst ] ; then rm $mrglst ;fi
 #
 outf=$1
@@ -55,6 +55,5 @@ void ${macroName}'(const char* outFile,const char* mrgLst,Bool_t force) {
 
 aliroot -b -q ${macroName}.C\(\"${outf}\",\"${mrglst}\",${force}\)
 
-exit
 rm ${mrglst}
 rm ${macroName}.C
