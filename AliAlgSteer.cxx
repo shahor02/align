@@ -81,7 +81,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fAlgTrack(0)
   ,fVtxSens(0)
   ,fConstraints()
-  ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult)
+  ,fSelEventSpecii(AliRecoParam::kCosmic|AliRecoParam::kLowMult|AliRecoParam::kHighMult|AliRecoParam::kDefault)
   ,fCosmicSelStrict(kFALSE)
   ,fVtxMinCont(-1)
   ,fVtxMaxCont(-1)
@@ -439,14 +439,14 @@ Bool_t AliAlgSteer::ProcessEvent(const AliESDEvent* esdEv)
     return kFALSE;
   }
   //
-  SetCosmic(esdEv->GetEventSpecie()==AliRecoParam::kCosmic);
+  SetCosmic(esdEv->GetEventSpecie()==AliRecoParam::kCosmic || esdEv->GetNumberOfCosmicTracks()>0);
   //
   FillStatHisto( kEvInp );
   //
 #if DEBUG>2    
-  AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d",
+  AliInfoF("Processing event %d of ev.specie %d -> Ntr: %4d NtrCosm: %d",
 	   esdEv->GetEventNumberInFile(),esdEv->GetEventSpecie(),
-	   IsCosmic() ? esdEv->GetNumberOfCosmicTracks():esdEv->GetNumberOfTracks());
+	   esdEv->GetNumberOfTracks(),esdEv->GetNumberOfCosmicTracks());
 #endif
   //
   SetFieldOn(Abs(esdEv->GetMagneticField())>kAlmost0Field);
