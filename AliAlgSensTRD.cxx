@@ -208,7 +208,7 @@ AliAlgPoint* AliAlgSensTRD::TrackPoint2AlgPoint(int pntId, const AliTrackPointAr
       AliExternalTrackParam trc = *tr;
       if (!trc.RotateParamOnly(GetAlpTracking())) return 0;
       double snp = trc.GetSnpAt(pnt->GetXPoint(),AliTrackerBase::GetBz());
-      if (Abs(snp)>1.-kAlmostOneD) return 0;
+      if (Abs(snp)>kAlmostOneD) return 0;
       double slpY = snp/Sqrt((1-snp)*(1+snp));
       double* pYZ = (double*)pnt->GetYZTracking();
       pYZ[0] += dvt*slpY;

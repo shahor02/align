@@ -480,7 +480,7 @@ void BookHistosVTX(HistoManager* hm)
   hnm = Form("VTXYvsPt");
   htl = Form("VTX #DeltaY vs p_{T}");
   h2 = new TH2F(hnm.Data(),htl.Data(),	       
-		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsPtVTX,kMinPtVTX,kMaxPtVTX,
 		kNBinsResVTX,-kMaxDYVTX,kMaxDYVTX);
   h2->SetXTitle("p_{T}");
   h2->SetYTitle("#DeltaY");
@@ -490,7 +490,7 @@ void BookHistosVTX(HistoManager* hm)
   hnm = Form("VTXDZvsPt");
   htl = Form("VTX #DeltaZ vs p_{T}");
   h2 = new TH2F(hnm.Data(),htl.Data(),
-		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsPtVTX,kMinPtVTX,kMaxPtVTX,
 		kNBinsResVTX,-kMaxDZVTX,kMaxDZVTX);
   h2->SetXTitle("p_{T}");
   h2->SetYTitle("#DeltaZ");
@@ -500,7 +500,7 @@ void BookHistosVTX(HistoManager* hm)
   hnm = Form("VTXYPullvsPt");
   htl = Form("VTX #DeltaY Pull vs p_{T}");
   h2 = new TH2F(hnm.Data(),htl.Data(),	       
-		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsPtVTX,kMinPtVTX,kMaxPtVTX,
 		kNBinPull,-kMaxPull,kMaxPull);
   h2->SetXTitle("p_{T}");
   h2->SetYTitle("#DeltaY Pull");
@@ -510,15 +510,13 @@ void BookHistosVTX(HistoManager* hm)
   hnm = Form("VTXDZPullvsPt");
   htl = Form("VTX #DeltaZ Pull vs p_{T}");
   h2 = new TH2F(hnm.Data(),htl.Data(),
-		kNBinsPtVTX,-TMath::Pi(),TMath::Pi(),
+		kNBinsPtVTX,kMinPtVTX,kMaxPtVTX,
 		kNBinPull,-kMaxPull,kMaxPull);
   h2->SetXTitle("p_{T}");
   h2->SetYTitle("#DeltaZ Pull");
   //
   hm->AddHisto(h2, hoffs + kDZPull);
-  //
-  
-
+  //  
 }
 
 //___________________________________________
@@ -553,12 +551,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrY)) {
     h1 = (TH1*)arrY.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_Y_Mean","DCA_{Y} mean");
+      h1->SetNameTitle("DCA_Y_Phi_Mean","DCA_{Y} mean");
       hmProc->AddHisto(h1, kHOffsVTX + kDY*10+0);
     }
     h1 = (TH1*)arrY.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_Y_Sigm","DCA_{Y} sigma");
+      h1->SetNameTitle("DCA_Y_Phi_Sigm","DCA_{Y} sigma");
       hmProc->AddHisto(h1, kHOffsVTX + kDY*10+1);
     }
   }
@@ -566,12 +564,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrZ)) {
     h1 = (TH1*)arrZ.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_Z_Mean","DCA_{Z} mean");
+      h1->SetNameTitle("DCA_Z_Phi_Mean","DCA_{Z} mean");
       hmProc->AddHisto(h1, kHOffsVTX + kDZ*10+0);
     }
     h1 = (TH1*)arrZ.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_Z_Sigm","DCA_{Z} sigma");      
+      h1->SetNameTitle("DCA_Z_Phi_Sigm","DCA_{Z} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + kDZ*10+1);
     }
   }
@@ -579,12 +577,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrYP)) {
     h1 = (TH1*)arrYP.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_YPull_Mean","DCA_{YPull} mean");
+      h1->SetNameTitle("DCA_YPull_Phi_Mean","DCA_{YPull} mean");
       hmProc->AddHisto(h1, kHOffsVTX + kDYPull*10+0);
     }
     h1 = (TH1*)arrYP.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_YPull_Sigm","DCA_{YPull} sigma");      
+      h1->SetNameTitle("DCA_YPull_Phi_Sigm","DCA_{YPull} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + kDYPull*10+1);
     }
   }
@@ -592,17 +590,17 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrZP)) {
     h1 = (TH1*)arrZP.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_ZPull_Mean","DCA_{ZPull} mean");
+      h1->SetNameTitle("DCA_ZPull_Phi_Mean","DCA_{ZPull} mean");
       hmProc->AddHisto(h1, kHOffsVTX + kDZPull*10+0);
     }
     h1 = (TH1*)arrZP.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_ZPull_Sigm","DCA_{ZPull} sigma");      
+      h1->SetNameTitle("DCA_ZPull_Phi_Sigm","DCA_{ZPull} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + kDZPull*10+1);
     }
   }
   //
-  // --- 
+  // ---  // ---------------- PT dependence
   arrY.Clear();
   arrZ.Clear();
   arrYP.Clear();
@@ -621,12 +619,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrY)) {
     h1 = (TH1*)arrY.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_Y_Mean","DCA_{Y} mean");
+      h1->SetNameTitle("DCA_Y_Pt_Mean","DCA_{Y} mean");
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDY*10+0);
     }
     h1 = (TH1*)arrY.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_Y_Sigm","DCA_{Y} sigma");
+      h1->SetNameTitle("DCA_Y_Pt_Sigm","DCA_{Y} sigma");
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDY*10+1);
     }
   }
@@ -634,12 +632,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrZ)) {
     h1 = (TH1*)arrZ.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_Z_Mean","DCA_{Z} mean");
+      h1->SetNameTitle("DCA_Z_Pt_Mean","DCA_{Z} mean");
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZ*10+0);
     }
     h1 = (TH1*)arrZ.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_Z_Sigm","DCA_{Z} sigma");      
+      h1->SetNameTitle("DCA_Z_Pt_Sigm","DCA_{Z} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZ*10+1);
     }
   }
@@ -647,12 +645,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrYP)) {
     h1 = (TH1*)arrYP.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_YPull_Mean","DCA_{YPull} mean");
+      h1->SetNameTitle("DCA_YPull_Pt_Mean","DCA_{YPull} mean");
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDYPull*10+0);
     }
     h1 = (TH1*)arrYP.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_YPull_Sigm","DCA_{YPull} sigma");      
+      h1->SetNameTitle("DCA_YPull_Pt_Sigm","DCA_{YPull} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDYPull*10+1);
     }
   }
@@ -660,12 +658,12 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
   if (FitProfile(&arrZP)) {
     h1 = (TH1*)arrZP.RemoveAt(0);
     if (h1) {
-      h1->SetNameTitle("DCA_ZPull_Mean","DCA_{ZPull} mean");
+      h1->SetNameTitle("DCA_ZPull_Pt_Mean","DCA_{ZPull} mean");
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZPull*10+0);
     }
     h1 = (TH1*)arrZP.RemoveAt(1);
     if (h1) {
-      h1->SetNameTitle("DCA_ZPull_Sigm","DCA_{ZPull} sigma");      
+      h1->SetNameTitle("DCA_ZPull_Pt_Sigm","DCA_{ZPull} sigma");      
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZPull*10+1);
     }
   }
