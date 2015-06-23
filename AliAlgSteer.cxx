@@ -72,7 +72,7 @@ const Char_t* AliAlgSteer::fgkHStatName[AliAlgSteer::kNHVars] = {
 
 
 //________________________________________________________________
-AliAlgSteer::AliAlgSteer(const char* configMacro)
+AliAlgSteer::AliAlgSteer(const char* configMacro, int refRun)
   :fNDet(0)
   ,fNDOFs(0)
   ,fRunNumber(-1)
@@ -128,6 +128,7 @@ AliAlgSteer::AliAlgSteer(const char* configMacro)
   ,fConfMacroName(configMacro)
   ,fRecoOCDBConf("configRecoOCDB.C")
   ,fRefOCDBConf("configRefOCDB.C")
+  ,fRefRunNumber(refRun)
   ,fRefOCDBLoaded(0)
   ,fUseRecoOCDB(kTRUE)
 {
@@ -903,7 +904,7 @@ Bool_t AliAlgSteer::LoadRecoTimeOCDB()
     AliFatalF("macro %s failed to configure reco-time OCDB",fRecoOCDBConf.Data());
   }
   else AliWarningF("No reco-time OCDB config macro %s is found, will use ESD:UserInfo",
-		   fRefOCDBConf.Data());
+		   fRecoOCDBConf.Data());
   //
   if (!fESDTree) AliFatal("Cannot preload Reco-Time OCDB since the ESD tree is not set");
   const TTree* tr = fESDTree;  // go the the real ESD tree
@@ -971,7 +972,9 @@ void AliAlgSteer::Print(const Option_t *opt) const
   printf("Collision tracks: Min pT: %5.2f |etaMax|: %5.2f\n",fPtMin[kColl],fEtaMax[kColl]);
   printf("Cosmic    tracks: Min pT: %5.2f |etaMax|: %5.2f\n",fPtMin[kCosm],fEtaMax[kCosm]);
   //
-  printf("%-40s:\t%s\n","Config. for reference OCDB",fRefOCDBConf.Data());
+  printf("%-40s:\t%s","Config. for reference OCDB",fRefOCDBConf.Data());
+  if (fRefRunNumber>=0) printf("(%d)",fRefRunNumber);
+  printf("\n");
   printf("%-40s:\t%s\n","Config. for reco-time OCDB",fRecoOCDBConf.Data());
   //
   printf("%-40s:\t%s\n","Output OCDB path",fOutCDBPath.Data());
@@ -1343,7 +1346,8 @@ Bool_t AliAlgSteer::LoadRefOCDB()
   // 
   if (!fRefOCDBConf.IsNull() && !gSystem->AccessPathName(fRefOCDBConf.Data(), kFileExists)) {
     AliInfoF("Executing reference OCDB setup macro %s",fRefOCDBConf.Data());
-    gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
+    if (fRefRunNumber>0) gROOT->ProcessLine(Form(".x %s(%d)",fRefOCDBConf.Data(),fRefRunNumber));    
+    else                 gROOT->ProcessLine(Form(".x %s",fRefOCDBConf.Data()));
   }
   else {
     AliWarningF("No reference OCDB config macro %s is found, assume raw:// with run %d",
