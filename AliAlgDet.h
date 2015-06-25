@@ -70,6 +70,8 @@ class AliAlgDet : public TNamed
   ULong64_t   GetFreeDOFPattern()               const {return fCalibDOF;}
   Int_t       GetNProcessedPoints()             const {return fNProcPoints;}
   virtual const char* GetCalibDOFName(int)      const {return 0;}
+  virtual     Double_t GetCalibDOFVal(int)      const {return 0;}
+  virtual     Double_t GetCalibDOFValWithCal(int) const {return 0;}
   //
   virtual Int_t InitGeom();
   virtual Int_t AssignDOFs();

@@ -102,7 +102,6 @@ void AliAlgDetTRD::Print(const Option_t *opt) const
 {
   // print info
   AliAlgDet::Print(opt);
-  printf("Correction dZ/dTgl NonRC: %f\n",GetNonRCCorrDzDtglWithCal());
   printf("Extra error for RC tracklets: Y:%e Z:%e\n",fExtraErrRC[0],fExtraErrRC[1]);
 }
  
@@ -132,4 +131,24 @@ void AliAlgDetTRD::WritePedeInfo(FILE* parOut, const Option_t *opt) const
 	    GetParVal(ip),GetParErr(ip),comment[kOnOn],IsFreeDOF(ip) ? "  ":"FX",ip);
   }
   //
+}
+
+//_______________________________________________________
+Double_t AliAlgDetTRD::GetCalibDOFVal(int id) const
+{
+  // return preset value of calibration dof
+  double val = 0;
+  switch (id) {
+  case kCalibNRCCorrDzDtgl : val = GetNonRCCorrDzDtgl(); break;
+  case kCalibDVT           : val = GetCorrDVT();         break;
+  default: break;
+  };
+  return val;
+}
+
+//_______________________________________________________
+Double_t AliAlgDetTRD::GetCalibDOFValWithCal(int id) const
+{
+  // return preset value of calibration dof + mp correction
+  return GetCalibDOFVal(id) + GetParVal(id);
 }

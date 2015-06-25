@@ -386,6 +386,10 @@ void AliAlgDet::Print(const Option_t *opt) const
   if (!(IsDisabledColl()&&IsDisabledCosm()) && opts.Contains("long")) 
     for (int iv=0;iv<GetNVolumes();iv++) GetVolume(iv)->Print(opt);
   //
+  for (int i=0;i<GetNCalibDOFs();i++) {
+    printf("CalibDOF%2d: %-20s\t%e\n",i,GetCalibDOFName(i),GetCalibDOFValWithCal(i));
+  }
+
 }
 
 //____________________________________________

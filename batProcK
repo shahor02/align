@@ -12,12 +12,30 @@
 #aliroot -b -q ProcResK.C+g\(\"/data/algTest/v0/lstContBP.txt\",\"halgKV00_SDD5.root\",\"v0BP\"\)
 #aliroot -b -q ProcResK.C+g\(\"/data/algTest/v0/lstContBM.txt\",\"halgKV00_SDD5.root\",\"v0BM\"\)
 
-aliroot -b -q ProcResK.C+g\(\"control12_PF1_b0.lst\",\"halg12KPF1_SDD5.root\",\"pfB0\"\)
-aliroot -b -q ProcResK.C+g\(\"control12_PF1_bp.lst\",\"halg12KPF1_SDD5.root\",\"pfBP\"\)
-aliroot -b -q ProcResK.C+g\(\"control12_PF1_bm.lst\",\"halg12KPF1_SDD5.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_b0.lst\",\"halg12KPF1_SDD5.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_bp.lst\",\"halg12KPF1_SDD5.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_bm.lst\",\"halg12KPF1_SDD5.root\",\"pfBM\"\)
 
 
 #-------------------------------
 #aliroot -b -q ProcResK.C+g\(\"control15_v0_b0.lst\",\"halg15KV0_SDD5.root\",\"v0B0\"\)
 #aliroot -b -q ProcResK.C+g\(\"control15_v0_bp.lst\",\"halg15KV0_SDD5.root\",\"v0BP\"\)
 #aliroot -b -q ProcResK.C+g\(\"control15_v0_bm.lst\",\"halg15KV0_SDD5.root\",\"v0BM\"\)
+
+
+aliroot -b -q ProcResK.C+g\(\"controlCosmBM.lst\",\"halg15KV0cosm_SDD5.root\",\"v0BM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosmBP.lst\",\"halg15KV0cosm_SDD5.root\",\"v0BP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosmB0.lst\",\"halg15KV0cosm_SDD5.root\",\"v0B0\"\)
+
+aliroot -b -q ProcResK.C+g\(\"controlCollBM.lst\",\"halg15KV0coll_SDD5.root\",\"v0BM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCollBP.lst\",\"halg15KV0coll_SDD5.root\",\"v0BP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCollB0.lst\",\"halg15KV0coll_SDD5.root\",\"v0B0\"\)
+
+
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CosmBM.lst\",\"halg15KPF0cosm_SDD5.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CosmBP.lst\",\"halg15KPF0cosm_SDD5.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CosmB0.lst\",\"halg15KPF0cosm_SDD5.root\",\"pfB0\"\)
+
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CollBM.lst\",\"halg15KPF0coll_SDD5.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CollBP.lst\",\"halg15KPF0coll_SDD5.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlPF0_CollB0.lst\",\"halg15KPF0coll_SDD5.root\",\"pfB0\"\)

@@ -37,7 +37,10 @@ class AliAlgDetTRD : public AliAlgDet
   void     SetCorrDVT(double v=0)                               {fCorrDVT = 0;}
   Double_t GetCorrDVT()                                   const {return fCorrDVT;}
   Double_t GetCorrDVTWithCal()                            const {return GetCorrDVT() + GetParVal(kCalibDVT);}
-
+  //
+  virtual  Double_t GetCalibDOFVal(int id)                const;
+  virtual  Double_t GetCalibDOFValWithCal(int id)         const;
+  //
   const Double_t* GetExtraErrRC()                         const {return fExtraErrRC;} 
   void     SetExtraErrRC(double y=0.2, double z=1.0)            {fExtraErrRC[0]=y;fExtraErrRC[1]=z;}
   //  
