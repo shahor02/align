@@ -1,0 +1,23 @@
+#aliroot -b -q ProcResK.C+g\(\"control12_v0_b0.lst\",\"halgKV0_SDD5.root\",\"v0B0\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_v0_bp.lst\",\"halgKV0_SDD5.root\",\"v0BP\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_v0_bm.lst\",\"halgKV0_SDD5.root\",\"v0BM\"\)
+##
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_b0.lst\",\"halgKPF1_SDD5.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_bp.lst\",\"halgKPF1_SDD5.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"control12_PF1_bm.lst\",\"halgKPF1_SDD5.root\",\"pfBM\"\)
+
+#-----------------------------------
+
+#aliroot -b -q ProcResK.C+g\(\"/data/algTest/v0/lstContB0.txt\",\"halgKV00_SDD5.root\",\"v0B0\"\)
+#aliroot -b -q ProcResK.C+g\(\"/data/algTest/v0/lstContBP.txt\",\"halgKV00_SDD5.root\",\"v0BP\"\)
+#aliroot -b -q ProcResK.C+g\(\"/data/algTest/v0/lstContBM.txt\",\"halgKV00_SDD5.root\",\"v0BM\"\)
+
+aliroot -b -q ProcResK.C+g\(\"control12_PF1_b0.lst\",\"halg12KPF1_SDD5.root\",\"pfB0\"\)
+aliroot -b -q ProcResK.C+g\(\"control12_PF1_bp.lst\",\"halg12KPF1_SDD5.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"control12_PF1_bm.lst\",\"halg12KPF1_SDD5.root\",\"pfBM\"\)
+
+
+#-------------------------------
+#aliroot -b -q ProcResK.C+g\(\"control15_v0_b0.lst\",\"halg15KV0_SDD5.root\",\"v0B0\"\)
+#aliroot -b -q ProcResK.C+g\(\"control15_v0_bp.lst\",\"halg15KV0_SDD5.root\",\"v0BP\"\)
+#aliroot -b -q ProcResK.C+g\(\"control15_v0_bm.lst\",\"halg15KV0_SDD5.root\",\"v0BM\"\)
