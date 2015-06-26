@@ -15,19 +15,29 @@ if [ "$1" == "-f" ] ; then
     if [ $# -lt 2 ] ; then Usage ;fi
 fi
 #
-mrglst="_mrglst_`date +%s`.txt"
-if [ -e $mrglst ] ; then rm $mrglst ;fi
+ver=`date +%s`
+macroName="TmpMergeMacro_${ver}"
+mrglst="_mrglst_${ver}"
+cnt=0
+macroNameS="${macroName}"
+mrglstS="${mrglst}"
+while [ -f "${mrglstS}.txt" ] || [ -f "${macroNameS}.C" ] ; do
+    mrglstS="${mrglst}"_"$cnt"
+    macroNameS="${macroName}"_"$cnt"
+    cnt=$((cnt+1))
+done
+#
+macroName="$macroNameS"
+mrglst="${mrglstS}.txt"
 #
 outf=$1
 shift 1 ;
-
+#
 while [ $# -gt 0 ] ; do
     echo $1
     shift 1 ;
 done > $mrglst
 
-macroName="TmpMergeMacro"
-if [ -e ${macroName}.C ] ; then rm ${macroName}.C ;fi
 #
 #cat > ${macroName}.C << "EOF"
 echo \

@@ -577,14 +577,14 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     }
   }
   //
-  if (FitProfile(&arrYP,50,20,3)) {
+  if (FitProfile(&arrYP,50,20,1)) {
     for (int i=0;i<4;i++) {
       h1 = (TH1*)arrYP.RemoveAt(i);
       hmProc->AddHisto(h1, kHOffsVTX + kDYPull*10+i);
     }
   }
   //
-  if (FitProfile(&arrZP,50,20,3)) {
+  if (FitProfile(&arrZP,50,20,1)) {
     for (int i=0;i<4;i++) {
       h1 = (TH1*)arrZP.RemoveAt(i);
       hmProc->AddHisto(h1, kHOffsVTX + kDZPull*10+i);
@@ -622,14 +622,14 @@ void PostProcessVTX(HistoManager* hm,HistoManager* hmProc)
     }
   }
   //
-  if (FitProfile(&arrYP,50,20,3)) {
+  if (FitProfile(&arrYP,50,20,1)) {
     for (int i=0;i<4;i++) {
       h1 = (TH1*)arrYP.RemoveAt(i);
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDYPull*10+i);
     }
   }
   //
-  if (FitProfile(&arrZP,50,20,3)) {
+  if (FitProfile(&arrZP,50,20,1)) {
     for (int i=0;i<4;i++) {
       h1 = (TH1*)arrZP.RemoveAt(i);
       hmProc->AddHisto(h1, kHOffsVTX + 100 + kDZPull*10+i);
@@ -673,14 +673,14 @@ void PostProcessTOF(HistoManager* hm,HistoManager* hmProc)
       }
     }
     //
-    if (FitProfile(&arrYP,50,20,3)) {
+    if (FitProfile(&arrYP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrYP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffs + kDYPull*10+i);
       }
     }
     //
-    if (FitProfile(&arrZP,50,20,3)) {
+    if (FitProfile(&arrZP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrZP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffs + kDZPull*10+i);
@@ -732,14 +732,14 @@ void PostProcessITS(HistoManager* hm, HistoManager* hmProc)
       }
     }
     //
-    if (FitProfile(&arrYP,50,20,3)) {
+    if (FitProfile(&arrYP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrYP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffsP + kDYPull*10+i);
       }
     }
     //
-    if (FitProfile(&arrZP,50,20,3)) {
+    if (FitProfile(&arrZP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrZP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffsP + kDZPull*10+i);
@@ -791,14 +791,14 @@ void PostProcessTRD(HistoManager* hm, HistoManager* hmProc)
       }
     }
     //
-    if (FitProfile(&arrYP,50,20,3)) {
+    if (FitProfile(&arrYP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrYP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffsP + kDYPull*10+i);
       }
     }
     //
-    if (FitProfile(&arrZP,50,20,3)) {
+    if (FitProfile(&arrZP,50,20,1)) {
       for (int i=0;i<4;i++) {
 	h1 = (TH1*)arrZP.RemoveAt(i);
 	hmProc->AddHisto(h1, hoffsP + kDZPull*10+i);
@@ -888,13 +888,15 @@ Bool_t FitProfile(TObjArray *histos, int minEnt, int minEntBin, double drng, dou
   if (drng<0) drng = range;
   //
   if (drngM<=-999) drngM = -drng;
-  TH1* spr = new TH1F(Form("%s_spr",h->GetName()),Form("%s Spread",h->GetTitle()),100,drng,drngM);
+  TH1* spr = new TH1F(Form("%s_spr",h->GetName()),Form("Spread %s",h->GetTitle()),100,drngM,drng);
   //
   TF1* gs = new TF1("gs","gaus",-range,range);
   TObjArray hfarr;
   h->FitSlicesY(gs,0,-1,0,kFitOptGS,&hfarr);
   TH1* hmean = (TH1*)hfarr[1];
+  hmean->SetTitle(Form("<#Delta> %s",h->GetTitle()));
   TH1* hsig  = (TH1*)hfarr[2];
+  hmean->SetTitle(Form("#sigma %s",h->GetTitle()));
   if (!hmean || !hsig) {hfarr.Delete(); return kFALSE;}
   delete gs;
   histos->Clear();
@@ -1051,14 +1053,14 @@ void DrawReportVTX(TObjArray* hmans, const char* psnm)
   // 
   // 1d histos of spread in phi
   repCanv->cd(1);
-  DrawHistos(hmans, kHOffsVTX + 100 + kDY*10+3);
+  DrawHistos(hmans, kHOffsVTX + kDY*10+3,-1,0);
   repCanv->cd(2);
-  DrawHistos(hmans, kHOffsVTX + 100 + kDZ*10+3);
+  DrawHistos(hmans, kHOffsVTX + kDZ*10+3,-1,0);
   //
   repCanv->cd(3);
-  DrawHistos(hmans, kHOffsVTX + 100 + kDYPull*10+3);
+  DrawHistos(hmans, kHOffsVTX + kDYPull*10+3,-1,0);
   repCanv->cd(4);
-  DrawHistos(hmans, kHOffsVTX + 100 + kDZPull*10+3);
+  DrawHistos(hmans, kHOffsVTX + kDZPull*10+3,-1,0);
   //
   repCanv->cd();
   repCanv->Print(psnm); // Z
@@ -1124,14 +1126,14 @@ void DrawReportITS(TObjArray* hmans, const char* psnm)
       repCanv->Clear();
       repCanv->Divide(2,2);
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDY*10 + 3); // 
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDY*10 + 3,-1,0); // 
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZ*10 + 3); // 
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZ*10 + 3,-1,0); // 
       //
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPull*10 + 3); // 
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDYPull*10 + 3,-1,0); // 
       repCanv->cd(++icn);
-      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPull*10 + 3); // 
+      DrawHistos(hmans, kHOffsITS + ilr*100 + kDZPull*10 + 3,-1,0); // 
       //
       repCanv->Print(psnm);
     }
@@ -1304,12 +1306,11 @@ void DrawHistos(TObjArray* hmans, int id, float range, float rangeM)
   if (nhAcc<1 || mn>=mx) return;
   float mnd = mn - 0.2*(mx-mn);
   float mxd = mx + 0.2*(mx-mn);
-  if (range>0) {
-    mxd = range; 
-    mnd = rangeM>-999 ? rangeM : -range;
-  }
+  mxd = range>0 ? range : mxd;
+  mnd = rangeM>-999 ? rangeM : -range;
   nhAcc = 0;
-  gStyle->SetTitleW(0.9);
+  gStyle->SetTitleX(0.1);
+  gStyle->SetTitleW(0.8);
   for (int ih=0;ih<nhm;ih++) {
     HistoManager* hm = (HistoManager*)hmans->At(ih);
     if (!hm) continue;
