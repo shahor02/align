@@ -91,7 +91,7 @@ void AliAlgSensTRD::DPosTraDParCalib(const AliAlgPoint* pnt,double* deriv,int ca
 	if (Abs(sgYZ)>0.01) {
 	  const double kTilt = 2.*TMath::DegToRad();
 	  deriv[2] = pnt->GetTrParamWSA()[AliAlgPoint::kParTgl];
-	  deriv[1] = deriv[2]*kTilt*Sign(kTilt,sgYZ);
+	  deriv[1] = deriv[2]*Sign(kTilt,sgYZ);
 	}
 	break;
       }
