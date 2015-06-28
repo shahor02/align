@@ -368,11 +368,9 @@ void AliAlgSens::PrepareMatrixClAlg()
 //____________________________________________
 void AliAlgSens::PrepareMatrixClAlgReco()
 {
-  // prepare alignment matrix
-  TGeoHMatrix ma = GetMatrixT2L();
-  ma.MultiplyLeft(&GetMatrixL2GReco());
-  ma.MultiplyLeft(&GetMatrixL2GIdeal().Inverse());
-  ma.MultiplyLeft(&GetMatrixT2L().Inverse());
+  // prepare alignment matrix used at reco time
+  TGeoHMatrix ma = GetMatrixL2GIdeal().Inverse();
+  ma *= GetMatrixL2GReco();
   SetMatrixClAlgReco(ma);
   //
 }
