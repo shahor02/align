@@ -92,6 +92,7 @@ class AliAlgDet : public TNamed
   //
   virtual AliAlgPoint* GetPointFromPool();
   virtual void ResetPool();
+  virtual void WriteSensorPositions(const char* outFName);
   //
   void      SetInitGeomDone()                             {SetBit(kInitGeomDone);}
   Bool_t    GetInitGeomDone()                       const {return TestBit(kInitGeomDone);}

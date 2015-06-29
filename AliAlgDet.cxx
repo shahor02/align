@@ -31,6 +31,8 @@
 #include "AliAlignObjParams.h"
 #include <TString.h>
 #include <TH1.h>
+#include <TTree.h>
+#include <TFile.h>
 #include <stdio.h>
 
 ClassImp(AliAlgDet)
@@ -685,4 +687,39 @@ void AliAlgDet::FillDOFStat(AliAlgDOFStat* st) const
     st->AddStat(dof,stat);
   }
   //
+}
+
+//______________________________________________________
+void AliAlgDet::WriteSensorPositions(const char* outFName)
+{
+  // create tree with sensors ideal, ref and reco positions
+  int ns = GetNSensors();
+  double loc[3]={0};
+  // ------- local container type for dumping sensor positions ------
+  typedef struct {
+    int    volID;  // volume id
+    double pId[3]; // ideal
+    double pRf[3]; // reference
+    double pRc[3]; // reco-time
+  } snpos_t;
+  snpos_t spos; // 
+  TFile* fl = TFile::Open(outFName,"recreate");
+  TTree* tr = new TTree("snpos",Form("sensor poisitions for %s",GetName()));
+  tr->Branch("volID",&spos.volID,"volID/I");
+  tr->Branch("pId",&spos.pId,"pId[3]/D");
+  tr->Branch("pRf",&spos.pRf,"pRf[3]/D");
+  tr->Branch("pRc",&spos.pRc,"pRc[3]/D");
+  //
+  for (int isn=0;isn<ns;isn++) {
+    AliAlgSens* sens = GetSensor(isn);
+    spos.volID = sens->GetVolID();
+    sens->GetMatrixL2GIdeal().LocalToMaster(loc,spos.pId);
+    sens->GetMatrixL2G().LocalToMaster(loc,spos.pRf);
+    sens->GetMatrixL2GReco().LocalToMaster(loc,spos.pRc);
+    tr->Fill();
+  }
+  tr->Write();
+  delete tr;
+  fl->Close();
+  delete fl;
 }
