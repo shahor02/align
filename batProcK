@@ -7,11 +7,38 @@
 #aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_v0.lst\",\"halg15KV0cosm.root\",\"v0BM\"\)
 #aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_v0.lst\",\"halg15KV0cosm.root\",\"v0B0\"\)
 
-#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF2C.lst\",\"halg15KPF2Ccoll.root\",\"pfBP\"\)
-#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF2C.lst\",\"halg15KPF2Ccoll.root\",\"pfBM\"\)
-#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF2C.lst\",\"halg15KPF2Ccoll.root\",\"pfB0\"\)
+#-------- charge dependent
 
-aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF2C.lst\",\"halg15KPF2Ccosm.root\",\"pfBP\"\)
-aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF2C.lst\",\"halg15KPF2Ccosm.root\",\"pfBM\"\)
-aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF2C.lst\",\"halg15KPF2Ccosm.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_v0.lst\",\"halg15KV0collPM.root\",\"v0BPp\",1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_v0.lst\",\"halg15KV0collPM.root\",\"v0BMp\",1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_v0.lst\",\"halg15KV0collPM.root\",\"v0BPm\",-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_v0.lst\",\"halg15KV0collPM.root\",\"v0BMm\",-1\)
 
+
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF2.lst\",\"halg15KPF2cosm.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF2.lst\",\"halg15KPF2cosm.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF2.lst\",\"halg15KPF2cosm.root\",\"pfB0\"\)
+
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF2.lst\",\"halg15KPF2coll.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF2.lst\",\"halg15KPF2coll.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF2.lst\",\"halg15KPF2coll.root\",\"pfB0\"\)
+
+#-----------------
+# PF4
+
+
+aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF4.lst\",\"halg15KPF4cosm.root\",\"pfB0\"\)
+
+aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4coll.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4coll.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF4.lst\",\"halg15KPF4coll.root\",\"pfB0\"\)
+
+
+
+# charge dependent
+aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPp\",1\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMp\",1\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPm\",-1\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMm\",-1\)

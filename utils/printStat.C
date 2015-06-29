@@ -15,7 +15,7 @@ void printStat(const char* fl)
   if (!hstat) {printf("no hstat\n");return;}
   //
   TAxis* ax = hstat->GetXaxis();
-  for (int ib=1;ib++<ax->GetNbins();ib++) {
+  for (int ib=1;ib<ax->GetNbins();ib++) {
     double val = hstat->GetBinContent(ib);
     if (val) printf("%-20s\t%9d\n",ax->GetBinLabel(ib),int(val));
   }
