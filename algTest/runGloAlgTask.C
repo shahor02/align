@@ -1,6 +1,6 @@
 TChain* CreateChainXML(const char *xmlfile);
 TChain* CreateChainTXT(const char *txtfile);
-Bool_t InputHandlerSetup(TString formatFr = "AliESDfriends_Barrel.root");
+Bool_t InputHandlerSetup(TString formatFr = "AliESDfriends.root");
 
 Bool_t barrelFlag = kFALSE;
 
@@ -8,7 +8,7 @@ Bool_t barrelFlag = kFALSE;
 //====================================================================
 void runGloAlgTask
 (
-// TString data="wn.xml",
+ //TString data="wn.xml",
  TString data="algColl.txt",
  Int_t nEvents=-1,
  UInt_t trigSel = AliVEvent::kAny

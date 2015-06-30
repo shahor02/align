@@ -8,9 +8,9 @@
   hv0bm->SetMarkerStyle(24);
   hv0bp->SetMarkerStyle(24);
   hv0b0->SetMarkerStyle(24);
-  hpfb0 = new HistoManager("hpostpfB0","halg15KPF4coll.root",1);
-  hpfbp = new HistoManager("hpostpfBP","halg15KPF4coll.root",1);
-  hpfbm = new HistoManager("hpostpfBM","halg15KPF4coll.root",1);
+  hpfb0 = new HistoManager("hpostpfB0","halg15KPF5coll.root",1);
+  hpfbp = new HistoManager("hpostpfBP","halg15KPF5coll.root",1);
+  hpfbm = new HistoManager("hpostpfBM","halg15KPF5coll.root",1);
 
  
   hpfb0->SetColor(kRed);
@@ -29,7 +29,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRep15B0_v0vsPF4Coll");
+  DrawReport(&harr,"algRep15B0_v0vsPF5Coll");
   //
   
   harr.Clear();
@@ -39,7 +39,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRep15BP_v0vsPF4Coll");
+  DrawReport(&harr,"algRep15BP_v0vsPF5Coll");
   //
   harr.Clear();
   harr.Add(hv0bm);
@@ -48,7 +48,7 @@
     HistoManager* hm = (HistoManager*)harr[i];
     hm->SetMarkerSize(0.6);
   }
-  DrawReport(&harr,"algRep15BM_v0vsPF4Coll");
+  DrawReport(&harr,"algRep15BM_v0vsPF5Coll");
   //
   //
 }

@@ -27,18 +27,24 @@
 # PF4
 
 
-aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBP\"\)
-aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBM\"\)
-aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF4.lst\",\"halg15KPF4cosm.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF4.lst\",\"halg15KPF4cosm.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF4.lst\",\"halg15KPF4cosm.root\",\"pfB0\"\)
 
-aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4coll.root\",\"pfBP\"\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4coll.root\",\"pfBM\"\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF4.lst\",\"halg15KPF4coll.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4coll.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4coll.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF4.lst\",\"halg15KPF4coll.root\",\"pfB0\"\)
 
 
 
 # charge dependent
-aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPp\",1\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMp\",1\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPm\",-1\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMm\",-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPp\",1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMp\",1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBPm\",-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF4.lst\",\"halg15KPF4collPM.root\",\"pfBMm\",-1\)
+
+
+
+aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF5.lst\",\"halg15KPF5coll.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF5.lst\",\"halg15KPF5coll.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF5.lst\",\"halg15KPF5coll.root\",\"pfB0\"\)

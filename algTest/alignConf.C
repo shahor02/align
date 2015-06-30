@@ -91,8 +91,8 @@ void ConfigVTX(AliAlgSteer* algSteer)
   //
   AliAlgVtx *vtx = algSteer->GetVertexSensor();
   vtx->SetAddError(0.001,0.001);
-  // fix vertex by precondition
-  for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
+  // fix vertex Z and angles by precondition
+  for (int idf=AliAlgVol::kDOFTZ;idf<AliAlgVol::kNDOFGeom;idf++) {
     vtx->SetParErr(idf,-999);
   }
 }
@@ -101,7 +101,7 @@ void ConfigVTX(AliAlgSteer* algSteer)
 void ConfigITS(AliAlgSteer* algSteer)
 {
   //
-  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.1,0.1,0.2,1,1,1}; // precondition sigmas
+  const double kCondSig[AliAlgVol::kNDOFGeom] = {0.2,0.2,0.3,1,1,1}; // precondition sigmas
   //
   AliAlgDetITS* det = (AliAlgDetITS*)algSteer->GetDetectorByDetID(AliAlgSteer::kITS);
   if (!det||det->IsDisabled()) return;
@@ -121,6 +121,7 @@ void ConfigITS(AliAlgSteer* algSteer)
   //
   AliAlgVol* vol=0;
   // precondition
+  /*
   for (int iv=det->GetNVolumes();iv--;) {
     vol = det->GetVolume(iv);
     for (int idf=AliAlgVol::kNDOFGeom;idf--;) {
@@ -131,9 +132,28 @@ void ConfigITS(AliAlgSteer* algSteer)
       // prevent global shift of children in the containers      
       vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
     }
-  }  
+  } 
+  */
+  TObjArray arr;
+  AliAlgVol* itsv = det->GetVolume("ITS");
+  itsv->SetChildrenConstrainPattern(0); // no auto constraint
+  itsv->SetFreeDOFPattern(0); // fix
+  /*
+  det->SelectVolumes(&arr,1,"SPD");
+  // constraint shifts of SPD sectors wrt ITS
+  AliAlgConstraint *cITS = new AliAlgConstraint("ITSsectSPD","");
+  cITS->ConstrainDOF(AliAlgVol::kDOFTX);
+  cITS->ConstrainDOF(AliAlgVol::kDOFTY);
+  cITS->ConstrainDOF(AliAlgVol::kDOFTZ);
+  algSteer->AddConstraint(cITS);
+  for (int i=0;i<arr.GetEntriesFast();i++) {
+    AliAlgVol* vol = (AliAlgVol*)arr[i]; 
+    cITS->AddChild(vol);
+  }
+  */
   //
   // constraints
+  /*
   vol = det->GetVolume("ITS");
   // 
   // limit global shifts of ITS envelope
@@ -146,6 +166,7 @@ void ConfigITS(AliAlgSteer* algSteer)
     cstr->SetSigma(idf,tolITS[idf]);
     algSteer->AddConstraint(cstr);
   }
+  */
   //
   //  det->SetAddError(2,2);
   det->SetAddErrorLr(0,10e-4,50e-4);
@@ -198,7 +219,7 @@ void ConfigTRD(AliAlgSteer* algSteer)
   //
   // allow variation of correction parameter for DZ,DY of non-crossing tracklets
   det->SetFreeDOF(AliAlgDetTRD::kCalibNRCCorrDzDtgl);
-  det->SetFreeDOF(AliAlgDetTRD::kCalibDVT);
+  //  det->SetFreeDOF(AliAlgDetTRD::kCalibDVT);
   //
   // just repeat default settings
   det->SetNonRCCorrDzDtgl(0); // correct DZ,DY of non-crossing tracklets
@@ -263,15 +284,17 @@ void ConfigTOF(AliAlgSteer* algSteer)
   //
   // prevent systematic compression of inflation in R
   // ATTENTION: see if using cosmics will allow to avoid this constraint
-  //  AliAlgConstraint* ctofX = new AliAlgConstraint("TOF_Xconstr","");
-  //  ctofX->SetNoJacobian();
-  //  ctofX->ConstrainDOF(AliAlgVol::kDOFTX);
-  //  algSteer->AddConstraint(ctofX);
+/*
+  AliAlgConstraint* ctofX = new AliAlgConstraint("TOF_Xconstr","");
+  ctofX->SetNoJacobian();
+  ctofX->ConstrainDOF(AliAlgVol::kDOFTX);
+  algSteer->AddConstraint(ctofX);
+*/
   //
   for (int i=0;i<tmpArr.GetEntriesFast();i++) {
     AliAlgVol* vol = (AliAlgVol*)tmpArr[i]; 
     ctofY->AddChild(vol); // add volume to special Y constraint
-    //    ctofX->AddChild(vol); // add volume to special X constraint
+    //  ctofX->AddChild(vol); // add volume to special X constraint
     //
     // prevent global shift of strips wrt SM
     vol->SetChildrenConstrainPattern(AliAlgVol::kDOFBitTX | AliAlgVol::kDOFBitTY | AliAlgVol::kDOFBitTZ);
