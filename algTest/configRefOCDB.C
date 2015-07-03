@@ -2,8 +2,9 @@
 // as a reference for the alignment/calibration, i.e. coorections
 // will be evaluated wrt these objects
 
-TString specOCDB = "";//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
-TString specOCDB = "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC15tst0";
+//TString specOCDB = "";//"/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC12tst0";
+//TString specOCDB = "/alice/cern.ch/user/s/shahoian/tstOCDB/outOCDB_LHC15tst0";
+TString specOCDB = "/alice/cern.ch/user/s/shahoian/tstOCDB/good_LHC15_PF2";
 //TString specOCDB = "outOCDB";
 
 void configRefOCDB(int run = 218893) 

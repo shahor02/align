@@ -45,6 +45,39 @@
 
 
 
-aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF5.lst\",\"halg15KPF5coll.root\",\"pfBP\"\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF5.lst\",\"halg15KPF5coll.root\",\"pfBM\"\)
-aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF5.lst\",\"halg15KPF5coll.root\",\"pfB0\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF7.lst\",\"halg15KPF7coll.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF7.lst\",\"halg15KPF7coll.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF7.lst\",\"halg15KPF7coll.root\",\"pfB0\"\)
+
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF8.lst\",\"halg15KPF8coll.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF8.lst\",\"halg15KPF8coll.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF8.lst\",\"halg15KPF8coll.root\",\"pfB0\"\)
+
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF8.lst\",\"halg15KPF8cosm.root\",\"pfBP\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF8.lst\",\"halg15KPF8cosm.root\",\"pfBM\"\)
+#aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF8.lst\",\"halg15KPF8cosm.root\",\"pfB0\"\)
+
+#----------------------
+# no vertex
+
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_v0.lst\",\"halgNV15KV0coll.root\",\"v0BP\",0,-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_v0.lst\",\"halgNV15KV0coll.root\",\"v0BM\",0,-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_v0.lst\",\"halgNV15KV0coll.root\",\"v0B0\",0,-1\)
+
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF2.lst\",\"halgNV15KPF2coll.root\",\"pfBP\",0,-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF2.lst\",\"halgNV15KPF2coll.root\",\"pfBM\",0,-1\)
+#aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF2.lst\",\"halgNV15KPF2coll.root\",\"pfB0\",0,-1\)
+
+
+#-----------------
+# PF2R1
+
+
+aliroot -b -q ProcResK.C+g\(\"controlCosm15BP_PF2R1.lst\",\"halg15KPF2R1cosm.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosm15BM_PF2R1.lst\",\"halg15KPF2R1cosm.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlCosm15B0_PF2R1.lst\",\"halg15KPF2R1cosm.root\",\"pfB0\"\)
+
+aliroot -b -q ProcResK.C+g\(\"controlColl15BP_PF2R1.lst\",\"halg15KPF2R1coll.root\",\"pfBP\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15BM_PF2R1.lst\",\"halg15KPF2R1coll.root\",\"pfBM\"\)
+aliroot -b -q ProcResK.C+g\(\"controlColl15B0_PF2R1.lst\",\"halg15KPF2R1coll.root\",\"pfB0\"\)
+

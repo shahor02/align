@@ -15,7 +15,7 @@
 #endif
 
 
-void ProcResK(const char* inpData, const char* outName="halgResK", const char* outDir="r", int qsel=0);
+void ProcResK(const char* inpData, const char* outName="halgResK", const char* outDir="r", int qsel=0, int vtxSel=0);
 TChain* LoadChain(const char* inpData, const char* chName="res");
 void BookHistos();
 void BookHistosVTX(HistoManager* hm);
@@ -103,7 +103,7 @@ double drRangeZ_TOF[2] = {2., 3.};
 
 //---------------------------------------------------
 
-void ProcResK(const char* inpData, const char* outName, const char* outDir, int qsel)
+void ProcResK(const char* inpData, const char* outName, const char* outDir, int qsel, int vtxSel)
 {
   ch = LoadChain(inpData);
   if (!ch) return;
@@ -120,6 +120,10 @@ void ProcResK(const char* inpData, const char* outName, const char* outDir, int 
     if (qsel && res->GetQ2Pt()*qsel<0) continue;
     //
     if (!res->GetKalmanDone()) continue;
+    if (vtxSel) {
+      if (vtxSel>0 && !res->HasVertex()) continue; // only with vtx
+      if (vtxSel<0 &&  res->HasVertex()) continue; // only w/o vtx
+    }
     int np = res->GetNPoints();
     for (int ip=np;ip--;) {
       ProcessRes(ip);
